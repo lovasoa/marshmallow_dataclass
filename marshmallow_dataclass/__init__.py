@@ -9,6 +9,79 @@ import datetime
 import uuid
 from typing import Dict, Type, List, cast
 
+
+def dataclass(clazz: type) -> type:
+    """
+    This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
+    It adds a `.Schema` attribute to the class object
+
+    >>> @dataclass
+    ... class Artist:
+    ...    name: str
+    >>> Artist.Schema
+    <class 'marshmallow.schema.Artist'>
+    """
+    return add_schema(dataclasses.dataclass(clazz))
+
+
+def add_schema(clazz: type) -> type:
+    """
+    This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
+    It uses :func:`class_schema` internally.
+
+    >>> @add_schema
+    ... @dataclasses.dataclass
+    ... class Artist:
+    ...    name: str
+    >>> artist, err = Artist.Schema(strict=True).loads('{"name": "Ramirez"}')
+    >>> artist
+    Artist(name='Ramirez')
+    """
+    clazz.Schema = class_schema(clazz)
+    return clazz
+
+
+def class_schema(clazz: type) -> Type[marshmallow.Schema]:
+    """
+    Convert a class to a marshmallow schema
+
+    :param clazz: A python class (may be a dataclass)
+    :return: A marshmallow Schema corresponding to the dataclass
+
+    >>> @dataclasses.dataclass()
+    ... class Building:
+    ...   height: float = dataclasses.field(metadata={'required':True})
+    ...   name: str = dataclasses.field(default="anonymous")
+    ...
+    >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
+    <class 'marshmallow.schema.Building'>
+    >>> @dataclasses.dataclass()
+    ... class City:
+    ...   name: str
+    ...   buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
+    >>> citySchema = class_schema(City)(strict=True)
+    >>> city, _ = citySchema.load({"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height":324}]})
+    >>> city
+    City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
+    """
+
+    try:
+        fields: Dict[str, dataclasses.Field] = getattr(clazz, '__dataclass_fields__')
+    except AttributeError:  # not a dataclass
+        return class_schema(dataclasses.dataclass(clazz))
+
+    attributes = {
+        name: field_for_schema(
+            field.type,
+            _get_field_default(field),
+            field.metadata
+        )
+        for name, field in fields.items()
+    }
+    schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
+    return cast(Type[marshmallow.Schema], schema_class)
+
+
 _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
     int: marshmallow.fields.Int,
     float: marshmallow.fields.Float,
@@ -67,77 +140,6 @@ def field_for_schema(
         default=default,
         **metadata
     )
-
-
-def class_schema(clazz: type) -> Type[marshmallow.Schema]:
-    """
-    Convert a class to a marshmallow schema
-
-    :param clazz: A python class (may be a dataclass)
-    :return: A marshmallow Schema corresponding to the dataclass
-
-    >>> @dataclasses.dataclass()
-    ... class Building:
-    ...   height: float = dataclasses.field(metadata={'required':True})
-    ...   name: str = dataclasses.field(default="anonymous")
-    ...
-    >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
-    <class 'marshmallow.schema.Building'>
-    >>> @dataclasses.dataclass()
-    ... class City:
-    ...   name: str
-    ...   buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
-    >>> citySchema = class_schema(City)(strict=True)
-    >>> city, _ = citySchema.load({"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height":324}]})
-    >>> city
-    City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
-    """
-
-    try:
-        fields: Dict[str, dataclasses.Field] = getattr(clazz, '__dataclass_fields__')
-    except AttributeError:  # not a dataclass
-        return class_schema(dataclasses.dataclass(clazz))
-
-    attributes = {
-        name: field_for_schema(
-            field.type,
-            _get_field_default(field),
-            field.metadata
-        )
-        for name, field in fields.items()
-    }
-    schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
-    return cast(Type[marshmallow.Schema], schema_class)
-
-
-def add_schema(clazz: type) -> type:
-    """
-    This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
-    It uses :func:`class_schema` internally.
-
-    >>> @add_schema
-    ... @dataclasses.dataclass
-    ... class Artist:
-    ...    name: str
-    >>> artist, err = Artist.Schema(strict=True).loads('{"name": "Ramirez"}')
-    >>> artist
-    Artist(name='Ramirez')
-    """
-    clazz.Schema = class_schema(clazz)
-    return clazz
-
-
-def dataclass(clazz: type) -> type:
-    """
-    This does the same as dataclasses.dataclass, but also applies :func:`add_schema`
-
-    >>> @dataclass
-    ... class Artist:
-    ...    name: str
-    >>> Artist.Schema
-    <class 'marshmallow.schema.Artist'>
-    """
-    return add_schema(dataclasses.dataclass(clazz))
 
 
 def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
