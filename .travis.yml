@@ -1,0 +1,6 @@
+language: python
+python:
+  - "3.7"
+script:
+  - pipenv run python -m doctest marshmallow_dataclass/*.py
+  - cd docs && make html
