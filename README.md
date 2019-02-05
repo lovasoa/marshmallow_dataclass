@@ -1,4 +1,6 @@
 # marshmallow_dataclass
+[![Build Status](https://travis-ci.org/lovasoa/marshmallow_dataclass.svg?branch=master)](https://travis-ci.org/lovasoa/marshmallow_dataclass)
+
 Automatic generation of marshmallow schemas from dataclasses.
 
 ## How to use
