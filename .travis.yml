@@ -2,6 +2,8 @@ language: python
 dist: xenial
 python:
   - "3.7"
+install:
+  - pipenv install
 script:
   - pipenv run python -m doctest marshmallow_dataclass/*.py
   - cd docs && make html
