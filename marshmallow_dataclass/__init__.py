@@ -7,7 +7,7 @@ import dataclasses
 import marshmallow
 import datetime
 import uuid
-from typing import Dict, Type, List
+from typing import Dict, Type, List, cast
 
 _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
     int: marshmallow.fields.Int,
@@ -94,7 +94,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     """
 
     try:
-        fields: Dict[str, dataclasses.Field] = clazz.__dataclass_fields__
+        fields: Dict[str, dataclasses.Field] = getattr(clazz, '__dataclass_fields__')
     except AttributeError:  # not a dataclass
         return class_schema(dataclasses.dataclass(clazz))
 
@@ -106,8 +106,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         )
         for name, field in fields.items()
     }
-
-    return type(clazz.__name__, (_base_schema(clazz),), attributes)
+    schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
+    return cast(Type[marshmallow.Schema], schema_class)
 
 
 def add_schema(clazz: type) -> type:
@@ -127,7 +127,7 @@ def add_schema(clazz: type) -> type:
     return clazz
 
 
-def _base_schema(clazz):
+def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
     class BaseSchema(marshmallow.Schema):
         @marshmallow.post_load
         def make_data_class(self, data):
