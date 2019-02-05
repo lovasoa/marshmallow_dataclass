@@ -27,3 +27,15 @@ city, _ = City.Schema().load({
     ]
 })
 ```
+
+## installation
+This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/) :
+
+```shell
+pipenv install marshmallow-dataclass
+```
+
+## Documentation
+
+The project documentation is hosted on github pages:
+https://lovasoa.github.io/marshmallow_dataclass/_build/html.
