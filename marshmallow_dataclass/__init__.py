@@ -127,6 +127,19 @@ def add_schema(clazz: type) -> type:
     return clazz
 
 
+def dataclass(clazz: type) -> type:
+    """
+    This does the same as dataclasses.dataclass, but also applies :func:`add_schema`
+
+    >>> @dataclass
+    ... class Artist:
+    ...    name: str
+    >>> Artist.Schema
+    <class 'marshmallow.schema.Artist'>
+    """
+    return add_schema(dataclasses.dataclass(clazz))
+
+
 def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
     class BaseSchema(marshmallow.Schema):
         @marshmallow.post_load
