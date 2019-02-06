@@ -107,6 +107,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     """
 
     try:
+        # noinspection PyDataclass
         fields: Tuple[dataclasses.Field] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
