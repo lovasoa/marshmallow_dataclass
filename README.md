@@ -97,3 +97,10 @@ pipenv install marshmallow-dataclass
 
 The project documentation is hosted on github pages:
  - [documentation](https://lovasoa.github.io/marshmallow_dataclass/).
+
+## Usage warning
+
+This library depends on python's standard
+[typing](https://docs.python.org/3/library/typing.html)
+library, which is
+[provisional](https://docs.python.org/3/glossary.html#term-provisional-api).
