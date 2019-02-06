@@ -182,14 +182,14 @@ def field_for_schema(
 
     # Generic types
     origin: type = typing_inspect.get_origin(typ)
-    if origin == list:
+    if origin in (list, List):
         list_elements_type = typing_inspect.get_args(typ, True)[0]
         return marshmallow.fields.List(
             field_for_schema(list_elements_type),
             default=default,
             **metadata
         )
-    elif origin == dict:
+    elif origin in (dict, Dict):
         key_type, value_type = typing_inspect.get_args(typ, True)
         return marshmallow.fields.Dict(
             keys=field_for_schema(key_type),
@@ -197,7 +197,7 @@ def field_for_schema(
             default=default,
             **metadata
         )
-    elif origin == collections.abc.Callable:
+    elif origin in (collections.abc.Callable, Callable):
         return marshmallow.fields.Function(
             default=default,
             **metadata
