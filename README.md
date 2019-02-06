@@ -55,7 +55,8 @@ it can confuse type checkers.
 If you want to avoid that, you can also use the standard
 `dataclass` decorator, and generate the schema manually
 using
-[`class_schema`]():
+[`class_schema`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.class_schema)
+:
 
 ```python
 from dataclasses import dataclass
@@ -68,6 +69,21 @@ class Person:
     birth: datetime
 
 PersonSchema = marshmallow_dataclass.class_schema(Person)
+```
+
+You can also declare the schema as a
+[`ClassVar`](https://docs.python.org/3/library/typing.html#typing.ClassVar):
+
+```python
+from marshmallow_dataclass import dataclass
+from marshmallow import Schema
+from typing import ClassVar, Type
+
+@dataclass
+class Point:
+  x:float
+  y:float
+  Schema: ClassVar[Type[Schema]] = Schema
 ```
 
 ## installation

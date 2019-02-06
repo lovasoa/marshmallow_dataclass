@@ -8,7 +8,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple
+from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar
 import collections.abc
 
 __all__ = [
@@ -29,6 +29,17 @@ def dataclass(clazz: type) -> type:
     ...    name: str
     >>> Artist.Schema
     <class 'marshmallow.schema.Artist'>
+
+    You can declare the `Schema` field to your type checker:
+    >>> from marshmallow import Schema
+    >>> @dataclass
+    ... class Point:
+    ...   x:float
+    ...   y:float
+    ...   Schema: ClassVar[Type[Schema]] = Schema
+    ...
+    >>> Point.Schema(strict=True).load({'x':0, 'y':0}).data # This line can be statically type checked
+    Point(x=0.0, y=0.0)
     """
     return add_schema(dataclasses.dataclass(clazz))
 
