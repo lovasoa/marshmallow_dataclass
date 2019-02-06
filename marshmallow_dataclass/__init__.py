@@ -57,6 +57,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     :param clazz: A python class (may be a dataclass)
     :return: A marshmallow Schema corresponding to the dataclass
 
+    All the arguments supported by marshmallow field classes are can
+    be passed in the `metadata` dictionary of a field:
     >>> @dataclasses.dataclass()
     ... class Building:
     ...   height: float = dataclasses.field(metadata={'required':True})
@@ -65,25 +67,43 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
 
+    You can reference other dataclasses, and a schema will be created for them too:
     >>> @dataclasses.dataclass()
     ... class City:
     ...   name: str
-    ...   buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
+    ...   best_building: Building
+    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
+    ...
     >>> citySchema = class_schema(City)(strict=True)
-    >>> city, _ = citySchema.load({"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height":324}]})
+    >>> city, _ = citySchema.load({"name": "Paris", "best_building": {"name": "Eiffel Tower", "height":324}})
     >>> city
-    City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
+    City(name='Paris', best_building=Building(height=324.0, name='Eiffel Tower'), other_buildings=[])
 
+    Recursive types are supported:
     >>> @dataclasses.dataclass()
     ... class Person:
     ...   name: str
     ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
+    ...
     >>> person, _ = class_schema(Person)(strict=True).load({
     ...     "name": "Gérard Bouchard",
     ...     "friends": [{"name": "Roger Boucher"}]
     ... })
     >>> person
     Person(name='Gérard Bouchard', friends=[Person(name='Roger Boucher', friends=[])])
+
+    Only fields that are in the __init__ method will be added:
+    >>> @dataclasses.dataclass()
+    ... class C:
+    ...   important: int = dataclasses.field(init=True, default=0)
+    ...   unimportant: int = dataclasses.field(init=False, default=0)
+    ...
+    >>> c, _ = class_schema(C)(strict=True).load({
+    ...     "important": 9, # This field will be imported
+    ...     "unimportant": 9 # This field will NOT be imported
+    ... })
+    >>> c
+    C(important=9, unimportant=0)
     """
 
     try:
@@ -101,6 +121,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
             field.metadata
         )
         for name, field in fields.items()
+        if field.init
     }
     schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
