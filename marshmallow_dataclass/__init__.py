@@ -31,13 +31,12 @@ def dataclass(clazz: type) -> type:
     >>> Artist.Schema
     <class 'marshmallow.schema.Artist'>
 
-    You can declare the `Schema` field to your type checker:
     >>> from marshmallow import Schema
     >>> @dataclass
     ... class Point:
     ...   x:float
     ...   y:float
-    ...   Schema: ClassVar[Type[Schema]] = Schema
+    ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
     ...
     >>> Point.Schema(strict=True).load({'x':0, 'y':0}).data # This line can be statically type checked
     Point(x=0.0, y=0.0)
@@ -79,11 +78,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
 
-    You can reference other dataclasses, and a schema will be created for them too:
     >>> @dataclasses.dataclass()
     ... class City:
     ...   name: str
-    ...   best_building: Building
+    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
     ...
     >>> citySchema = class_schema(City)(strict=True)
@@ -91,7 +89,6 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> city
     City(name='Paris', best_building=Building(height=324.0, name='Eiffel Tower'), other_buildings=[])
 
-    Recursive types are supported:
     >>> @dataclasses.dataclass()
     ... class Person:
     ...   name: str
@@ -104,11 +101,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> person
     Person(name='Gérard Bouchard', friends=[Person(name='Roger Boucher', friends=[])])
 
-    Only fields that are in the __init__ method will be added:
     >>> @dataclasses.dataclass()
     ... class C:
     ...   important: int = dataclasses.field(init=True, default=0)
-    ...   unimportant: int = dataclasses.field(init=False, default=0)
+    ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:
     ...
     >>> c, _ = class_schema(C)(strict=True).load({
     ...     "important": 9, # This field will be imported
