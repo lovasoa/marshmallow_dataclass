@@ -8,7 +8,8 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, cast
+from typing import Dict, Type, List, Callable, cast
+import collections.abc
 
 
 def dataclass(clazz: type) -> type:
@@ -121,8 +122,11 @@ def field_for_schema(
     >>> field_for_schema(int, default=9, metadata=dict(required=True))
     <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
 
-    >>> field_for_schema(Dict[str,str])
-    <fields.Dict(default=<marshmallow.missing>, attribute=None, validate=None, required=False, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid mapping type.'})>
+    >>> field_for_schema(Dict[str,str]).__class__
+    <class 'marshmallow.fields.Dict'>
+
+    >>> field_for_schema(Callable[[str],str]).__class__
+    <class 'marshmallow.fields.Function'>
     """
 
     if metadata is None:
@@ -146,6 +150,11 @@ def field_for_schema(
         return marshmallow.fields.Dict(
             keys=field_for_schema(key_type),
             values=field_for_schema(value_type),
+            default=default,
+            **metadata
+        )
+    elif origin == collections.abc.Callable:
+        return marshmallow.fields.Function(
             default=default,
             **metadata
         )
