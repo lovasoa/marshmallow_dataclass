@@ -11,6 +11,13 @@ import decimal
 from typing import Dict, Type, List, Callable, cast
 import collections.abc
 
+__all__ = [
+    'dataclass',
+    'add_schema',
+    'class_schema',
+    'field_for_schema'
+]
+
 
 def dataclass(clazz: type) -> type:
     """
