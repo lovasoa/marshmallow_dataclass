@@ -74,7 +74,9 @@ It uses <a class="reference internal" href="#marshmallow_dataclass.class_schema"
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
 <span class="go">&lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
 <span class="gp">... </span>  <span class="n">buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
@@ -82,6 +84,18 @@ It uses <a class="reference internal" href="#marshmallow_dataclass.class_schema"
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;buildings&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span><span class="mi">324</span><span class="p">}]})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city</span>
 <span class="go">City(name=&#39;Paris&#39;, buildings=[Building(height=324.0, name=&#39;Eiffel Tower&#39;)])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Gérard Bouchard&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;friends&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Roger Boucher&quot;</span><span class="p">}]</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span>
+<span class="go">Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 </pre></div>
 </div>
 </dd></dl>

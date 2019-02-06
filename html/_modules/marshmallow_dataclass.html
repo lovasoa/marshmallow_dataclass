@@ -42,6 +42,7 @@
 <span class="kn">import</span> <span class="nn">marshmallow</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">decimal</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span>
 
 
@@ -90,6 +91,7 @@
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
+
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class City:</span>
 <span class="sd">    ...   name: str</span>
@@ -98,6 +100,17 @@
 <span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;: &quot;Paris&quot;, &quot;buildings&quot;: [{&quot;name&quot;: &quot;Eiffel Tower&quot;, &quot;height&quot;:324}]})</span>
 <span class="sd">    &gt;&gt;&gt; city</span>
 <span class="sd">    City(name=&#39;Paris&#39;, buildings=[Building(height=324.0, name=&#39;Eiffel Tower&#39;)])</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
+<span class="sd">    ... class Person:</span>
+<span class="sd">    ...   name: str</span>
+<span class="sd">    ...   friends: List[&#39;Person&#39;] = dataclasses.field(default_factory=lambda:[]) # Recursive field</span>
+<span class="sd">    &gt;&gt;&gt; person, _ = class_schema(Person)(strict=True).load({</span>
+<span class="sd">    ...     &quot;name&quot;: &quot;Gérard Bouchard&quot;,</span>
+<span class="sd">    ...     &quot;friends&quot;: [{&quot;name&quot;: &quot;Roger Boucher&quot;}]</span>
+<span class="sd">    ... })</span>
+<span class="sd">    &gt;&gt;&gt; person</span>
+<span class="sd">    Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -123,7 +136,10 @@
     <span class="nb">str</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">,</span>
     <span class="nb">bool</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Bool</span><span class="p">,</span>
     <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">DateTime</span><span class="p">,</span>
+    <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Time</span><span class="p">,</span>
     <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">TimeDelta</span><span class="p">,</span>
+    <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Date</span><span class="p">,</span>
+    <span class="n">decimal</span><span class="o">.</span><span class="n">Decimal</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Decimal</span><span class="p">,</span>
     <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">UUID</span><span class="p">,</span>
 <span class="p">}</span>
 
@@ -170,8 +186,9 @@
         <span class="p">)</span>
 
     <span class="c1"># Nested dataclasses</span>
+    <span class="n">forward_reference</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s1">&#39;__forward_arg__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span>
-        <span class="n">nested</span><span class="o">=</span><span class="n">class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">nested</span><span class="o">=</span><span class="n">forward_reference</span> <span class="ow">or</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">),</span>
         <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
         <span class="o">**</span><span class="n">metadata</span>
     <span class="p">)</span></div>
