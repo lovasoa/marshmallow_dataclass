@@ -56,6 +56,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
+
     >>> @dataclasses.dataclass()
     ... class City:
     ...   name: str
@@ -64,6 +65,17 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> city, _ = citySchema.load({"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height":324}]})
     >>> city
     City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
+
+    >>> @dataclasses.dataclass()
+    ... class Person:
+    ...   name: str
+    ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
+    >>> person, _ = class_schema(Person)(strict=True).load({
+    ...     "name": "Gérard Bouchard",
+    ...     "friends": [{"name": "Roger Boucher"}]
+    ... })
+    >>> person
+    Person(name='Gérard Bouchard', friends=[Person(name='Roger Boucher', friends=[])])
     """
 
     try:
@@ -139,8 +151,9 @@ def field_for_schema(
         )
 
     # Nested dataclasses
+    forward_reference = getattr(typ, '__forward_arg__', None)
     return marshmallow.fields.Nested(
-        nested=class_schema(typ)(strict=True),
+        nested=forward_reference or class_schema(typ),
         default=default,
         **metadata
     )
