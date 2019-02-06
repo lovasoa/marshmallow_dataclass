@@ -46,8 +46,10 @@ city, _ = City.Schema().load({
 })
 ```
 
-The previous  syntax is very convenient, as it does not
-require you to change your dataclass definitions at all.
+The previous  syntax is very convenient, as the only change
+you have to apply to your existing code is update the
+`dataclass` import.
+
 However, as the `.Schema` property is added dynamically,
 it can confuse type checkers.
 If you want to avoid that, you can also use the standard
