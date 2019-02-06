@@ -96,4 +96,4 @@ pipenv install marshmallow-dataclass
 ## Documentation
 
 The project documentation is hosted on github pages:
-https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html.
+ - [documentation](https://lovasoa.github.io/marshmallow_dataclass/).
