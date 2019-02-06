@@ -8,7 +8,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast
+from typing import Dict, Type, List, Callable, cast, Tuple
 import collections.abc
 
 __all__ = [
@@ -107,20 +107,20 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     """
 
     try:
-        fields: Dict[str, dataclasses.Field] = getattr(clazz, '__dataclass_fields__')
-    except AttributeError:  # not a dataclass
+        fields: Tuple[dataclasses.Field] = dataclasses.fields(clazz)
+    except TypeError:  # Not a dataclass
         try:
             return class_schema(dataclasses.dataclass(clazz))
         except Exception:
             raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
 
     attributes = {
-        name: field_for_schema(
+        field.name: field_for_schema(
             field.type,
             _get_field_default(field),
             field.metadata
         )
-        for name, field in fields.items()
+        for field in fields
         if field.init
     }
     schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
