@@ -38,6 +38,30 @@
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-marshmallow_dataclass" title="Permalink to this headline">¶</a></h2>
 <p>This library allows the conversion of python 3.7’s dataclasses to marshmallow’s schemas.</p>
 <dl class="function">
+<dt id="marshmallow_dataclass.dataclass">
+<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
+It adds a <cite>.Schema</cite> attribute to the class object</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
+<span class="gp">... </span>   <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span>
+<span class="go">&lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
+</pre></div>
+</div>
+<p>You can declare the <cite>Schema</cite> field to your type checker:
+&gt;&gt;&gt; from marshmallow import Schema
+&gt;&gt;&gt; &#64;dataclass
+… class Point:
+…   x:float
+…   y:float
+…   Schema: ClassVar[Type[Schema]] = Schema
+…
+&gt;&gt;&gt; Point.Schema(strict=True).load({‘x’:0, ‘y’:0}).data # This line can be statically type checked
+Point(x=0.0, y=0.0)</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="marshmallow_dataclass.add_schema">
 <code class="descclassname">marshmallow_dataclass.</code><code class="descname">add_schema</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#add_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.add_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>This decorator adds a marshmallow schema as the ‘Schema’ attribute in a dataclass.
@@ -67,51 +91,50 @@ It uses <a class="reference internal" href="#marshmallow_dataclass.class_schema"
 </tr>
 </tbody>
 </table>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
-<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
-<span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
-<span class="go">&lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="gp">... </span>  <span class="n">buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;buildings&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span><span class="mi">324</span><span class="p">}]})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span>
-<span class="go">City(name=&#39;Paris&#39;, buildings=[Building(height=324.0, name=&#39;Eiffel Tower&#39;)])</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
-<span class="gp">... </span>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Gérard Bouchard&quot;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="s2">&quot;friends&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Roger Boucher&quot;</span><span class="p">}]</span>
-<span class="gp">... </span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span>
-<span class="go">Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="marshmallow_dataclass.dataclass">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
-<dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
-It adds a <cite>.Schema</cite> attribute to the class object</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
-<span class="gp">... </span>   <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span>
-<span class="go">&lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
-</pre></div>
-</div>
+<p>All the arguments supported by marshmallow field classes are can
+be passed in the <cite>metadata</cite> dictionary of a field:
+&gt;&gt;&gt; &#64;dataclasses.dataclass()
+… class Building:
+…   height: float = dataclasses.field(metadata={‘required’:True})
+…   name: str = dataclasses.field(default=”anonymous”)
+…
+&gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)
+&lt;class ‘marshmallow.schema.Building’&gt;</p>
+<p>You can reference other dataclasses, and a schema will be created for them too:
+&gt;&gt;&gt; &#64;dataclasses.dataclass()
+… class City:
+…   name: str
+…   best_building: Building
+…   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
+…
+&gt;&gt;&gt; citySchema = class_schema(City)(strict=True)
+&gt;&gt;&gt; city, _ = citySchema.load({“name”: “Paris”, “best_building”: {“name”: “Eiffel Tower”, “height”:324}})
+&gt;&gt;&gt; city
+City(name=’Paris’, best_building=Building(height=324.0, name=’Eiffel Tower’), other_buildings=[])</p>
+<p>Recursive types are supported:
+&gt;&gt;&gt; &#64;dataclasses.dataclass()
+… class Person:
+…   name: str
+…   friends: List[‘Person’] = dataclasses.field(default_factory=lambda:[]) # Recursive field
+…
+&gt;&gt;&gt; person, _ = class_schema(Person)(strict=True).load({
+…     “name”: “Gérard Bouchard”,
+…     “friends”: [{“name”: “Roger Boucher”}]
+… })
+&gt;&gt;&gt; person
+Person(name=’Gérard Bouchard’, friends=[Person(name=’Roger Boucher’, friends=[])])</p>
+<p>Only fields that are in the __init__ method will be added:
+&gt;&gt;&gt; &#64;dataclasses.dataclass()
+… class C:
+…   important: int = dataclasses.field(init=True, default=0)
+…   unimportant: int = dataclasses.field(init=False, default=0)
+…
+&gt;&gt;&gt; c, _ = class_schema(C)(strict=True).load({
+…     “important”: 9, # This field will be imported
+…     “unimportant”: 9 # This field will NOT be imported
+… })
+&gt;&gt;&gt; c
+C(important=9, unimportant=0)</p>
 </dd></dl>
 
 <dl class="function">
@@ -123,8 +146,12 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
 <span class="go">&lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=&lt;marshmallow.missing&gt;, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span>
-<span class="go">&lt;fields.Dict(default=&lt;marshmallow.missing&gt;, attribute=None, validate=None, required=False, load_only=False, dump_only=False, missing=&lt;marshmallow.missing&gt;, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid mapping type.&#39;})&gt;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow.fields.Function&#39;&gt;</span>
 </pre></div>
 </div>
 </dd></dl>

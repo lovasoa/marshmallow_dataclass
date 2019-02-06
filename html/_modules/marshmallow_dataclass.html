@@ -43,7 +43,15 @@
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">import</span> <span class="nn">decimal</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">import</span> <span class="nn">collections.abc</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;dataclass&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;add_schema&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;class_schema&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;field_for_schema&#39;</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
@@ -56,6 +64,17 @@
 <span class="sd">    ...    name: str</span>
 <span class="sd">    &gt;&gt;&gt; Artist.Schema</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
+
+<span class="sd">    You can declare the `Schema` field to your type checker:</span>
+<span class="sd">    &gt;&gt;&gt; from marshmallow import Schema</span>
+<span class="sd">    &gt;&gt;&gt; @dataclass</span>
+<span class="sd">    ... class Point:</span>
+<span class="sd">    ...   x:float</span>
+<span class="sd">    ...   y:float</span>
+<span class="sd">    ...   Schema: ClassVar[Type[Schema]] = Schema</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; Point.Schema(strict=True).load({&#39;x&#39;:0, &#39;y&#39;:0}).data # This line can be statically type checked</span>
+<span class="sd">    Point(x=0.0, y=0.0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span></div>
 
@@ -84,6 +103,8 @@
 <span class="sd">    :param clazz: A python class (may be a dataclass)</span>
 <span class="sd">    :return: A marshmallow Schema corresponding to the dataclass</span>
 
+<span class="sd">    All the arguments supported by marshmallow field classes are can</span>
+<span class="sd">    be passed in the `metadata` dictionary of a field:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Building:</span>
 <span class="sd">    ...   height: float = dataclasses.field(metadata={&#39;required&#39;:True})</span>
@@ -92,39 +113,62 @@
 <span class="sd">    &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
 
+<span class="sd">    You can reference other dataclasses, and a schema will be created for them too:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class City:</span>
 <span class="sd">    ...   name: str</span>
-<span class="sd">    ...   buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
+<span class="sd">    ...   best_building: Building</span>
+<span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
+<span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)(strict=True)</span>
-<span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;: &quot;Paris&quot;, &quot;buildings&quot;: [{&quot;name&quot;: &quot;Eiffel Tower&quot;, &quot;height&quot;:324}]})</span>
+<span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;: &quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;, &quot;height&quot;:324}})</span>
 <span class="sd">    &gt;&gt;&gt; city</span>
-<span class="sd">    City(name=&#39;Paris&#39;, buildings=[Building(height=324.0, name=&#39;Eiffel Tower&#39;)])</span>
+<span class="sd">    City(name=&#39;Paris&#39;, best_building=Building(height=324.0, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 
+<span class="sd">    Recursive types are supported:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Person:</span>
 <span class="sd">    ...   name: str</span>
 <span class="sd">    ...   friends: List[&#39;Person&#39;] = dataclasses.field(default_factory=lambda:[]) # Recursive field</span>
+<span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; person, _ = class_schema(Person)(strict=True).load({</span>
 <span class="sd">    ...     &quot;name&quot;: &quot;Gérard Bouchard&quot;,</span>
 <span class="sd">    ...     &quot;friends&quot;: [{&quot;name&quot;: &quot;Roger Boucher&quot;}]</span>
 <span class="sd">    ... })</span>
 <span class="sd">    &gt;&gt;&gt; person</span>
 <span class="sd">    Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
+
+<span class="sd">    Only fields that are in the __init__ method will be added:</span>
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
+<span class="sd">    ... class C:</span>
+<span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
+<span class="sd">    ...   unimportant: int = dataclasses.field(init=False, default=0)</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; c, _ = class_schema(C)(strict=True).load({</span>
+<span class="sd">    ...     &quot;important&quot;: 9, # This field will be imported</span>
+<span class="sd">    ...     &quot;unimportant&quot;: 9 # This field will NOT be imported</span>
+<span class="sd">    ... })</span>
+<span class="sd">    &gt;&gt;&gt; c</span>
+<span class="sd">    C(important=9, unimportant=0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="s1">&#39;__dataclass_fields__&#39;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># not a dataclass</span>
-        <span class="k">return</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span>
+        <span class="c1"># noinspection PyDataclass</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># Not a dataclass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{clazz.__name__}</span><span class="s2"> is not a dataclass and cannot be turned into one.&quot;</span><span class="p">)</span>
 
     <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">name</span><span class="p">:</span> <span class="n">field_for_schema</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field_for_schema</span><span class="p">(</span>
             <span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
             <span class="n">_get_field_default</span><span class="p">(</span><span class="n">field</span><span class="p">),</span>
             <span class="n">field</span><span class="o">.</span><span class="n">metadata</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span>
+        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span>
     <span class="p">}</span>
     <span class="n">schema_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">),),</span> <span class="n">attributes</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">],</span> <span class="n">schema_class</span><span class="p">)</span></div>
@@ -156,8 +200,11 @@
 <span class="sd">    &gt;&gt;&gt; field_for_schema(int, default=9, metadata=dict(required=True))</span>
 <span class="sd">    &lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=&lt;marshmallow.missing&gt;, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
 
-<span class="sd">    &gt;&gt;&gt; field_for_schema(Dict[str,str])</span>
-<span class="sd">    &lt;fields.Dict(default=&lt;marshmallow.missing&gt;, attribute=None, validate=None, required=False, load_only=False, dump_only=False, missing=&lt;marshmallow.missing&gt;, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid mapping type.&#39;})&gt;</span>
+<span class="sd">    &gt;&gt;&gt; field_for_schema(Dict[str,str]).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
+
+<span class="sd">    &gt;&gt;&gt; field_for_schema(Callable[[str],str]).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow.fields.Function&#39;&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -181,6 +228,11 @@
         <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span>
             <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">key_type</span><span class="p">),</span>
             <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">value_type</span><span class="p">),</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">metadata</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">origin</span> <span class="o">==</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Callable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
             <span class="o">**</span><span class="n">metadata</span>
         <span class="p">)</span>
