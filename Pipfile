@@ -8,6 +8,7 @@ sphinx = "*"
 
 [packages]
 marshmallow = "*"
+typing-inspect = "*"
 
 [requires]
 python_version = "3.7"

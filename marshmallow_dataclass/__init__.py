@@ -10,6 +10,7 @@ import uuid
 import decimal
 from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar
 import collections.abc
+import typing_inspect
 
 __all__ = [
     'dataclass',
@@ -180,16 +181,16 @@ def field_for_schema(
         return _native_to_marshmallow[typ](default=default, **metadata)
 
     # Generic types
-    origin: type = getattr(typ, '__origin__', None)
+    origin: type = typing_inspect.get_origin(typ)
     if origin == list:
-        list_elements_type = getattr(typ, '__args__', (None,))[0]
+        list_elements_type = typing_inspect.get_args(typ, True)[0]
         return marshmallow.fields.List(
             field_for_schema(list_elements_type),
             default=default,
             **metadata
         )
     elif origin == dict:
-        key_type, value_type = getattr(typ, '__args__', (None, None))
+        key_type, value_type = typing_inspect.get_args(typ, True)
         return marshmallow.fields.Dict(
             keys=field_for_schema(key_type),
             values=field_for_schema(value_type),
