@@ -7,6 +7,7 @@ import dataclasses
 import marshmallow
 import datetime
 import uuid
+import decimal
 from typing import Dict, Type, List, cast
 
 
@@ -88,7 +89,10 @@ _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
     str: marshmallow.fields.Str,
     bool: marshmallow.fields.Bool,
     datetime.datetime: marshmallow.fields.DateTime,
+    datetime.time: marshmallow.fields.Time,
     datetime.timedelta: marshmallow.fields.TimeDelta,
+    datetime.date: marshmallow.fields.Date,
+    decimal.Decimal: marshmallow.fields.Decimal,
     uuid.UUID: marshmallow.fields.UUID,
 }
 
