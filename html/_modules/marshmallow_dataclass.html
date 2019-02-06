@@ -66,13 +66,12 @@
 <span class="sd">    &gt;&gt;&gt; Artist.Schema</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
 
-<span class="sd">    You can declare the `Schema` field to your type checker:</span>
 <span class="sd">    &gt;&gt;&gt; from marshmallow import Schema</span>
 <span class="sd">    &gt;&gt;&gt; @dataclass</span>
 <span class="sd">    ... class Point:</span>
 <span class="sd">    ...   x:float</span>
 <span class="sd">    ...   y:float</span>
-<span class="sd">    ...   Schema: ClassVar[Type[Schema]] = Schema</span>
+<span class="sd">    ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; Point.Schema(strict=True).load({&#39;x&#39;:0, &#39;y&#39;:0}).data # This line can be statically type checked</span>
 <span class="sd">    Point(x=0.0, y=0.0)</span>
@@ -114,11 +113,10 @@
 <span class="sd">    &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
 
-<span class="sd">    You can reference other dataclasses, and a schema will be created for them too:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class City:</span>
 <span class="sd">    ...   name: str</span>
-<span class="sd">    ...   best_building: Building</span>
+<span class="sd">    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)(strict=True)</span>
@@ -126,7 +124,6 @@
 <span class="sd">    &gt;&gt;&gt; city</span>
 <span class="sd">    City(name=&#39;Paris&#39;, best_building=Building(height=324.0, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 
-<span class="sd">    Recursive types are supported:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Person:</span>
 <span class="sd">    ...   name: str</span>
@@ -139,11 +136,10 @@
 <span class="sd">    &gt;&gt;&gt; person</span>
 <span class="sd">    Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 
-<span class="sd">    Only fields that are in the __init__ method will be added:</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class C:</span>
 <span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
-<span class="sd">    ...   unimportant: int = dataclasses.field(init=False, default=0)</span>
+<span class="sd">    ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; c, _ = class_schema(C)(strict=True).load({</span>
 <span class="sd">    ...     &quot;important&quot;: 9, # This field will be imported</span>

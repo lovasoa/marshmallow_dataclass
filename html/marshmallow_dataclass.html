@@ -49,16 +49,17 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 <span class="go">&lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
 </pre></div>
 </div>
-<p>You can declare the <cite>Schema</cite> field to your type checker:
-&gt;&gt;&gt; from marshmallow import Schema
-&gt;&gt;&gt; &#64;dataclass
-… class Point:
-…   x:float
-…   y:float
-…   Schema: ClassVar[Type[Schema]] = Schema
-…
-&gt;&gt;&gt; Point.Schema(strict=True).load({‘x’:0, ‘y’:0}).data # This line can be statically type checked
-Point(x=0.0, y=0.0)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">x</span><span class="p">:</span><span class="nb">float</span>
+<span class="gp">... </span>  <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
+<span class="gp">... </span>  <span class="n">Schema</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Schema</span> <span class="c1"># For the type checker</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span><span class="o">.</span><span class="n">data</span> <span class="c1"># This line can be statically type checked</span>
+<span class="go">Point(x=0.0, y=0.0)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -100,41 +101,44 @@ be passed in the <cite>metadata</cite> dictionary of a field:
 …
 &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)
 &lt;class ‘marshmallow.schema.Building’&gt;</p>
-<p>You can reference other dataclasses, and a schema will be created for them too:
-&gt;&gt;&gt; &#64;dataclasses.dataclass()
-… class City:
-…   name: str
-…   best_building: Building
-…   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
-…
-&gt;&gt;&gt; citySchema = class_schema(City)(strict=True)
-&gt;&gt;&gt; city, _ = citySchema.load({“name”: “Paris”, “best_building”: {“name”: “Eiffel Tower”, “height”:324}})
-&gt;&gt;&gt; city
-City(name=’Paris’, best_building=Building(height=324.0, name=’Eiffel Tower’), other_buildings=[])</p>
-<p>Recursive types are supported:
-&gt;&gt;&gt; &#64;dataclasses.dataclass()
-… class Person:
-…   name: str
-…   friends: List[‘Person’] = dataclasses.field(default_factory=lambda:[]) # Recursive field
-…
-&gt;&gt;&gt; person, _ = class_schema(Person)(strict=True).load({
-…     “name”: “Gérard Bouchard”,
-…     “friends”: [{“name”: “Roger Boucher”}]
-… })
-&gt;&gt;&gt; person
-Person(name=’Gérard Bouchard’, friends=[Person(name=’Roger Boucher’, friends=[])])</p>
-<p>Only fields that are in the __init__ method will be added:
-&gt;&gt;&gt; &#64;dataclasses.dataclass()
-… class C:
-…   important: int = dataclasses.field(init=True, default=0)
-…   unimportant: int = dataclasses.field(init=False, default=0)
-…
-&gt;&gt;&gt; c, _ = class_schema(C)(strict=True).load({
-…     “important”: 9, # This field will be imported
-…     “unimportant”: 9 # This field will NOT be imported
-… })
-&gt;&gt;&gt; c
-C(important=9, unimportant=0)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
+<span class="gp">... </span>  <span class="n">other_buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span><span class="mi">324</span><span class="p">}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span>
+<span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=324.0, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Gérard Bouchard&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;friends&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Roger Boucher&quot;</span><span class="p">}]</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span>
+<span class="go">Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">important</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">... </span>  <span class="n">unimportant</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Only fields that are in the __init__ method will be added:</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">C</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s2">&quot;important&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="c1"># This field will be imported</span>
+<span class="gp">... </span>    <span class="s2">&quot;unimportant&quot;</span><span class="p">:</span> <span class="mi">9</span> <span class="c1"># This field will NOT be imported</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span>
+<span class="go">C(important=9, unimportant=0)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
