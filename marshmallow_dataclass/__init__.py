@@ -82,7 +82,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     try:
         fields: Dict[str, dataclasses.Field] = getattr(clazz, '__dataclass_fields__')
     except AttributeError:  # not a dataclass
-        return class_schema(dataclasses.dataclass(clazz))
+        try:
+            return class_schema(dataclasses.dataclass(clazz))
+        except Exception:
+            raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
 
     attributes = {
         name: field_for_schema(
