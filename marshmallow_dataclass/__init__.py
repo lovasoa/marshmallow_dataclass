@@ -41,7 +41,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar
+from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping
 import collections.abc
 import typing_inspect
 
@@ -112,7 +112,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
     >>> @dataclasses.dataclass()
     ... class Building:
-    ...   height: float = dataclasses.field(metadata={'required':True})
+    ...   height: Optional[float]
     ...   name: str = dataclasses.field(default="anonymous")
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
@@ -120,28 +120,27 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
     >>> @dataclasses.dataclass()
     ... class City:
-    ...   name: str
+    ...   name: str = dataclasses.field(metadata={'required':True})
     ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
     ...
     >>> citySchema = class_schema(City)(strict=True)
-    >>> city, _ = citySchema.load({"name": "Paris", "best_building": {"name": "Eiffel Tower", "height":324}})
+    >>> city, _ = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
     >>> city
-    City(name='Paris', best_building=Building(height=324.0, name='Eiffel Tower'), other_buildings=[])
+    City(name='Paris', best_building=Building(height=None, name='Eiffel Tower'), other_buildings=[])
 
     >>> city_json, _ = citySchema.dump(city)
 
     >>> @dataclasses.dataclass()
     ... class Person:
-    ...   name: str
+    ...   name: str = dataclasses.field(default="Anonymous")
     ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
     ...
     >>> person, _ = class_schema(Person)(strict=True).load({
-    ...     "name": "Gérard Bouchard",
     ...     "friends": [{"name": "Roger Boucher"}]
     ... })
     >>> person
-    Person(name='Gérard Bouchard', friends=[Person(name='Roger Boucher', friends=[])])
+    Person(name='Anonymous', friends=[Person(name='Roger Boucher', friends=[])])
 
     >>> @dataclasses.dataclass()
     ... class C:
@@ -190,10 +189,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
 
 _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
-    int: marshmallow.fields.Int,
+    int: marshmallow.fields.Integer,
     float: marshmallow.fields.Float,
-    str: marshmallow.fields.Str,
-    bool: marshmallow.fields.Bool,
+    str: marshmallow.fields.String,
+    bool: marshmallow.fields.Boolean,
     datetime.datetime: marshmallow.fields.DateTime,
     datetime.time: marshmallow.fields.Time,
     datetime.timedelta: marshmallow.fields.TimeDelta,
@@ -206,14 +205,14 @@ _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
 def field_for_schema(
         typ: type,
         default=marshmallow.missing,
-        metadata=None
+        metadata: Mapping[str, Any] = None
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
 
     >>> field_for_schema(int, default=9, metadata=dict(required=True))
-    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
+    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
 
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
@@ -223,10 +222,15 @@ def field_for_schema(
 
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
+
+    >>> field_for_schema(Optional[str]).__class__
+    <class 'marshmallow.fields.String'>
     """
 
-    if metadata is None:
-        metadata = {}
+    metadata = {} if metadata is None else dict(metadata)
+    if default is not marshmallow.missing:
+        metadata.setdefault('default', default)
+        metadata.setdefault('missing', default)
 
     # If the field was already defined by the user
     predefined_field = metadata.get('marshmallow_field')
@@ -235,7 +239,7 @@ def field_for_schema(
 
     # Base types
     if typ in _native_to_marshmallow:
-        return _native_to_marshmallow[typ](default=default, **metadata)
+        return _native_to_marshmallow[typ](**metadata)
 
     # Generic types
     origin: type = typing_inspect.get_origin(typ)
@@ -243,7 +247,6 @@ def field_for_schema(
         list_elements_type = typing_inspect.get_args(typ, True)[0]
         return marshmallow.fields.List(
             field_for_schema(list_elements_type),
-            default=default,
             **metadata
         )
     elif origin in (dict, Dict):
@@ -251,20 +254,23 @@ def field_for_schema(
         return marshmallow.fields.Dict(
             keys=field_for_schema(key_type),
             values=field_for_schema(value_type),
-            default=default,
             **metadata
         )
     elif origin in (collections.abc.Callable, Callable):
         return marshmallow.fields.Function(
-            default=default,
             **metadata
         )
+    elif typing_inspect.is_optional_type(typ):
+        subtyp = next(t for t in typing_inspect.get_args(typ) if not isinstance(None, t))
+        # Treat optional types as types with a None default
+        metadata['default'] = metadata.get('default', None)
+        metadata['missing'] = metadata.get('missing', None)
+        return field_for_schema(subtyp, metadata=metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
     return marshmallow.fields.Nested(
         nested=forward_reference or class_schema(typ),
-        default=default,
         **metadata
     )
 
