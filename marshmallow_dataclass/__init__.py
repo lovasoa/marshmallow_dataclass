@@ -1,5 +1,6 @@
 """
-This library allows the conversion of python 3.7's dataclasses to marshmallow's schemas.
+This library allows the conversion of python 3.7's :mod:`dataclasses`
+to :mod:`marshmallow` schemas.
 
 It takes a python class, and generates a marshmallow schema for it.
 
@@ -100,8 +101,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     :param clazz: A python class (may be a dataclass)
     :return: A marshmallow Schema corresponding to the dataclass
 
-    All the arguments supported by marshmallow field classes are can
-    be passed in the `metadata` dictionary of a field.
+    .. note::
+        All the arguments supported by marshmallow field classes are can
+        be passed in the `metadata` dictionary of a field.
+
 
     If you want to use a custom marshmallow field
     (one that has no equivalent python type), you can pass it as the
