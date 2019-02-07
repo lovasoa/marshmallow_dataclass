@@ -1,5 +1,37 @@
 """
 This library allows the conversion of python 3.7's dataclasses to marshmallow's schemas.
+
+It takes a python class, and generates a marshmallow schema for it.
+
+Simple example::
+
+    from marshmallow import Schema
+    from marshmallow_dataclass import dataclass
+
+    @dataclass
+    class Point:
+      x:float
+      y:float
+
+    point = Point(x=0, y=0)
+    point_json, err = Point.Schema(strict=True).dumps(point)
+
+Full example::
+
+    from marshmallow import Schema
+    from dataclasses import field
+    from marshmallow_dataclass import dataclass
+    import datetime
+
+    @dataclass
+    class User:
+      birth: datetime.date = field(metadata= {
+        "required": True # A parameter to pass to marshmallow's field
+      })
+      website:str = field(metadata = {
+        "marshmallow_field": marshmallow.fields.Url() # Custom marshmallow field
+      })
+      Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
 
 import dataclasses
@@ -69,7 +101,11 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     :return: A marshmallow Schema corresponding to the dataclass
 
     All the arguments supported by marshmallow field classes are can
-    be passed in the `metadata` dictionary of a field:
+    be passed in the `metadata` dictionary of a field.
+
+    If you want to use a custom marshmallow field
+    (one that has no equivalent python type), you can pass it as the
+    ``marshmallow_field`` key in the metadata dictionary.
 
     >>> @dataclasses.dataclass()
     ... class Building:
@@ -115,6 +151,17 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ... })
     >>> c
     C(important=9, unimportant=0)
+
+    >>> @dataclasses.dataclass
+    ... class Website:
+    ...  url:str = dataclasses.field(metadata = {
+    ...    "marshmallow_field": marshmallow.fields.Url() # Custom marshmallow field
+    ...  })
+    ...
+    >>> class_schema(Website)(strict=True).load({"url": "I am not a good URL !"})
+    Traceback (most recent call last):
+        ...
+    marshmallow.exceptions.ValidationError: {'url': ['Not a valid URL.']}
     """
 
     try:
@@ -170,10 +217,18 @@ def field_for_schema(
 
     >>> field_for_schema(Callable[[str],str]).__class__
     <class 'marshmallow.fields.Function'>
+
+    >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
+    <class 'marshmallow.fields.Url'>
     """
 
     if metadata is None:
         metadata = {}
+
+    # If the field was already defined by the user
+    predefined_field = metadata.get('marshmallow_field')
+    if predefined_field:
+        return predefined_field
 
     # Base types
     if typ in _native_to_marshmallow:
