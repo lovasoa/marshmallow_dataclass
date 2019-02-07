@@ -90,6 +90,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> city
     City(name='Paris', best_building=Building(height=324.0, name='Eiffel Tower'), other_buildings=[])
 
+    >>> city_json, _ = citySchema.dumps(city)
+    >>> city_json
+    '{"best_building": {"height": 324.0, "name": "Eiffel Tower"}, "name": "Paris", "other_buildings": []}'
+
     >>> @dataclasses.dataclass()
     ... class Person:
     ...   name: str

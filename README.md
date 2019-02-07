@@ -45,9 +45,8 @@ city, _ = City.Schema().load({
     ]
 })
 
-# Example string dump of City Schema
+# Serializing city as a json string
 city_json, _ = City.Schema().dumps(city)
-
 ```
 
 The previous  syntax is very convenient, as the only change
