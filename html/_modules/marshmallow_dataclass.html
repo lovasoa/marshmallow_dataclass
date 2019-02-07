@@ -164,6 +164,11 @@
 <span class="sd">    &gt;&gt;&gt; city</span>
 <span class="sd">    City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 
+<span class="sd">    &gt;&gt;&gt; citySchema.load({&quot;name&quot;:&quot;Paris&quot;})</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    marshmallow.exceptions.ValidationError: {&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
+
 <span class="sd">    &gt;&gt;&gt; city_json, _ = citySchema.dump(city)</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
@@ -263,6 +268,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+    <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;required&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">:</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
@@ -292,22 +298,19 @@
             <span class="o">**</span><span class="n">metadata</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
-            <span class="o">**</span><span class="n">metadata</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
         <span class="n">subtyp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
         <span class="c1"># Treat optional types as types with a None default</span>
         <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;required&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
 
     <span class="c1"># Nested dataclasses</span>
     <span class="n">forward_reference</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s1">&#39;__forward_arg__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span>
-        <span class="n">nested</span><span class="o">=</span><span class="n">forward_reference</span> <span class="ow">or</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">),</span>
-        <span class="o">**</span><span class="n">metadata</span>
-    <span class="p">)</span></div>
+    <span class="n">nested</span> <span class="o">=</span> <span class="n">forward_reference</span> <span class="ow">or</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
