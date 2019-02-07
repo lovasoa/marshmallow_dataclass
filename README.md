@@ -90,6 +90,21 @@ class Point:
   Schema: ClassVar[Type[Schema]] = Schema
 ```
 
+You can specify the
+[`Meta`](https://marshmallow.readthedocs.io/en/3.0/api_reference.html#marshmallow.Schema.Meta)
+just as you would in a marshmallow Schema:
+
+```python
+from marshmallow_dataclass import dataclass
+
+@dataclass
+class Point:
+  x:float
+  y:float
+  class Meta:
+    ordered = True
+```
+
 ## installation
 This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/) :
 

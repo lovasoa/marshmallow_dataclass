@@ -123,6 +123,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   name: str = dataclasses.field(metadata={'required':True})
     ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
+    ...   class Meta:
+    ...     ordered = True
     ...
     >>> citySchema = class_schema(City)(strict=True)
     >>> city, _ = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
@@ -135,6 +137,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
 
     >>> city_json, _ = citySchema.dump(city)
+    >>> city_json # We get an OrderedDict because we specified order = True in the Meta class
+    OrderedDict([('name', 'Paris'), ('best_building', OrderedDict([('height', None), ('name', 'Eiffel Tower')])), ('other_buildings', [])])
 
     >>> @dataclasses.dataclass()
     ... class Person:
@@ -189,6 +193,9 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         for field in fields
         if field.init
     }
+
+    attributes['Meta'] = getattr(clazz, 'Meta', marshmallow.Schema.Meta)
+
     schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
