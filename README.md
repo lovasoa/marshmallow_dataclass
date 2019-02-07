@@ -23,18 +23,19 @@ function.
 ```python
 from dataclasses import field
 from marshmallow_dataclass import dataclass # Importing from marshmallow_dataclass instead of dataclasses
-from typing import List
+import marshmallow.validate
+from typing import List, Optional
 
 @dataclass
 class Building:
   # The field metadata is used to instantiate the marshmallow field
-  height: float = field(metadata={'required':True})
+  height: float = field(metadata={'validate': marshmallow.validate.Range(min=0)})
   name: str = field(default="anonymous")
 
 
 @dataclass
 class City:
-  name: str
+  name: Optional[str]
   buildings: List[Building] = field(default_factory=lambda: [])
 
 # City.Schema contains a marshmallow schema class
