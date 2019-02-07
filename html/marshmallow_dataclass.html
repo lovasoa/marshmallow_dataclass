@@ -155,7 +155,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <code class="docutils literal notranslate"><span class="pre">marshmallow_field</span></code> key in the metadata dictionary.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
+<span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
@@ -164,14 +164,14 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
 <span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="gp">... </span>  <span class="n">other_buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span><span class="mi">324</span><span class="p">}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">}})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city</span>
-<span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=324.0, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
+<span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
@@ -179,15 +179,14 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">person</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
-<span class="gp">... </span>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Gérard Bouchard&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="s2">&quot;friends&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Roger Boucher&quot;</span><span class="p">}]</span>
 <span class="gp">... </span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">person</span>
-<span class="go">Person(name=&#39;Gérard Bouchard&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
+<span class="go">Person(name=&#39;Anonymous&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
@@ -219,11 +218,11 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 
 <dl class="function">
 <dt id="marshmallow_dataclass.field_for_schema">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">field_for_schema</code><span class="sig-paren">(</span><em>typ: type</em>, <em>default=&lt;marshmallow.missing&gt;</em>, <em>metadata=None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">marshmallow_dataclass.</code><code class="descname">field_for_schema</code><span class="sig-paren">(</span><em>typ: type</em>, <em>default=&lt;marshmallow.missing&gt;</em>, <em>metadata: Mapping[str</em>, <em>Any] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a marshmallow Field corresponding to the given python type.
 The metadata of the dataclass field is used as arguments to the marshmallow Field.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-<span class="go">&lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=&lt;marshmallow.missing&gt;, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
+<span class="go">&lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
@@ -236,6 +235,10 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()})</span><span class="o">.</span><span class="vm">__class__</span>
 <span class="go">&lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow.fields.String&#39;&gt;</span>
 </pre></div>
 </div>
 </dd></dl>
