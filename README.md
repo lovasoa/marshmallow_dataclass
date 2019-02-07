@@ -44,6 +44,10 @@ city, _ = City.Schema().load({
         {"name": "Eiffel Tower", "height":324}
     ]
 })
+
+# Example string dump of City Schema
+city_json, _ = City.Schema().dumps(city)
+
 ```
 
 The previous  syntax is very convenient, as the only change
