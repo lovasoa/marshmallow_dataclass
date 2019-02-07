@@ -292,7 +292,7 @@ def _get_field_default(field: dataclasses.Field):
     <marshmallow.missing>
     """
     if field.default_factory is not dataclasses.MISSING:
-        return field.default_factory()
+        return field.default_factory
     elif field.default is dataclasses.MISSING:
         return marshmallow.missing
     return field.default
