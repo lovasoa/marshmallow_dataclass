@@ -34,7 +34,40 @@
             
   <h1>Source code for marshmallow_dataclass</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This library allows the conversion of python 3.7&#39;s dataclasses to marshmallow&#39;s schemas.</span>
+<span class="sd">This library allows the conversion of python 3.7&#39;s :mod:`dataclasses`</span>
+<span class="sd">to :mod:`marshmallow` schemas.</span>
+
+<span class="sd">It takes a python class, and generates a marshmallow schema for it.</span>
+
+<span class="sd">Simple example::</span>
+
+<span class="sd">    from marshmallow import Schema</span>
+<span class="sd">    from marshmallow_dataclass import dataclass</span>
+
+<span class="sd">    @dataclass</span>
+<span class="sd">    class Point:</span>
+<span class="sd">      x:float</span>
+<span class="sd">      y:float</span>
+
+<span class="sd">    point = Point(x=0, y=0)</span>
+<span class="sd">    point_json, err = Point.Schema(strict=True).dumps(point)</span>
+
+<span class="sd">Full example::</span>
+
+<span class="sd">    from marshmallow import Schema</span>
+<span class="sd">    from dataclasses import field</span>
+<span class="sd">    from marshmallow_dataclass import dataclass</span>
+<span class="sd">    import datetime</span>
+
+<span class="sd">    @dataclass</span>
+<span class="sd">    class User:</span>
+<span class="sd">      birth: datetime.date = field(metadata= {</span>
+<span class="sd">        &quot;required&quot;: True # A parameter to pass to marshmallow&#39;s field</span>
+<span class="sd">      })</span>
+<span class="sd">      website:str = field(metadata = {</span>
+<span class="sd">        &quot;marshmallow_field&quot;: marshmallow.fields.Url() # Custom marshmallow field</span>
+<span class="sd">      })</span>
+<span class="sd">      Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">dataclasses</span>
@@ -55,7 +88,7 @@
 <span class="p">]</span>
 
 
-<div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+<div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.</span>
 <span class="sd">    It adds a `.Schema` attribute to the class object</span>
@@ -96,15 +129,22 @@
     <span class="k">return</span> <span class="n">clazz</span></div>
 
 
-<div class="viewcode-block" id="class_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.class_schema">[docs]</a><span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
+<div class="viewcode-block" id="class_schema"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema">[docs]</a><span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a class to a marshmallow schema</span>
 
 <span class="sd">    :param clazz: A python class (may be a dataclass)</span>
 <span class="sd">    :return: A marshmallow Schema corresponding to the dataclass</span>
 
-<span class="sd">    All the arguments supported by marshmallow field classes are can</span>
-<span class="sd">    be passed in the `metadata` dictionary of a field:</span>
+<span class="sd">    .. note::</span>
+<span class="sd">        All the arguments supported by marshmallow field classes are can</span>
+<span class="sd">        be passed in the `metadata` dictionary of a field.</span>
+
+
+<span class="sd">    If you want to use a custom marshmallow field</span>
+<span class="sd">    (one that has no equivalent python type), you can pass it as the</span>
+<span class="sd">    ``marshmallow_field`` key in the metadata dictionary.</span>
+
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Building:</span>
 <span class="sd">    ...   height: float = dataclasses.field(metadata={&#39;required&#39;:True})</span>
@@ -123,6 +163,8 @@
 <span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;: &quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;, &quot;height&quot;:324}})</span>
 <span class="sd">    &gt;&gt;&gt; city</span>
 <span class="sd">    City(name=&#39;Paris&#39;, best_building=Building(height=324.0, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
+
+<span class="sd">    &gt;&gt;&gt; city_json, _ = citySchema.dump(city)</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Person:</span>
@@ -147,6 +189,17 @@
 <span class="sd">    ... })</span>
 <span class="sd">    &gt;&gt;&gt; c</span>
 <span class="sd">    C(important=9, unimportant=0)</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
+<span class="sd">    ... class Website:</span>
+<span class="sd">    ...  url:str = dataclasses.field(metadata = {</span>
+<span class="sd">    ...    &quot;marshmallow_field&quot;: marshmallow.fields.Url() # Custom marshmallow field</span>
+<span class="sd">    ...  })</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(Website)(strict=True).load({&quot;url&quot;: &quot;I am not a good URL !&quot;})</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    marshmallow.exceptions.ValidationError: {&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -202,10 +255,18 @@
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Callable[[str],str]).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Function&#39;&gt;</span>
+
+<span class="sd">    &gt;&gt;&gt; field_for_schema(str, metadata={&quot;marshmallow_field&quot;: marshmallow.fields.Url()}).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># If the field was already defined by the user</span>
+    <span class="n">predefined_field</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;marshmallow_field&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">predefined_field</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">predefined_field</span>
 
     <span class="c1"># Base types</span>
     <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="n">_native_to_marshmallow</span><span class="p">:</span>
@@ -288,6 +349,9 @@
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">marshmallow_dataclass</a></li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>

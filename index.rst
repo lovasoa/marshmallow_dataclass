@@ -3,12 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to [marshmallow_dataclass](https://github.com/lovasoa/marshmallow_dataclass)'s documentation!
-=================================================
+`marshmallow_dataclass <https://github.com/lovasoa/marshmallow_dataclass>`_
+===========================================================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   modules
 
 
 
