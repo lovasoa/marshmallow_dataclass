@@ -129,6 +129,11 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> city
     City(name='Paris', best_building=Building(height=None, name='Eiffel Tower'), other_buildings=[])
 
+    >>> citySchema.load({"name":"Paris"})
+    Traceback (most recent call last):
+        ...
+    marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
+
     >>> city_json, _ = citySchema.dump(city)
 
     >>> @dataclasses.dataclass()
@@ -228,6 +233,7 @@ def field_for_schema(
     """
 
     metadata = {} if metadata is None else dict(metadata)
+    metadata.setdefault('required', True)
     if default is not marshmallow.missing:
         metadata.setdefault('default', default)
         metadata.setdefault('missing', default)
@@ -257,22 +263,19 @@ def field_for_schema(
             **metadata
         )
     elif origin in (collections.abc.Callable, Callable):
-        return marshmallow.fields.Function(
-            **metadata
-        )
+        return marshmallow.fields.Function(**metadata)
     elif typing_inspect.is_optional_type(typ):
         subtyp = next(t for t in typing_inspect.get_args(typ) if not isinstance(None, t))
         # Treat optional types as types with a None default
         metadata['default'] = metadata.get('default', None)
         metadata['missing'] = metadata.get('missing', None)
+        metadata['required'] = False
         return field_for_schema(subtyp, metadata=metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
-    return marshmallow.fields.Nested(
-        nested=forward_reference or class_schema(typ),
-        **metadata
-    )
+    nested = forward_reference or class_schema(typ)
+    return marshmallow.fields.Nested(nested, **metadata)
 
 
 def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
