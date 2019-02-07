@@ -70,6 +70,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
     All the arguments supported by marshmallow field classes are can
     be passed in the `metadata` dictionary of a field:
+
     >>> @dataclasses.dataclass()
     ... class Building:
     ...   height: float = dataclasses.field(metadata={'required':True})
