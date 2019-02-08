@@ -158,8 +158,6 @@
 <span class="sd">    ...   name: str = dataclasses.field(metadata={&#39;required&#39;:True})</span>
 <span class="sd">    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
-<span class="sd">    ...   class Meta:</span>
-<span class="sd">    ...     ordered = True</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)(strict=True)</span>
 <span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;:&quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;}})</span>
@@ -172,8 +170,6 @@
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 
 <span class="sd">    &gt;&gt;&gt; city_json, _ = citySchema.dump(city)</span>
-<span class="sd">    &gt;&gt;&gt; city_json # We get an OrderedDict because we specified order = True in the Meta class</span>
-<span class="sd">    OrderedDict([(&#39;name&#39;, &#39;Paris&#39;), (&#39;best_building&#39;, OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])), (&#39;other_buildings&#39;, [])])</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Person:</span>
@@ -228,9 +224,6 @@
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span>
         <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span>
     <span class="p">}</span>
-
-    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;Meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="s1">&#39;Meta&#39;</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="o">.</span><span class="n">Meta</span><span class="p">)</span>
-
     <span class="n">schema_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">),),</span> <span class="n">attributes</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">],</span> <span class="n">schema_class</span><span class="p">)</span></div>
 
