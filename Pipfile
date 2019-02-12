@@ -7,9 +7,12 @@ verify_ssl = true
 sphinx = "*"
 
 [packages]
-marshmallow = ">=2.0,<3.0"
+marshmallow = ">=3.0.0rc4,<4.0"
 typing-inspect = "*"
 dataclasses = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

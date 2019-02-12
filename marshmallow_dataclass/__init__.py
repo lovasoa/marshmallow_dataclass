@@ -15,7 +15,7 @@ Simple example::
       y:float
 
     point = Point(x=0, y=0)
-    point_json, err = Point.Schema(strict=True).dumps(point)
+    point_json, err = Point.Schema().dumps(point)
 
 Full example::
 
@@ -71,7 +71,7 @@ def dataclass(clazz: type) -> type:
     ...   y:float
     ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
     ...
-    >>> Point.Schema(strict=True).load({'x':0, 'y':0}).data # This line can be statically type checked
+    >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
     return add_schema(dataclasses.dataclass(clazz))
@@ -86,7 +86,7 @@ def add_schema(clazz: type) -> type:
     ... @dataclasses.dataclass
     ... class Artist:
     ...    name: str
-    >>> artist, err = Artist.Schema(strict=True).loads('{"name": "Ramirez"}')
+    >>> artist = Artist.Schema().loads('{"name": "Ramirez"}')
     >>> artist
     Artist(name='Ramirez')
     """
@@ -114,6 +114,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ... class Building:
     ...   height: Optional[float]
     ...   name: str = dataclasses.field(default="anonymous")
+    ...   class Meta:
+    ...     ordered = True
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
@@ -126,8 +128,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   class Meta:
     ...     ordered = True
     ...
-    >>> citySchema = class_schema(City)(strict=True)
-    >>> city, _ = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
+    >>> citySchema = class_schema(City)()
+    >>> city = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
     >>> city
     City(name='Paris', best_building=Building(height=None, name='Eiffel Tower'), other_buildings=[])
 
@@ -136,7 +138,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         ...
     marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
 
-    >>> city_json, _ = citySchema.dump(city)
+    >>> city_json = citySchema.dump(city)
     >>> city_json # We get an OrderedDict because we specified order = True in the Meta class
     OrderedDict([('name', 'Paris'), ('best_building', OrderedDict([('height', None), ('name', 'Eiffel Tower')])), ('other_buildings', [])])
 
@@ -145,7 +147,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   name: str = dataclasses.field(default="Anonymous")
     ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
     ...
-    >>> person, _ = class_schema(Person)(strict=True).load({
+    >>> person = class_schema(Person)().load({
     ...     "friends": [{"name": "Roger Boucher"}]
     ... })
     >>> person
@@ -156,10 +158,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   important: int = dataclasses.field(init=True, default=0)
     ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:
     ...
-    >>> c, _ = class_schema(C)(strict=True).load({
+    >>> c = class_schema(C)().load({
     ...     "important": 9, # This field will be imported
     ...     "unimportant": 9 # This field will NOT be imported
-    ... })
+    ... }, unknown=marshmallow.EXCLUDE)
     >>> c
     C(important=9, unimportant=0)
 
@@ -169,7 +171,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...    "marshmallow_field": marshmallow.fields.Url() # Custom marshmallow field
     ...  })
     ...
-    >>> class_schema(Website)(strict=True).load({"url": "I am not a good URL !"})
+    >>> class_schema(Website)().load({"url": "I am not a good URL !"})
     Traceback (most recent call last):
         ...
     marshmallow.exceptions.ValidationError: {'url': ['Not a valid URL.']}
@@ -224,7 +226,7 @@ def field_for_schema(
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
 
     >>> field_for_schema(int, default=9, metadata=dict(required=True))
-    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
+    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
 
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
@@ -240,10 +242,12 @@ def field_for_schema(
     """
 
     metadata = {} if metadata is None else dict(metadata)
-    metadata.setdefault('required', True)
     if default is not marshmallow.missing:
         metadata.setdefault('default', default)
-        metadata.setdefault('missing', default)
+        if not metadata.get("required"):  # 'missing' must not be set for required fields.
+            metadata.setdefault('missing', default)
+    else:
+        metadata.setdefault('required', True)
 
     # If the field was already defined by the user
     predefined_field = metadata.get('marshmallow_field')
