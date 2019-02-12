@@ -15,7 +15,7 @@ Simple example::
       y:float
 
     point = Point(x=0, y=0)
-    point_json, err = Point.Schema().dumps(point)
+    point_json = Point.Schema().dumps(point)
 
 Full example::
 
