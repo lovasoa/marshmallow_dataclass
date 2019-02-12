@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.5.0'
+VERSION = '0.5.1'
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
@@ -23,5 +23,5 @@ setup(
     url='https://github.com/lovasoa/marshmallow_dataclass',
     keywords=['marshmallow', 'dataclass', 'serialization'],
     classifiers=CLASSIFIERS,
-    install_requires=['marshmallow', 'typing-inspect']
+    install_requires=['marshmallow>=2.0,<3.0', 'typing-inspect']
 )

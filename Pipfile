@@ -7,7 +7,7 @@ verify_ssl = true
 sphinx = "*"
 
 [packages]
-marshmallow = "*"
+marshmallow = ">=2.0,<3.0"
 typing-inspect = "*"
 dataclasses = "*"
 
