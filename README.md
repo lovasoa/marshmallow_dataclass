@@ -3,6 +3,11 @@
 
 Automatic generation of marshmallow schemas from dataclasses.
 
+Specifying a schema to which your data should conform is very useful, both for (de)serialization and for documentation.
+However, using schemas in python often means having both a class to represent your data and a class to represent its schema, which means duplicated code that could fall out of sync. With the new features of python 3.6, types can be defined for class members, and that allows libraries like this one to generate schemas automatically.
+
+An use case would be to document APIs (with [flasgger](https://github.com/rochacbruno/flasgger#flasgger), for instance) in a way that allows you to statically check that the code matches the documentation.
+
 ## How to use
 
 You simply import
