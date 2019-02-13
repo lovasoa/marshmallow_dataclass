@@ -85,10 +85,10 @@ def add_schema(clazz: type) -> type:
     >>> @add_schema
     ... @dataclasses.dataclass
     ... class Artist:
-    ...    name: str
-    >>> artist = Artist.Schema().loads('{"name": "Ramirez"}')
+    ...    names: Tuple[str, str]
+    >>> artist = Artist.Schema().loads('{"names": ["Martin", "Ramirez"]}')
     >>> artist
-    Artist(name='Ramirez')
+    Artist(names=('Martin', 'Ramirez'))
     """
     clazz.Schema = class_schema(clazz)
     return clazz
@@ -265,6 +265,11 @@ def field_for_schema(
         if origin in (list, List):
             return marshmallow.fields.List(
                 field_for_schema(arguments[0]),
+                **metadata
+            )
+        if origin in (tuple, Tuple):
+            return marshmallow.fields.Tuple(
+                tuple(field_for_schema(arg) for arg in arguments),
                 **metadata
             )
         elif origin in (dict, Dict):
