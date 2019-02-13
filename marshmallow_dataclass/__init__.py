@@ -259,29 +259,29 @@ def field_for_schema(
         return _native_to_marshmallow[typ](**metadata)
 
     # Generic types
-    origin: type = typing_inspect.get_origin(typ)
-    if origin in (list, List):
-        list_elements_type = typing_inspect.get_args(typ, True)[0]
-        return marshmallow.fields.List(
-            field_for_schema(list_elements_type),
-            **metadata
-        )
-    elif origin in (dict, Dict):
-        key_type, value_type = typing_inspect.get_args(typ, True)
-        return marshmallow.fields.Dict(
-            keys=field_for_schema(key_type),
-            values=field_for_schema(value_type),
-            **metadata
-        )
-    elif origin in (collections.abc.Callable, Callable):
-        return marshmallow.fields.Function(**metadata)
-    elif typing_inspect.is_optional_type(typ):
-        subtyp = next(t for t in typing_inspect.get_args(typ) if not isinstance(None, t))
-        # Treat optional types as types with a None default
-        metadata['default'] = metadata.get('default', None)
-        metadata['missing'] = metadata.get('missing', None)
-        metadata['required'] = False
-        return field_for_schema(subtyp, metadata=metadata)
+    origin = typing_inspect.get_origin(typ)
+    if origin:
+        arguments = typing_inspect.get_args(typ, True)
+        if origin in (list, List):
+            return marshmallow.fields.List(
+                field_for_schema(arguments[0]),
+                **metadata
+            )
+        elif origin in (dict, Dict):
+            return marshmallow.fields.Dict(
+                keys=field_for_schema(arguments[0]),
+                values=field_for_schema(arguments[1]),
+                **metadata
+            )
+        elif origin in (collections.abc.Callable, Callable):
+            return marshmallow.fields.Function(**metadata)
+        elif typing_inspect.is_optional_type(typ):
+            subtyp = next(t for t in arguments if not isinstance(None, t))
+            # Treat optional types as types with a None default
+            metadata['default'] = metadata.get('default', None)
+            metadata['missing'] = metadata.get('missing', None)
+            metadata['required'] = False
+            return field_for_schema(subtyp, metadata=metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
