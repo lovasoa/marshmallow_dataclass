@@ -41,8 +41,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping
-import collections.abc
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping
 import typing_inspect
 
 __all__ = [
@@ -231,9 +230,6 @@ def field_for_schema(
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
 
-    >>> field_for_schema(Callable[[str],str]).__class__
-    <class 'marshmallow.fields.Function'>
-
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
 
@@ -278,8 +274,6 @@ def field_for_schema(
                 values=field_for_schema(arguments[1]),
                 **metadata
             )
-        elif origin in (collections.abc.Callable, Callable):
-            return marshmallow.fields.Function(**metadata)
         elif typing_inspect.is_optional_type(typ):
             subtyp = next(t for t in arguments if not isinstance(None, t))
             # Treat optional types as types with a None default
