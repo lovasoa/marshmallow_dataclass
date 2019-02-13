@@ -10,6 +10,7 @@ sphinx = "*"
 marshmallow = ">=3.0.0rc4,<4.0"
 typing-inspect = "*"
 dataclasses = "*"
+marshmallow-enum = "*"
 
 [requires]
 python_version = "3.7"

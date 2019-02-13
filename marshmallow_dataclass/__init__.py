@@ -42,7 +42,9 @@ import datetime
 import uuid
 import decimal
 from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping
+from enum import Enum, EnumMeta
 import typing_inspect
+import marshmallow_enum
 
 __all__ = [
     'dataclass',
@@ -235,6 +237,9 @@ def field_for_schema(
 
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
+
+    >>> field_for_schema(Enum("X", "a b c"))
+    <fields.EnumField(default=<marshmallow.missing>, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'by_name': 'Invalid enum member {input}', 'by_value': 'Invalid enum value {input}', 'must_be_string': 'Enum name must be string'})>
     """
 
     metadata = {} if metadata is None else dict(metadata)
@@ -281,6 +286,10 @@ def field_for_schema(
             metadata['missing'] = metadata.get('missing', None)
             metadata['required'] = False
             return field_for_schema(subtyp, metadata=metadata)
+
+    # enumerations
+    if type(typ) is EnumMeta:
+        return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
