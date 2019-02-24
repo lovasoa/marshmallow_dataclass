@@ -1,7 +1,8 @@
 # marshmallow_dataclass
 [![Build Status](https://travis-ci.org/lovasoa/marshmallow_dataclass.svg?branch=master)](https://travis-ci.org/lovasoa/marshmallow_dataclass)
+[![PyPI version](https://badge.fury.io/py/marshmallow-dataclass.svg)](https://badge.fury.io/py/marshmallow-dataclass)
 
-Automatic generation of marshmallow schemas from dataclasses.
+Automatic generation of [marshmallow](https://marshmallow.readthedocs.io/) schemas from dataclasses.
 
 Specifying a schema to which your data should conform is very useful, both for (de)serialization and for documentation.
 However, using schemas in python often means having both a class to represent your data and a class to represent its schema, which means duplicated code that could fall out of sync. With the new features of python 3.6, types can be defined for class members, and that allows libraries like this one to generate schemas automatically.
