@@ -44,6 +44,7 @@ import decimal
 from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping
 from enum import Enum, EnumMeta
 import typing_inspect
+import inspect
 import marshmallow_enum
 
 __all__ = [
@@ -176,6 +177,17 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     Traceback (most recent call last):
         ...
     marshmallow.exceptions.ValidationError: {'url': ['Not a valid URL.']}
+
+    >>> @dataclasses.dataclass
+    ... class NeverValid:
+    ...     @marshmallow.validates_schema
+    ...     def validate(self, data):
+    ...         raise marshmallow.ValidationError('never valid')
+    ...
+    >>> class_schema(NeverValid)().load({})
+    Traceback (most recent call last):
+        ...
+    marshmallow.exceptions.ValidationError: {'_schema': ['never valid']}
     """
 
     try:
@@ -187,17 +199,13 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         except Exception:
             raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
 
-    attributes = {
-        field.name: field_for_schema(
-            field.type,
-            _get_field_default(field),
-            field.metadata
-        )
-        for field in fields
-        if field.init
-    }
-
-    attributes['Meta'] = getattr(clazz, 'Meta', marshmallow.Schema.Meta)
+    # Copy all public members of the dataclass to the schema
+    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
+    # Update the schema members to contain marshmallow fields instead of dataclass fields
+    attributes.update(
+        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata))
+        for field in fields if field.init
+    )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
