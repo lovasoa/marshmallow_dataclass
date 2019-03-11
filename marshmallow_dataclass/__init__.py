@@ -45,7 +45,6 @@ from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, 
 import collections.abc
 import typing_inspect
 import inspect
-import marshmallow_enum
 
 __all__ = [
     'dataclass',
