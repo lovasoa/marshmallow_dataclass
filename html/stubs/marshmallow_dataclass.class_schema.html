@@ -61,6 +61,8 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
+<span class="gp">... </span>  <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span> <span class="c1"># marshmallow meta attributes are supported</span>
+<span class="gp">... </span>    <span class="n">ordered</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
 <span class="go">&lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
@@ -71,8 +73,6 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
 <span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="gp">... </span>  <span class="n">other_buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-<span class="gp">... </span>  <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="n">ordered</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">}})</span>
@@ -86,9 +86,9 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="o">.</span><span class="n">best_building</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="c1"># We get an OrderedDict because we specified order = True in the Meta class</span>
-<span class="go">OrderedDict([(&#39;name&#39;, &#39;Paris&#39;), (&#39;best_building&#39;, OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])), (&#39;other_buildings&#39;, [])])</span>
+<span class="go">OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
@@ -126,6 +126,17 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">NeverValid</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;never valid&#39;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">NeverValid</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">err</span>
+<span class="go">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
 </dd></dl>

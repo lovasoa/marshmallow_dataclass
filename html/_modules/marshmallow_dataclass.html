@@ -79,6 +79,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">import</span> <span class="nn">collections.abc</span>
 <span class="kn">import</span> <span class="nn">typing_inspect</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;dataclass&#39;</span><span class="p">,</span>
@@ -149,6 +150,8 @@
 <span class="sd">    ... class Building:</span>
 <span class="sd">    ...   height: Optional[float]</span>
 <span class="sd">    ...   name: str = dataclasses.field(default=&quot;anonymous&quot;)</span>
+<span class="sd">    ...   class Meta: # marshmallow meta attributes are supported</span>
+<span class="sd">    ...     ordered = True</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
@@ -158,8 +161,6 @@
 <span class="sd">    ...   name: str = dataclasses.field(metadata={&#39;required&#39;:True})</span>
 <span class="sd">    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
-<span class="sd">    ...   class Meta:</span>
-<span class="sd">    ...     ordered = True</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)(strict=True)</span>
 <span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;:&quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;}})</span>
@@ -171,9 +172,9 @@
 <span class="sd">        ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 
-<span class="sd">    &gt;&gt;&gt; city_json, _ = citySchema.dump(city)</span>
+<span class="sd">    &gt;&gt;&gt; city_json, _ = class_schema(Building)(strict=True).dump(city.best_building)</span>
 <span class="sd">    &gt;&gt;&gt; city_json # We get an OrderedDict because we specified order = True in the Meta class</span>
-<span class="sd">    OrderedDict([(&#39;name&#39;, &#39;Paris&#39;), (&#39;best_building&#39;, OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])), (&#39;other_buildings&#39;, [])])</span>
+<span class="sd">    OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Person:</span>
@@ -208,6 +209,16 @@
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">        ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
+<span class="sd">    ... class NeverValid:</span>
+<span class="sd">    ...     @marshmallow.validates_schema</span>
+<span class="sd">    ...     def validate(self, data):</span>
+<span class="sd">    ...         raise marshmallow.ValidationError(&#39;never valid&#39;)</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; _, err = class_schema(NeverValid)().load({})</span>
+<span class="sd">    &gt;&gt;&gt; err</span>
+<span class="sd">    {&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -219,17 +230,13 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{clazz.__name__}</span><span class="s2"> is not a dataclass and cannot be turned into one.&quot;</span><span class="p">)</span>
 
-    <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field_for_schema</span><span class="p">(</span>
-            <span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
-            <span class="n">_get_field_default</span><span class="p">(</span><span class="n">field</span><span class="p">),</span>
-            <span class="n">field</span><span class="o">.</span><span class="n">metadata</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span>
-        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span>
-    <span class="p">}</span>
-
-    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;Meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="s1">&#39;Meta&#39;</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="o">.</span><span class="n">Meta</span><span class="p">)</span>
+    <span class="c1"># Copy all public members of the dataclass to the schema</span>
+    <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)}</span>
+    <span class="c1"># Update the schema members to contain marshmallow fields instead of dataclass fields</span>
+    <span class="n">attributes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">_get_field_default</span><span class="p">(</span><span class="n">field</span><span class="p">),</span> <span class="n">field</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span>
+    <span class="p">)</span>
 
     <span class="n">schema_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">),),</span> <span class="n">attributes</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">],</span> <span class="n">schema_class</span><span class="p">)</span></div>
