@@ -44,6 +44,8 @@ import decimal
 from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping
 import collections.abc
 import typing_inspect
+import inspect
+import marshmallow_enum
 
 __all__ = [
     'dataclass',
@@ -114,6 +116,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ... class Building:
     ...   height: Optional[float]
     ...   name: str = dataclasses.field(default="anonymous")
+    ...   class Meta: # marshmallow meta attributes are supported
+    ...     ordered = True
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
@@ -123,8 +127,6 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   name: str = dataclasses.field(metadata={'required':True})
     ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
-    ...   class Meta:
-    ...     ordered = True
     ...
     >>> citySchema = class_schema(City)(strict=True)
     >>> city, _ = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
@@ -136,9 +138,9 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         ...
     marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
 
-    >>> city_json, _ = citySchema.dump(city)
+    >>> city_json, _ = class_schema(Building)(strict=True).dump(city.best_building)
     >>> city_json # We get an OrderedDict because we specified order = True in the Meta class
-    OrderedDict([('name', 'Paris'), ('best_building', OrderedDict([('height', None), ('name', 'Eiffel Tower')])), ('other_buildings', [])])
+    OrderedDict([('height', None), ('name', 'Eiffel Tower')])
 
     >>> @dataclasses.dataclass()
     ... class Person:
@@ -173,6 +175,16 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     Traceback (most recent call last):
         ...
     marshmallow.exceptions.ValidationError: {'url': ['Not a valid URL.']}
+
+    >>> @dataclasses.dataclass
+    ... class NeverValid:
+    ...     @marshmallow.validates_schema
+    ...     def validate(self, data):
+    ...         raise marshmallow.ValidationError('never valid')
+    ...
+    >>> _, err = class_schema(NeverValid)().load({})
+    >>> err
+    {'_schema': ['never valid']}
     """
 
     try:
@@ -184,17 +196,13 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         except Exception:
             raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
 
-    attributes = {
-        field.name: field_for_schema(
-            field.type,
-            _get_field_default(field),
-            field.metadata
-        )
-        for field in fields
-        if field.init
-    }
-
-    attributes['Meta'] = getattr(clazz, 'Meta', marshmallow.Schema.Meta)
+    # Copy all public members of the dataclass to the schema
+    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
+    # Update the schema members to contain marshmallow fields instead of dataclass fields
+    attributes.update(
+        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata))
+        for field in fields if field.init
+    )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
