@@ -41,7 +41,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
 from enum import Enum, EnumMeta
 import typing_inspect
 import inspect
@@ -53,6 +53,8 @@ __all__ = [
     'class_schema',
     'field_for_schema'
 ]
+
+NoneType = type(None)
 
 
 def dataclass(clazz: type) -> type:
@@ -112,9 +114,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     (one that has no equivalent python type), you can pass it as the
     ``marshmallow_field`` key in the metadata dictionary.
 
+    >>> Meters = NewType('Meters', float)
     >>> @dataclasses.dataclass()
     ... class Building:
-    ...   height: Optional[float]
+    ...   height: Optional[Meters]
     ...   name: str = dataclasses.field(default="anonymous")
     ...   class Meta:
     ...     ordered = True
@@ -248,6 +251,9 @@ def field_for_schema(
 
     >>> field_for_schema(Enum("X", "a b c"))
     <fields.EnumField(default=<marshmallow.missing>, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'by_name': 'Invalid enum member {input}', 'by_value': 'Invalid enum value {input}', 'must_be_string': 'Enum name must be string'})>
+
+    >>> field_for_schema(NewType('UserId', int)).__class__
+    <class 'marshmallow.fields.Integer'>
     """
 
     metadata = {} if metadata is None else dict(metadata)
@@ -288,12 +294,18 @@ def field_for_schema(
                 **metadata
             )
         elif typing_inspect.is_optional_type(typ):
-            subtyp = next(t for t in arguments if not isinstance(None, t))
+            subtyp = next(t for t in arguments if t is not NoneType)
             # Treat optional types as types with a None default
             metadata['default'] = metadata.get('default', None)
             metadata['missing'] = metadata.get('missing', None)
             metadata['required'] = False
             return field_for_schema(subtyp, metadata=metadata)
+
+    # typing.NewType returns a function with a __supertype__ attribute
+    newtype_supertype = getattr(typ, '__supertype__', None)
+    if newtype_supertype and inspect.isfunction(typ):
+        metadata.setdefault('description', typ.__name__)
+        return field_for_schema(newtype_supertype, metadata=metadata)
 
     # enumerations
     if type(typ) is EnumMeta:
