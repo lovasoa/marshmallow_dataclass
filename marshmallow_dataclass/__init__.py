@@ -41,7 +41,7 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping
+from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
 import collections.abc
 import typing_inspect
 import inspect
@@ -244,6 +244,9 @@ def field_for_schema(
 
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
+
+    >>> field_for_schema(NewType('UserId', int)).__class__
+    <class 'marshmallow.fields.Integer'>
     """
 
     metadata = {} if metadata is None else dict(metadata)
@@ -285,6 +288,11 @@ def field_for_schema(
         metadata['missing'] = metadata.get('missing', None)
         metadata['required'] = False
         return field_for_schema(subtyp, metadata=metadata)
+    # typing.NewType returns a function with a __supertype__ attribute
+    newtype_supertype = getattr(typ, '__supertype__', None)
+    if newtype_supertype and inspect.isfunction(typ):
+        metadata.setdefault('description', typ.__name__)
+        return field_for_schema(newtype_supertype, metadata=metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
