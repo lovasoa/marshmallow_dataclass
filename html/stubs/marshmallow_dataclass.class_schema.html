@@ -57,9 +57,10 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <p>If you want to use a custom marshmallow field
 (one that has no equivalent python type), you can pass it as the
 <code class="docutils literal notranslate"><span class="pre">marshmallow_field</span></code> key in the metadata dictionary.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Meters</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Meters&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Meters</span><span class="p">]</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span> <span class="c1"># marshmallow meta attributes are supported</span>
 <span class="gp">... </span>    <span class="n">ordered</span> <span class="o">=</span> <span class="kc">True</span>

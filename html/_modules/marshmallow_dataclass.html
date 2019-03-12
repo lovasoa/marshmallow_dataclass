@@ -88,6 +88,8 @@
     <span class="s1">&#39;field_for_schema&#39;</span>
 <span class="p">]</span>
 
+<span class="n">NoneType</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -146,9 +148,10 @@
 <span class="sd">    (one that has no equivalent python type), you can pass it as the</span>
 <span class="sd">    ``marshmallow_field`` key in the metadata dictionary.</span>
 
+<span class="sd">    &gt;&gt;&gt; Meters = NewType(&#39;Meters&#39;, float)</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Building:</span>
-<span class="sd">    ...   height: Optional[float]</span>
+<span class="sd">    ...   height: Optional[Meters]</span>
 <span class="sd">    ...   name: str = dataclasses.field(default=&quot;anonymous&quot;)</span>
 <span class="sd">    ...   class Meta: # marshmallow meta attributes are supported</span>
 <span class="sd">    ...     ordered = True</span>
@@ -317,7 +320,7 @@
     <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
-        <span class="n">subtyp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+        <span class="n">subtyp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">)</span>
         <span class="c1"># Treat optional types as types with a None default</span>
         <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
