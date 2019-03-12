@@ -53,6 +53,8 @@ __all__ = [
     'field_for_schema'
 ]
 
+NoneType = type(None)
+
 
 def dataclass(clazz: type) -> type:
     """
@@ -111,9 +113,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     (one that has no equivalent python type), you can pass it as the
     ``marshmallow_field`` key in the metadata dictionary.
 
+    >>> Meters = NewType('Meters', float)
     >>> @dataclasses.dataclass()
     ... class Building:
-    ...   height: Optional[float]
+    ...   height: Optional[Meters]
     ...   name: str = dataclasses.field(default="anonymous")
     ...   class Meta: # marshmallow meta attributes are supported
     ...     ordered = True
@@ -282,7 +285,7 @@ def field_for_schema(
     elif origin in (collections.abc.Callable, Callable):
         return marshmallow.fields.Function(**metadata)
     elif typing_inspect.is_optional_type(typ):
-        subtyp = next(t for t in typing_inspect.get_args(typ) if not isinstance(None, t))
+        subtyp = next(t for t in typing_inspect.get_args(typ) if t is not NoneType)
         # Treat optional types as types with a None default
         metadata['default'] = metadata.get('default', None)
         metadata['missing'] = metadata.get('missing', None)
