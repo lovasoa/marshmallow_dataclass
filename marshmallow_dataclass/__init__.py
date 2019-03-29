@@ -56,7 +56,10 @@ __all__ = [
 NoneType = type(None)
 
 
-def dataclass(clazz: type) -> type:
+# _cls should never be specified by keyword, so start it with an
+# underscore.  The presence of _cls is used to detect if this
+# decorator is being called with parameters or not.
+def dataclass(_cls: type = None, *, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False) -> type:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
@@ -68,7 +71,7 @@ def dataclass(clazz: type) -> type:
     <class 'marshmallow.schema.Artist'>
 
     >>> from marshmallow import Schema
-    >>> @dataclass
+    >>> @dataclass(order=True) # preserve field order
     ... class Point:
     ...   x:float
     ...   y:float
@@ -77,7 +80,8 @@ def dataclass(clazz: type) -> type:
     >>> Point.Schema(strict=True).load({'x':0, 'y':0}).data # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
-    return add_schema(dataclasses.dataclass(clazz))
+    dc = dataclasses.dataclass(_cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
+    return add_schema(dc) if _cls else lambda cls: add_schema(dc(cls))
 
 
 def add_schema(clazz: type) -> type:
