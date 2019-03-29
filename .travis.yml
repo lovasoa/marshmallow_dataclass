@@ -30,4 +30,3 @@ deploy:
     on:
       tags: true
       all_branches: true
-      condition: $TRAVIS_BRANCH =~ ^master|marshmallow3$
