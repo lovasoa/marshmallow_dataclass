@@ -38,7 +38,7 @@
 <h1>marshmallow_dataclass.dataclass<a class="headerlink" href="#marshmallow-dataclass-dataclass" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="marshmallow_dataclass.dataclass">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="../_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>_cls: type = None</em>, <em>*</em>, <em>repr=True</em>, <em>eq=True</em>, <em>order=False</em>, <em>unsafe_hash=False</em>, <em>frozen=False</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="../_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
 <dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
 It adds a <cite>.Schema</cite> attribute to the class object</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
@@ -49,7 +49,7 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># preserve field order</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">x</span><span class="p">:</span><span class="nb">float</span>
 <span class="gp">... </span>  <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
