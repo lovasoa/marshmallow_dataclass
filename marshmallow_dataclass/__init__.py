@@ -237,8 +237,15 @@ def field_for_schema(
     Get a marshmallow Field corresponding to the given python type.
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
 
-    >>> field_for_schema(int, default=9, metadata=dict(required=True))
-    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={'required': 'Missing data for required field.', 'type': 'Invalid input type.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
+    >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
+    >>> int_field.__class__
+    <class 'marshmallow.fields.Integer'>
+    
+    >>> int_field.default
+    9
+
+    >>> int_field.required
+    True
 
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
