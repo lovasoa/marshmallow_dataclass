@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>marshmallow_dataclass package &#8212; marshmallow_dataclass 0.1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -40,17 +38,17 @@
 <h2>Table of contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 </div>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-center">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>(_cls,&nbsp;*[,&nbsp;…])</td>
-<td>This decorator does the same as dataclasses.dataclass, but also applies <code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code>.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>(_cls, *[, …])</p></td>
+<td><p>This decorator does the same as dataclasses.dataclass, but also applies <code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.class_schema</span></code></a>(clazz)</td>
-<td>Convert a class to a marshmallow schema</td>
+<tr class="row-even"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.class_schema</span></code></a>(clazz)</p></td>
+<td><p>Convert a class to a marshmallow schema</p></td>
 </tr>
 </tbody>
 </table>
@@ -135,19 +133,17 @@ It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_sc
 <dt id="marshmallow_dataclass.class_schema">
 <code class="descclassname">marshmallow_dataclass.</code><code class="descname">class_schema</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>clazz</strong> – A python class (may be a dataclass)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A marshmallow Schema corresponding to the dataclass</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>clazz</strong> – A python class (may be a dataclass)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A marshmallow Schema corresponding to the dataclass</p>
+</dd>
+</dl>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">All the arguments supported by marshmallow field classes are can
+<p class="admonition-title">Note</p>
+<p>All the arguments supported by marshmallow field classes are can
 be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <p>If you want to use a custom marshmallow field
@@ -243,8 +239,17 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <code class="descclassname">marshmallow_dataclass.</code><code class="descname">field_for_schema</code><span class="sig-paren">(</span><em>typ: type</em>, <em>default=&lt;marshmallow.missing&gt;</em>, <em>metadata: Mapping[str</em>, <em>Any] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a marshmallow Field corresponding to the given python type.
 The metadata of the dataclass field is used as arguments to the marshmallow Field.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-<span class="go">&lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="n">default</span>
+<span class="go">9</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="n">required</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
@@ -321,8 +326,6 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -343,7 +346,7 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>marshmallow_dataclass &#8212; marshmallow_dataclass 0.1.0 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -272,8 +270,15 @@
 <span class="sd">    Get a marshmallow Field corresponding to the given python type.</span>
 <span class="sd">    The metadata of the dataclass field is used as arguments to the marshmallow Field.</span>
 
-<span class="sd">    &gt;&gt;&gt; field_for_schema(int, default=9, metadata=dict(required=True))</span>
-<span class="sd">    &lt;fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=9, allow_none=False, error_messages={&#39;required&#39;: &#39;Missing data for required field.&#39;, &#39;type&#39;: &#39;Invalid input type.&#39;, &#39;null&#39;: &#39;Field may not be null.&#39;, &#39;validator_failed&#39;: &#39;Invalid value.&#39;, &#39;invalid&#39;: &#39;Not a valid integer.&#39;})&gt;</span>
+<span class="sd">    &gt;&gt;&gt; int_field = field_for_schema(int, default=9, metadata=dict(required=True))</span>
+<span class="sd">    &gt;&gt;&gt; int_field.__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; int_field.default</span>
+<span class="sd">    9</span>
+
+<span class="sd">    &gt;&gt;&gt; int_field.required</span>
+<span class="sd">    True</span>
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Dict[str,str]).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
@@ -406,8 +411,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -428,7 +431,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
