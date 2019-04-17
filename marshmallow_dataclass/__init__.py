@@ -241,8 +241,15 @@ def field_for_schema(
     Get a marshmallow Field corresponding to the given python type.
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
 
-    >>> field_for_schema(int, default=9, metadata=dict(required=True))
-    <fields.Integer(default=9, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'invalid': 'Not a valid integer.'})>
+    >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
+    >>> int_field.__class__
+    <class 'marshmallow.fields.Integer'>
+    
+    >>> int_field.default
+    9
+
+    >>> int_field.required
+    True
 
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
@@ -253,8 +260,8 @@ def field_for_schema(
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
 
-    >>> field_for_schema(Enum("X", "a b c"))
-    <fields.EnumField(default=<marshmallow.missing>, attribute=None, validate=None, required=True, load_only=False, dump_only=False, missing=<marshmallow.missing>, allow_none=False, error_messages={'required': 'Missing data for required field.', 'null': 'Field may not be null.', 'validator_failed': 'Invalid value.', 'by_name': 'Invalid enum member {input}', 'by_value': 'Invalid enum value {input}', 'must_be_string': 'Enum name must be string'})>
+    >>> field_for_schema(Enum("X", "a b c")).__class__
+    <class 'marshmallow_enum.EnumField'>
 
     >>> field_for_schema(NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
