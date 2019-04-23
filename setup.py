@@ -23,6 +23,11 @@ setup(
     url='https://github.com/lovasoa/marshmallow_dataclass',
     keywords=['marshmallow', 'dataclass', 'serialization'],
     classifiers=CLASSIFIERS,
-    install_requires=['marshmallow>=2.0,<3.0', 'typing-inspect'],
+    install_requires=['marshmallow>=3.0.0rc4,<4.0', 'typing-inspect'],
+    extras_require={
+        'enum': ["marshmallow-enum"],
+        ':python_version == "3.6"': ["dataclasses"],
+        'dev': 'sphinx',
+    },
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )

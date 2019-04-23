@@ -45,7 +45,6 @@ from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mappi
 from enum import Enum, EnumMeta
 import typing_inspect
 import inspect
-import marshmallow_enum
 
 __all__ = [
     'dataclass',
@@ -260,6 +259,7 @@ def field_for_schema(
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
 
+    >>> import marshmallow_enum
     >>> field_for_schema(Enum("X", "a b c")).__class__
     <class 'marshmallow_enum.EnumField'>
 
@@ -320,6 +320,7 @@ def field_for_schema(
 
     # enumerations
     if type(typ) is EnumMeta:
+        import marshmallow_enum
         return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested dataclasses
