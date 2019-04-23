@@ -114,7 +114,17 @@ class Point:
 This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/) :
 
 ```shell
-pipenv install marshmallow-dataclass
+pipenv install --pre marshmallow-dataclass
+```
+
+This package has the following optional features:
+ - `enum`, for translating python enums to 
+[marshmallow-enum](https://github.com/justanr/marshmallow_enum).
+
+You can install them with:
+
+```shell 
+pipenv install marshmallow-dataclass[enum]
 ```
 
 ## Documentation
