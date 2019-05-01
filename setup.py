@@ -24,5 +24,9 @@ setup(
     keywords=['marshmallow', 'dataclass', 'serialization'],
     classifiers=CLASSIFIERS,
     install_requires=['marshmallow>=2.0,<3.0', 'typing-inspect'],
+    extras_require={
+        ':python_version == "3.6"': ["dataclasses"],
+        'dev': 'sphinx',
+    },
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )
