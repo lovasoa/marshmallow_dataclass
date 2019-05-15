@@ -34,8 +34,9 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
-
+from enum import Enum, EnumMeta
 import dataclasses
+import inspect
 
 import marshmallow
 import datetime
@@ -44,7 +45,7 @@ import decimal
 from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
 import collections.abc
 import typing_inspect
-import inspect
+
 
 __all__ = [
     'dataclass',
@@ -245,7 +246,7 @@ def field_for_schema(
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
     >>> int_field.__class__
     <class 'marshmallow.fields.Integer'>
-    
+
     >>> int_field.default
     9
 
@@ -266,6 +267,11 @@ def field_for_schema(
 
     >>> field_for_schema(NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
+
+    >>> class Color(Enum):
+    ...   red = 1
+    >>> field_for_schema(Color).__class__
+    <class 'marshmallow_enum.EnumField'>
     """
 
     metadata = {} if metadata is None else dict(metadata)
@@ -283,8 +289,11 @@ def field_for_schema(
     if typ in _native_to_marshmallow:
         return _native_to_marshmallow[typ](**metadata)
 
+
+
     # Generic types
     origin: type = typing_inspect.get_origin(typ)
+
     if origin in (list, List):
         list_elements_type = typing_inspect.get_args(typ, True)[0]
         return marshmallow.fields.List(
@@ -312,6 +321,11 @@ def field_for_schema(
     if newtype_supertype and inspect.isfunction(typ):
         metadata.setdefault('description', typ.__name__)
         return field_for_schema(newtype_supertype, metadata=metadata)
+
+    # enumerations
+    if type(typ) is EnumMeta:
+        import marshmallow_enum
+        return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
