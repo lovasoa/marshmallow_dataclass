@@ -41,7 +41,8 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
+from typing import Dict, Type, List, Callable, Tuple, \
+    ClassVar, Optional, Any, Mapping, NewType, cast, get_type_hints
 import collections.abc
 import typing_inspect
 import inspect
@@ -202,11 +203,19 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         except Exception:
             raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
 
+    processed_types = get_type_hints(clazz)  # Resolved type annotations
     # Copy all public members of the dataclass to the schema
     attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
-        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata))
+        (
+            field.name,  # The field name is the key
+            field_for_schema(  # The marshmallow Field object is the value
+                field.type if isinstance(field.type, type) else processed_types[field.name],
+                _get_field_default(field),
+                field.metadata
+            )
+        )
         for field in fields if field.init
     )
 
