@@ -192,6 +192,11 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> _, err = class_schema(NeverValid)().load({})
     >>> err
     {'_schema': ['never valid']}
+
+    >>> class_schema(None)  # unsupported type
+    Traceback (most recent call last):
+      ...
+    TypeError: None is not a dataclass and cannot be turned into one.
     """
 
     try:
@@ -201,7 +206,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         try:
             return class_schema(dataclasses.dataclass(clazz))
         except Exception:
-            raise TypeError(f"{clazz.__name__} is not a dataclass and cannot be turned into one.")
+            raise TypeError(f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one.")
 
     processed_types = get_type_hints(clazz)  # Resolved type annotations
     # Copy all public members of the dataclass to the schema
