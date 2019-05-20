@@ -289,8 +289,6 @@ def field_for_schema(
     if typ in _native_to_marshmallow:
         return _native_to_marshmallow[typ](**metadata)
 
-
-
     # Generic types
     origin: type = typing_inspect.get_origin(typ)
 
