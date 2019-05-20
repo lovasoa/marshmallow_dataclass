@@ -111,7 +111,7 @@ class Point:
     ordered = True
 ```
 
-## installation
+## Installation
 This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/) :
 
 ```shell
