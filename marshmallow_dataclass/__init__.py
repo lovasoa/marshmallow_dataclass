@@ -268,6 +268,9 @@ def field_for_schema(
     >>> field_for_schema(NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
 
+    >>> field_for_schema(NewType('UserId', int), default=0).default
+    0
+
     >>> class Color(Enum):
     ...   red = 1
     >>> field_for_schema(Color).__class__
@@ -318,7 +321,7 @@ def field_for_schema(
     newtype_supertype = getattr(typ, '__supertype__', None)
     if newtype_supertype and inspect.isfunction(typ):
         metadata.setdefault('description', typ.__name__)
-        return field_for_schema(newtype_supertype, metadata=metadata)
+        return field_for_schema(newtype_supertype, metadata=metadata, default=default)
 
     # enumerations
     if type(typ) is EnumMeta:
