@@ -301,6 +301,9 @@
 <span class="sd">    &gt;&gt;&gt; field_for_schema(NewType(&#39;UserId&#39;, int)).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
 
+<span class="sd">    &gt;&gt;&gt; field_for_schema(NewType(&#39;UserId&#39;, int), default=0).default</span>
+<span class="sd">    0</span>
+
 <span class="sd">    &gt;&gt;&gt; class Color(Enum):</span>
 <span class="sd">    ...   red = 1</span>
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Color).__class__</span>
@@ -351,7 +354,7 @@
     <span class="n">newtype_supertype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s1">&#39;__supertype__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">newtype_supertype</span> <span class="ow">and</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">typ</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">newtype_supertype</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">newtype_supertype</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">)</span>
 
     <span class="c1"># enumerations</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="ow">is</span> <span class="n">EnumMeta</span><span class="p">:</span>
