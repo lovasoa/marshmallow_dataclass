@@ -278,6 +278,12 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
 <span class="go">&lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="gp">... </span>  <span class="n">red</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>

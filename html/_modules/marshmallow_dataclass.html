@@ -67,8 +67,9 @@
 <span class="sd">      })</span>
 <span class="sd">      Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">EnumMeta</span>
 <span class="kn">import</span> <span class="nn">dataclasses</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="kn">import</span> <span class="nn">marshmallow</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
@@ -77,7 +78,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NewType</span>
 <span class="kn">import</span> <span class="nn">collections.abc</span>
 <span class="kn">import</span> <span class="nn">typing_inspect</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
+
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;dataclass&#39;</span><span class="p">,</span>
@@ -278,7 +279,7 @@
 <span class="sd">    &gt;&gt;&gt; int_field = field_for_schema(int, default=9, metadata=dict(required=True))</span>
 <span class="sd">    &gt;&gt;&gt; int_field.__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
-<span class="sd">    </span>
+
 <span class="sd">    &gt;&gt;&gt; int_field.default</span>
 <span class="sd">    9</span>
 
@@ -299,6 +300,11 @@
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(NewType(&#39;UserId&#39;, int)).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
+
+<span class="sd">    &gt;&gt;&gt; class Color(Enum):</span>
+<span class="sd">    ...   red = 1</span>
+<span class="sd">    &gt;&gt;&gt; field_for_schema(Color).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
@@ -318,6 +324,7 @@
 
     <span class="c1"># Generic types</span>
     <span class="n">origin</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
         <span class="n">list_elements_type</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
@@ -345,6 +352,11 @@
     <span class="k">if</span> <span class="n">newtype_supertype</span> <span class="ow">and</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">typ</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">newtype_supertype</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+
+    <span class="c1"># enumerations</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="ow">is</span> <span class="n">EnumMeta</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">marshmallow_enum</span>
+        <span class="k">return</span> <span class="n">marshmallow_enum</span><span class="o">.</span><span class="n">EnumField</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
 
     <span class="c1"># Nested dataclasses</span>
     <span class="n">forward_reference</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s1">&#39;__forward_arg__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
