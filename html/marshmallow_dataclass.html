@@ -38,13 +38,13 @@
 <h2>Table of contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 </div>
-<table class="longtable docutils align-center">
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>(_cls, *[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>([_cls, …])</p></td>
 <td><p>This decorator does the same as dataclasses.dataclass, but also applies <code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.class_schema</span></code></a>(clazz)</p></td>
@@ -90,7 +90,7 @@ to <code class="xref py py-mod docutils literal notranslate"><span class="pre">m
 </div>
 <dl class="function">
 <dt id="marshmallow_dataclass.dataclass">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>_cls: type = None</em>, <em>*</em>, <em>repr=True</em>, <em>eq=True</em>, <em>order=False</em>, <em>unsafe_hash=False</em>, <em>frozen=False</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">dataclass</code><span class="sig-paren">(</span><em class="sig-param">_cls: type = None</em>, <em class="sig-param">*</em>, <em class="sig-param">repr=True</em>, <em class="sig-param">eq=True</em>, <em class="sig-param">order=False</em>, <em class="sig-param">unsafe_hash=False</em>, <em class="sig-param">frozen=False</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
 <dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
 It adds a <cite>.Schema</cite> attribute to the class object</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
@@ -115,7 +115,7 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 
 <dl class="function">
 <dt id="marshmallow_dataclass.add_schema">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">add_schema</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#add_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.add_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">add_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="_modules/marshmallow_dataclass.html#add_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.add_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>This decorator adds a marshmallow schema as the ‘Schema’ attribute in a dataclass.
 It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">class_schema()</span></code></a> internally.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@add_schema</span>
@@ -131,7 +131,7 @@ It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_sc
 
 <dl class="function">
 <dt id="marshmallow_dataclass.class_schema">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">class_schema</code><span class="sig-paren">(</span><em>clazz: type</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -242,7 +242,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 
 <dl class="function">
 <dt id="marshmallow_dataclass.field_for_schema">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">field_for_schema</code><span class="sig-paren">(</span><em>typ: type</em>, <em>default=&lt;marshmallow.missing&gt;</em>, <em>metadata: Mapping[str</em>, <em>Any] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">field_for_schema</code><span class="sig-paren">(</span><em class="sig-param">typ: type</em>, <em class="sig-param">default=&lt;marshmallow.missing&gt;</em>, <em class="sig-param">metadata: Mapping[str</em>, <em class="sig-param">Any] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a marshmallow Field corresponding to the given python type.
 The metadata of the dataclass field is used as arguments to the marshmallow Field.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
@@ -337,10 +337,10 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -362,7 +362,7 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

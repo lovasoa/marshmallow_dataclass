@@ -36,7 +36,7 @@
 <h1>marshmallow_dataclass.dataclass<a class="headerlink" href="#marshmallow-dataclass-dataclass" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="marshmallow_dataclass.dataclass">
-<code class="descclassname">marshmallow_dataclass.</code><code class="descname">dataclass</code><span class="sig-paren">(</span><em>_cls: type = None</em>, <em>*</em>, <em>repr=True</em>, <em>eq=True</em>, <em>order=False</em>, <em>unsafe_hash=False</em>, <em>frozen=False</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="../_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">dataclass</code><span class="sig-paren">(</span><em class="sig-param">_cls: type = None</em>, <em class="sig-param">*</em>, <em class="sig-param">repr=True</em>, <em class="sig-param">eq=True</em>, <em class="sig-param">order=False</em>, <em class="sig-param">unsafe_hash=False</em>, <em class="sig-param">frozen=False</em><span class="sig-paren">)</span> &#x2192; type<a class="reference internal" href="../_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
 <dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
 It adds a <cite>.Schema</cite> attribute to the class object</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
@@ -107,10 +107,10 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -132,7 +132,7 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
