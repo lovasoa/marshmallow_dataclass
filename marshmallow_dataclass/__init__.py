@@ -193,6 +193,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> err
     {'_schema': ['never valid']}
 
+    >>> # noinspection PyTypeChecker
     >>> class_schema(None)  # unsupported type
     Traceback (most recent call last):
       ...
