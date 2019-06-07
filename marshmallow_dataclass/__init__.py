@@ -231,6 +231,7 @@ _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
     datetime.date: marshmallow.fields.Date,
     decimal.Decimal: marshmallow.fields.Decimal,
     uuid.UUID: marshmallow.fields.UUID,
+    Any: marshmallow.fields.Raw,
 }
 
 
@@ -275,6 +276,9 @@ def field_for_schema(
     ...   red = 1
     >>> field_for_schema(Color).__class__
     <class 'marshmallow_enum.EnumField'>
+
+    >>> field_for_schema(Any).__class__
+    <class 'marshmallow.fields.Raw'>
     """
 
     metadata = {} if metadata is None else dict(metadata)
