@@ -136,7 +136,8 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># unsupported type</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># noinspection PyTypeChecker</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># unsupported type</span>
 <span class="gt">Traceback (most recent call last):</span>
   <span class="c">...</span>
 <span class="gr">TypeError</span>: <span class="n">None is not a dataclass and cannot be turned into one.</span>
