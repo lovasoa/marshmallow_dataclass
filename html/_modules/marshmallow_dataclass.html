@@ -375,7 +375,7 @@
 <span class="k">def</span> <span class="nf">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
     <span class="k">class</span> <span class="nc">BaseSchema</span><span class="p">(</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>
         <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">post_load</span>
-        <span class="k">def</span> <span class="nf">make_data_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">make_data_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">clazz</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">BaseSchema</span>
@@ -456,7 +456,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
