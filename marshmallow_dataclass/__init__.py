@@ -342,7 +342,7 @@ def field_for_schema(
 def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
     class BaseSchema(marshmallow.Schema):
         @marshmallow.post_load
-        def make_data_class(self, data):
+        def make_data_class(self, data, **_):
             return clazz(**data)
 
     return BaseSchema
