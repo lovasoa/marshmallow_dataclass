@@ -112,10 +112,22 @@ class Point:
 ```
 
 ## Installation
-This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/) :
+This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/).
 
+There are two versions, depending on whether you want to use
+the latest stable release of marshmallow
+(marshmallow 2)
+or the newer unstable
+marshmallow 3 pre-release:
+
+#### For marshmallow 2
 ```shell
 pipenv install marshmallow-dataclass
+```
+
+#### For marshmallow 3
+```shell
+pipenv install --pre marshmallow-dataclass
 ```
 
 ## Documentation
