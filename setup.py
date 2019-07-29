@@ -26,6 +26,7 @@ setup(
     install_requires=['marshmallow>=3.0.0rc4,<4.0', 'typing-inspect'],
     extras_require={
         'enum': ["marshmallow-enum"],
+        'union': ["marshmallow-union"],
         ':python_version == "3.6"': ["dataclasses"],
         'dev': 'sphinx',
     },
