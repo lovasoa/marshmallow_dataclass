@@ -270,6 +270,7 @@ def field_for_schema(
     >>> field_for_schema(Enum("X", "a b c")).__class__
     <class 'marshmallow_enum.EnumField'>
 
+    >>> import marshmallow_union
     >>> field_for_schema(Union[int,str]).__class__
     <class 'marshmallow_union.Union'>
 
@@ -333,9 +334,7 @@ def field_for_schema(
             metadata['required'] = False
             return field_for_schema(subtyp, metadata=metadata)
         elif typing_inspect.is_union_type(typ):
-            subfields = []
-            for subtyp in arguments:
-                subfields.append(field_for_schema(subtyp, metadata=metadata))
+            subfields = [field_for_schema(subtyp, metadata=metadata) for subtyp in arguments]
             import marshmallow_union
             return marshmallow_union.Union(subfields, **metadata)
 
