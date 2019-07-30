@@ -270,6 +270,10 @@ def field_for_schema(
     >>> field_for_schema(Enum("X", "a b c")).__class__
     <class 'marshmallow_enum.EnumField'>
 
+    >>> import typing
+    >>> field_for_schema(typing.Union[int,str]).__class__
+    <class 'marshmallow_union.Union'>
+
     >>> field_for_schema(NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
 
@@ -329,6 +333,10 @@ def field_for_schema(
             metadata['missing'] = metadata.get('missing', None)
             metadata['required'] = False
             return field_for_schema(subtyp, metadata=metadata)
+        elif typing_inspect.is_union_type(typ):
+            subfields = [field_for_schema(subtyp, metadata=metadata) for subtyp in arguments]
+            import marshmallow_union
+            return marshmallow_union.Union(subfields, **metadata)
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, '__supertype__', None)

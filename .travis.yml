@@ -9,7 +9,7 @@ python:
   - "3.7-dev"
   - "3.8-dev"
 install:
-  - pipenv install --pre -e '.[enum,dev]'
+  - pipenv install --pre -e '.[union,enum,dev]'
 script:
   - pipenv run python -m doctest -v marshmallow_dataclass/*.py
   - cd docs && pipenv run make html && cd ..
