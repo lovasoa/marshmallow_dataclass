@@ -271,7 +271,8 @@ def field_for_schema(
     <class 'marshmallow_enum.EnumField'>
 
     >>> import marshmallow_union
-    >>> field_for_schema(Union[int,str]).__class__
+    >>> import typing
+    >>> field_for_schema(typing.Union[int,str]).__class__
     <class 'marshmallow_union.Union'>
 
     >>> field_for_schema(NewType('UserId', int)).__class__
