@@ -48,7 +48,7 @@
 <span class="sd">      y:float</span>
 
 <span class="sd">    point = Point(x=0, y=0)</span>
-<span class="sd">    point_json, err = Point.Schema(strict=True).dumps(point)</span>
+<span class="sd">    point_json = Point.Schema().dumps(point)</span>
 
 <span class="sd">Full example::</span>
 
@@ -75,9 +75,10 @@
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">import</span> <span class="nn">decimal</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NewType</span>
-<span class="kn">import</span> <span class="nn">collections.abc</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NewType</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">EnumMeta</span>
 <span class="kn">import</span> <span class="nn">typing_inspect</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -111,7 +112,7 @@
 <span class="sd">    ...   y:float</span>
 <span class="sd">    ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; Point.Schema(strict=True).load({&#39;x&#39;:0, &#39;y&#39;:0}).data # This line can be statically type checked</span>
+<span class="sd">    &gt;&gt;&gt; Point.Schema().load({&#39;x&#39;:0, &#39;y&#39;:0}) # This line can be statically type checked</span>
 <span class="sd">    Point(x=0.0, y=0.0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dc</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">_cls</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span><span class="p">)</span>
@@ -126,10 +127,10 @@
 <span class="sd">    &gt;&gt;&gt; @add_schema</span>
 <span class="sd">    ... @dataclasses.dataclass</span>
 <span class="sd">    ... class Artist:</span>
-<span class="sd">    ...    name: str</span>
-<span class="sd">    &gt;&gt;&gt; artist, err = Artist.Schema(strict=True).loads(&#39;{&quot;name&quot;: &quot;Ramirez&quot;}&#39;)</span>
+<span class="sd">    ...    names: Tuple[str, str]</span>
+<span class="sd">    &gt;&gt;&gt; artist = Artist.Schema().loads(&#39;{&quot;names&quot;: [&quot;Martin&quot;, &quot;Ramirez&quot;]}&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; artist</span>
-<span class="sd">    Artist(name=&#39;Ramirez&#39;)</span>
+<span class="sd">    Artist(names=(&#39;Martin&#39;, &#39;Ramirez&#39;))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">clazz</span><span class="o">.</span><span class="n">Schema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">clazz</span></div>
@@ -156,7 +157,7 @@
 <span class="sd">    ... class Building:</span>
 <span class="sd">    ...   height: Optional[Meters]</span>
 <span class="sd">    ...   name: str = dataclasses.field(default=&quot;anonymous&quot;)</span>
-<span class="sd">    ...   class Meta: # marshmallow meta attributes are supported</span>
+<span class="sd">    ...   class Meta:</span>
 <span class="sd">    ...     ordered = True</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; class_schema(Building) # Returns a marshmallow schema class (not an instance)</span>
@@ -168,8 +169,8 @@
 <span class="sd">    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)(strict=True)</span>
-<span class="sd">    &gt;&gt;&gt; city, _ = citySchema.load({&quot;name&quot;:&quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;}})</span>
+<span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)()</span>
+<span class="sd">    &gt;&gt;&gt; city = citySchema.load({&quot;name&quot;:&quot;Paris&quot;, &quot;best_building&quot;: {&quot;name&quot;: &quot;Eiffel Tower&quot;}})</span>
 <span class="sd">    &gt;&gt;&gt; city</span>
 <span class="sd">    City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 
@@ -178,8 +179,8 @@
 <span class="sd">        ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 
-<span class="sd">    &gt;&gt;&gt; city_json, _ = class_schema(Building)(strict=True).dump(city.best_building)</span>
-<span class="sd">    &gt;&gt;&gt; city_json # We get an OrderedDict because we specified order = True in the Meta class</span>
+<span class="sd">    &gt;&gt;&gt; city_json = citySchema.dump(city)</span>
+<span class="sd">    &gt;&gt;&gt; city_json[&#39;best_building&#39;] # We get an OrderedDict because we specified order = True in the Meta class</span>
 <span class="sd">    OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
@@ -187,7 +188,7 @@
 <span class="sd">    ...   name: str = dataclasses.field(default=&quot;Anonymous&quot;)</span>
 <span class="sd">    ...   friends: List[&#39;Person&#39;] = dataclasses.field(default_factory=lambda:[]) # Recursive field</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; person, _ = class_schema(Person)(strict=True).load({</span>
+<span class="sd">    &gt;&gt;&gt; person = class_schema(Person)().load({</span>
 <span class="sd">    ...     &quot;friends&quot;: [{&quot;name&quot;: &quot;Roger Boucher&quot;}]</span>
 <span class="sd">    ... })</span>
 <span class="sd">    &gt;&gt;&gt; person</span>
@@ -198,10 +199,10 @@
 <span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
 <span class="sd">    ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; c, _ = class_schema(C)(strict=True).load({</span>
+<span class="sd">    &gt;&gt;&gt; c = class_schema(C)().load({</span>
 <span class="sd">    ...     &quot;important&quot;: 9, # This field will be imported</span>
 <span class="sd">    ...     &quot;unimportant&quot;: 9 # This field will NOT be imported</span>
-<span class="sd">    ... })</span>
+<span class="sd">    ... }, unknown=marshmallow.EXCLUDE)</span>
 <span class="sd">    &gt;&gt;&gt; c</span>
 <span class="sd">    C(important=9, unimportant=0)</span>
 
@@ -211,7 +212,7 @@
 <span class="sd">    ...    &quot;marshmallow_field&quot;: marshmallow.fields.Url() # Custom marshmallow field</span>
 <span class="sd">    ...  })</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; class_schema(Website)(strict=True).load({&quot;url&quot;: &quot;I am not a good URL !&quot;})</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(Website)().load({&quot;url&quot;: &quot;I am not a good URL !&quot;})</span>
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">        ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
@@ -219,14 +220,14 @@
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
 <span class="sd">    ... class NeverValid:</span>
 <span class="sd">    ...     @marshmallow.validates_schema</span>
-<span class="sd">    ...     def validate(self, data):</span>
+<span class="sd">    ...     def validate(self, data, **_):</span>
 <span class="sd">    ...         raise marshmallow.ValidationError(&#39;never valid&#39;)</span>
 <span class="sd">    ...</span>
-<span class="sd">    &gt;&gt;&gt; _, err = class_schema(NeverValid)().load({})</span>
-<span class="sd">    &gt;&gt;&gt; err</span>
-<span class="sd">    {&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(NeverValid)().load({})</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    marshmallow.exceptions.ValidationError: {&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 
-<span class="sd">    &gt;&gt;&gt; # noinspection PyTypeChecker</span>
 <span class="sd">    &gt;&gt;&gt; class_schema(None)  # unsupported type</span>
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">      ...</span>
@@ -240,7 +241,8 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;{getattr(clazz, &#39;__name__&#39;, repr(clazz))} is not a dataclass and cannot be turned into one.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="n">f</span><span class="s2">&quot;{getattr(clazz, &#39;__name__&#39;, repr(clazz))} is not a dataclass and cannot be turned into one.&quot;</span><span class="p">)</span>
 
     <span class="c1"># Copy all public members of the dataclass to the schema</span>
     <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)}</span>
@@ -281,7 +283,7 @@
 <span class="sd">    &gt;&gt;&gt; int_field = field_for_schema(int, default=9, metadata=dict(required=True))</span>
 <span class="sd">    &gt;&gt;&gt; int_field.__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
-
+<span class="sd">    </span>
 <span class="sd">    &gt;&gt;&gt; int_field.default</span>
 <span class="sd">    9</span>
 
@@ -291,14 +293,19 @@
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Dict[str,str]).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
 
-<span class="sd">    &gt;&gt;&gt; field_for_schema(Callable[[str],str]).__class__</span>
-<span class="sd">    &lt;class &#39;marshmallow.fields.Function&#39;&gt;</span>
-
 <span class="sd">    &gt;&gt;&gt; field_for_schema(str, metadata={&quot;marshmallow_field&quot;: marshmallow.fields.Url()}).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Optional[str]).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.String&#39;&gt;</span>
+
+<span class="sd">    &gt;&gt;&gt; import marshmallow_enum</span>
+<span class="sd">    &gt;&gt;&gt; field_for_schema(Enum(&quot;X&quot;, &quot;a b c&quot;)).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
+
+<span class="sd">    &gt;&gt;&gt; import typing</span>
+<span class="sd">    &gt;&gt;&gt; field_for_schema(typing.Union[int,str]).__class__</span>
+<span class="sd">    &lt;class &#39;marshmallow_union.Union&#39;&gt;</span>
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(NewType(&#39;UserId&#39;, int)).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
@@ -316,10 +323,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
-    <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;required&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">:</span>
         <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
-        <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">):</span>  <span class="c1"># &#39;missing&#39; must not be set for required fields.</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;required&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># If the field was already defined by the user</span>
     <span class="n">predefined_field</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;marshmallow_field&#39;</span><span class="p">)</span>
@@ -331,30 +340,37 @@
         <span class="k">return</span> <span class="n">_native_to_marshmallow</span><span class="p">[</span><span class="n">typ</span><span class="p">](</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
 
     <span class="c1"># Generic types</span>
-    <span class="n">origin</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span><span class="p">:</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
+                <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="o">**</span><span class="n">metadata</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span><span class="p">),</span>
+                <span class="o">**</span><span class="n">metadata</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span>
+                <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="o">**</span><span class="n">metadata</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
+            <span class="n">subtyp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">)</span>
+            <span class="c1"># Treat optional types as types with a None default</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;required&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_union_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
+            <span class="n">subfields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span> <span class="k">for</span> <span class="n">subtyp</span> <span class="ow">in</span> <span class="n">arguments</span><span class="p">]</span>
+            <span class="kn">import</span> <span class="nn">marshmallow_union</span>
+            <span class="k">return</span> <span class="n">marshmallow_union</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="n">subfields</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
-        <span class="n">list_elements_type</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
-            <span class="n">field_for_schema</span><span class="p">(</span><span class="n">list_elements_type</span><span class="p">),</span>
-            <span class="o">**</span><span class="n">metadata</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
-        <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span>
-            <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">key_type</span><span class="p">),</span>
-            <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">value_type</span><span class="p">),</span>
-            <span class="o">**</span><span class="n">metadata</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
-        <span class="n">subtyp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">)</span>
-        <span class="c1"># Treat optional types as types with a None default</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;required&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
     <span class="c1"># typing.NewType returns a function with a __supertype__ attribute</span>
     <span class="n">newtype_supertype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s1">&#39;__supertype__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">newtype_supertype</span> <span class="ow">and</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>

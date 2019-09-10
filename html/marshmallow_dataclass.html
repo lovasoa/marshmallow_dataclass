@@ -68,7 +68,7 @@ to <code class="xref py py-mod docutils literal notranslate"><span class="pre">m
   <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
 
 <span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">point_json</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+<span class="n">point_json</span> <span class="o">=</span> <span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Full example:</p>
@@ -107,7 +107,7 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 <span class="gp">... </span>  <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
 <span class="gp">... </span>  <span class="n">Schema</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Schema</span> <span class="c1"># For the type checker</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span><span class="o">.</span><span class="n">data</span> <span class="c1"># This line can be statically type checked</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span> <span class="c1"># This line can be statically type checked</span>
 <span class="go">Point(x=0.0, y=0.0)</span>
 </pre></div>
 </div>
@@ -121,10 +121,10 @@ It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_sc
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@add_schema</span>
 <span class="gp">... </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
-<span class="gp">... </span>   <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">artist</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="s1">&#39;{&quot;name&quot;: &quot;Ramirez&quot;}&#39;</span><span class="p">)</span>
+<span class="gp">... </span>   <span class="n">names</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">artist</span> <span class="o">=</span> <span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="s1">&#39;{&quot;names&quot;: [&quot;Martin&quot;, &quot;Ramirez&quot;]}&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">artist</span>
-<span class="go">Artist(name=&#39;Ramirez&#39;)</span>
+<span class="go">Artist(names=(&#39;Martin&#39;, &#39;Ramirez&#39;))</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -154,7 +154,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Meters</span><span class="p">]</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
-<span class="gp">... </span>  <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span> <span class="c1"># marshmallow meta attributes are supported</span>
+<span class="gp">... </span>  <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">ordered</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
@@ -167,8 +167,8 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
 <span class="gp">... </span>  <span class="n">other_buildings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Building</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">City</span><span class="p">)()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">city</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">,</span> <span class="s2">&quot;best_building&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Eiffel Tower&quot;</span><span class="p">}})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city</span>
 <span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 </pre></div>
@@ -179,8 +179,8 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="o">.</span><span class="n">best_building</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="c1"># We get an OrderedDict because we specified order = True in the Meta class</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">[</span><span class="s1">&#39;best_building&#39;</span><span class="p">]</span> <span class="c1"># We get an OrderedDict because we specified order = True in the Meta class</span>
 <span class="go">OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 </pre></div>
 </div>
@@ -189,7 +189,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">person</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Person</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
 <span class="gp">... </span>    <span class="s2">&quot;friends&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Roger Boucher&quot;</span><span class="p">}]</span>
 <span class="gp">... </span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">person</span>
@@ -201,10 +201,10 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>  <span class="n">important</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="n">unimportant</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Only fields that are in the __init__ method will be added:</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">C</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">C</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span>
 <span class="gp">... </span>    <span class="s2">&quot;important&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="c1"># This field will be imported</span>
 <span class="gp">... </span>    <span class="s2">&quot;unimportant&quot;</span><span class="p">:</span> <span class="mi">9</span> <span class="c1"># This field will NOT be imported</span>
-<span class="gp">... </span><span class="p">})</span>
+<span class="gp">... </span><span class="p">},</span> <span class="n">unknown</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">EXCLUDE</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span>
 <span class="go">C(important=9, unimportant=0)</span>
 </pre></div>
@@ -215,7 +215,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>   <span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()</span> <span class="c1"># Custom marshmallow field</span>
 <span class="gp">... </span> <span class="p">})</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Website</span><span class="p">)(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;I am not a good URL !&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Website</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;I am not a good URL !&quot;</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
@@ -224,16 +224,16 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">NeverValid</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
 <span class="gp">... </span>        <span class="k">raise</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;never valid&#39;</span><span class="p">)</span>
 <span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">NeverValid</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">err</span>
-<span class="go">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">NeverValid</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># noinspection PyTypeChecker</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># unsupported type</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># unsupported type</span>
 <span class="gt">Traceback (most recent call last):</span>
   <span class="c">...</span>
 <span class="gr">TypeError</span>: <span class="n">None is not a dataclass and cannot be turned into one.</span>
@@ -263,16 +263,22 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
 <span class="go">&lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow.fields.Function&#39;&gt;</span>
-</pre></div>
-</div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()})</span><span class="o">.</span><span class="vm">__class__</span>
 <span class="go">&lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
 <span class="go">&lt;class &#39;marshmallow.fields.String&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">marshmallow_enum</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;a b c&quot;</span><span class="p">))</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">&lt;class &#39;marshmallow_union.Union&#39;&gt;</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span><span class="o">.</span><span class="vm">__class__</span>
