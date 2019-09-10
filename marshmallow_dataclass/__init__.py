@@ -147,7 +147,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
 
     >>> city_json = citySchema.dump(city)
-    >>> city_json # We get an OrderedDict because we specified order = True in the Meta class
+    >>> city_json['best_building'] # We get an OrderedDict because we specified order = True in the Meta class
     OrderedDict([('height', None), ('name', 'Eiffel Tower')])
 
     >>> @dataclasses.dataclass()
