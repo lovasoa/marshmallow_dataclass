@@ -34,9 +34,7 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
-from enum import Enum, EnumMeta
 import dataclasses
-import inspect
 
 import marshmallow
 import datetime
