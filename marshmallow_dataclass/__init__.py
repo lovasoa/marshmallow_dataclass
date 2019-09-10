@@ -15,7 +15,7 @@ Simple example::
       y:float
 
     point = Point(x=0, y=0)
-    point_json, err = Point.Schema(strict=True).dumps(point)
+    point_json = Point.Schema().dumps(point)
 
 Full example::
 
@@ -42,9 +42,10 @@ import marshmallow
 import datetime
 import uuid
 import decimal
-from typing import Dict, Type, List, Callable, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
-import collections.abc
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
+from enum import Enum, EnumMeta
 import typing_inspect
+import inspect
 
 
 __all__ = [
@@ -78,7 +79,7 @@ def dataclass(_cls: type = None, *, repr=True, eq=True, order=False, unsafe_hash
     ...   y:float
     ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
     ...
-    >>> Point.Schema(strict=True).load({'x':0, 'y':0}).data # This line can be statically type checked
+    >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
     dc = dataclasses.dataclass(_cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
@@ -93,10 +94,10 @@ def add_schema(clazz: type) -> type:
     >>> @add_schema
     ... @dataclasses.dataclass
     ... class Artist:
-    ...    name: str
-    >>> artist, err = Artist.Schema(strict=True).loads('{"name": "Ramirez"}')
+    ...    names: Tuple[str, str]
+    >>> artist = Artist.Schema().loads('{"names": ["Martin", "Ramirez"]}')
     >>> artist
-    Artist(name='Ramirez')
+    Artist(names=('Martin', 'Ramirez'))
     """
     clazz.Schema = class_schema(clazz)
     return clazz
@@ -123,7 +124,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ... class Building:
     ...   height: Optional[Meters]
     ...   name: str = dataclasses.field(default="anonymous")
-    ...   class Meta: # marshmallow meta attributes are supported
+    ...   class Meta:
     ...     ordered = True
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
@@ -135,8 +136,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
     ...
-    >>> citySchema = class_schema(City)(strict=True)
-    >>> city, _ = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
+    >>> citySchema = class_schema(City)()
+    >>> city = citySchema.load({"name":"Paris", "best_building": {"name": "Eiffel Tower"}})
     >>> city
     City(name='Paris', best_building=Building(height=None, name='Eiffel Tower'), other_buildings=[])
 
@@ -145,7 +146,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         ...
     marshmallow.exceptions.ValidationError: {'best_building': ['Missing data for required field.']}
 
-    >>> city_json, _ = class_schema(Building)(strict=True).dump(city.best_building)
+    >>> city_json = citySchema.dump(city)
     >>> city_json # We get an OrderedDict because we specified order = True in the Meta class
     OrderedDict([('height', None), ('name', 'Eiffel Tower')])
 
@@ -154,7 +155,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   name: str = dataclasses.field(default="Anonymous")
     ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
     ...
-    >>> person, _ = class_schema(Person)(strict=True).load({
+    >>> person = class_schema(Person)().load({
     ...     "friends": [{"name": "Roger Boucher"}]
     ... })
     >>> person
@@ -165,10 +166,10 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...   important: int = dataclasses.field(init=True, default=0)
     ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:
     ...
-    >>> c, _ = class_schema(C)(strict=True).load({
+    >>> c = class_schema(C)().load({
     ...     "important": 9, # This field will be imported
     ...     "unimportant": 9 # This field will NOT be imported
-    ... })
+    ... }, unknown=marshmallow.EXCLUDE)
     >>> c
     C(important=9, unimportant=0)
 
@@ -178,7 +179,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     ...    "marshmallow_field": marshmallow.fields.Url() # Custom marshmallow field
     ...  })
     ...
-    >>> class_schema(Website)(strict=True).load({"url": "I am not a good URL !"})
+    >>> class_schema(Website)().load({"url": "I am not a good URL !"})
     Traceback (most recent call last):
         ...
     marshmallow.exceptions.ValidationError: {'url': ['Not a valid URL.']}
@@ -186,14 +187,14 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     >>> @dataclasses.dataclass
     ... class NeverValid:
     ...     @marshmallow.validates_schema
-    ...     def validate(self, data):
+    ...     def validate(self, data, **_):
     ...         raise marshmallow.ValidationError('never valid')
     ...
-    >>> _, err = class_schema(NeverValid)().load({})
-    >>> err
-    {'_schema': ['never valid']}
+    >>> class_schema(NeverValid)().load({})
+    Traceback (most recent call last):
+        ...
+    marshmallow.exceptions.ValidationError: {'_schema': ['never valid']}
 
-    >>> # noinspection PyTypeChecker
     >>> class_schema(None)  # unsupported type
     Traceback (most recent call last):
       ...
@@ -207,7 +208,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         try:
             return class_schema(dataclasses.dataclass(clazz))
         except Exception:
-            raise TypeError(f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one.")
+            raise TypeError(
+                f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one.")
 
     # Copy all public members of the dataclass to the schema
     attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
@@ -248,7 +250,7 @@ def field_for_schema(
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
     >>> int_field.__class__
     <class 'marshmallow.fields.Integer'>
-
+    
     >>> int_field.default
     9
 
@@ -258,14 +260,19 @@ def field_for_schema(
     >>> field_for_schema(Dict[str,str]).__class__
     <class 'marshmallow.fields.Dict'>
 
-    >>> field_for_schema(Callable[[str],str]).__class__
-    <class 'marshmallow.fields.Function'>
-
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
 
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
+
+    >>> import marshmallow_enum
+    >>> field_for_schema(Enum("X", "a b c")).__class__
+    <class 'marshmallow_enum.EnumField'>
+
+    >>> import typing
+    >>> field_for_schema(typing.Union[int,str]).__class__
+    <class 'marshmallow_union.Union'>
 
     >>> field_for_schema(NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
@@ -283,10 +290,12 @@ def field_for_schema(
     """
 
     metadata = {} if metadata is None else dict(metadata)
-    metadata.setdefault('required', True)
     if default is not marshmallow.missing:
         metadata.setdefault('default', default)
-        metadata.setdefault('missing', default)
+        if not metadata.get("required"):  # 'missing' must not be set for required fields.
+            metadata.setdefault('missing', default)
+    else:
+        metadata.setdefault('required', True)
 
     # If the field was already defined by the user
     predefined_field = metadata.get('marshmallow_field')
@@ -298,30 +307,37 @@ def field_for_schema(
         return _native_to_marshmallow[typ](**metadata)
 
     # Generic types
-    origin: type = typing_inspect.get_origin(typ)
+    origin = typing_inspect.get_origin(typ)
+    if origin:
+        arguments = typing_inspect.get_args(typ, True)
+        if origin in (list, List):
+            return marshmallow.fields.List(
+                field_for_schema(arguments[0]),
+                **metadata
+            )
+        if origin in (tuple, Tuple):
+            return marshmallow.fields.Tuple(
+                tuple(field_for_schema(arg) for arg in arguments),
+                **metadata
+            )
+        elif origin in (dict, Dict):
+            return marshmallow.fields.Dict(
+                keys=field_for_schema(arguments[0]),
+                values=field_for_schema(arguments[1]),
+                **metadata
+            )
+        elif typing_inspect.is_optional_type(typ):
+            subtyp = next(t for t in arguments if t is not NoneType)
+            # Treat optional types as types with a None default
+            metadata['default'] = metadata.get('default', None)
+            metadata['missing'] = metadata.get('missing', None)
+            metadata['required'] = False
+            return field_for_schema(subtyp, metadata=metadata)
+        elif typing_inspect.is_union_type(typ):
+            subfields = [field_for_schema(subtyp, metadata=metadata) for subtyp in arguments]
+            import marshmallow_union
+            return marshmallow_union.Union(subfields, **metadata)
 
-    if origin in (list, List):
-        list_elements_type = typing_inspect.get_args(typ, True)[0]
-        return marshmallow.fields.List(
-            field_for_schema(list_elements_type),
-            **metadata
-        )
-    elif origin in (dict, Dict):
-        key_type, value_type = typing_inspect.get_args(typ, True)
-        return marshmallow.fields.Dict(
-            keys=field_for_schema(key_type),
-            values=field_for_schema(value_type),
-            **metadata
-        )
-    elif origin in (collections.abc.Callable, Callable):
-        return marshmallow.fields.Function(**metadata)
-    elif typing_inspect.is_optional_type(typ):
-        subtyp = next(t for t in typing_inspect.get_args(typ) if t is not NoneType)
-        # Treat optional types as types with a None default
-        metadata['default'] = metadata.get('default', None)
-        metadata['missing'] = metadata.get('missing', None)
-        metadata['required'] = False
-        return field_for_schema(subtyp, metadata=metadata)
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, '__supertype__', None)
     if newtype_supertype and inspect.isfunction(typ):

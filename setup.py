@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.6.6'
+VERSION = '6.0.0c5'
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
@@ -23,9 +23,10 @@ setup(
     url='https://github.com/lovasoa/marshmallow_dataclass',
     keywords=['marshmallow', 'dataclass', 'serialization'],
     classifiers=CLASSIFIERS,
-    install_requires=['marshmallow>=2.0,<3.0', 'typing-inspect'],
+    install_requires=['marshmallow>=3.0.0rc4,<4.0', 'typing-inspect'],
     extras_require={
-        'enum': ["marshmallow-enum<2.0"],
+        'enum': ["marshmallow-enum"],
+        'union': ["marshmallow-union"],
         ':python_version == "3.6"': ["dataclasses"],
         'dev': 'sphinx',
     },

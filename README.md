@@ -45,7 +45,7 @@ class City:
   buildings: List[Building] = field(default_factory=lambda: [])
 
 # City.Schema contains a marshmallow schema class
-city, _ = City.Schema().load({
+city = City.Schema().load({
     "name": "Paris",
     "buildings": [
         {"name": "Eiffel Tower", "height":324}
@@ -53,7 +53,7 @@ city, _ = City.Schema().load({
 })
 
 # Serializing city as a json string
-city_json, _ = City.Schema().dumps(city)
+city_json = City.Schema().dumps(city)
 ```
 
 The previous  syntax is very convenient, as the only change
@@ -122,7 +122,17 @@ marshmallow 3 pre-release:
 
 #### For marshmallow 2
 ```shell
-pipenv install marshmallow-dataclass
+pipenv install --pre marshmallow-dataclass
+```
+
+This package has the following optional features:
+ - `enum`, for translating python enums to 
+[marshmallow-enum](https://github.com/justanr/marshmallow_enum).
+
+You can install them with:
+
+```shell 
+pipenv install marshmallow-dataclass[enum]
 ```
 
 #### For marshmallow 3
