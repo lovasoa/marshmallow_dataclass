@@ -67,9 +67,7 @@
 <span class="sd">      })</span>
 <span class="sd">      Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">EnumMeta</span>
 <span class="kn">import</span> <span class="nn">dataclasses</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="kn">import</span> <span class="nn">marshmallow</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
@@ -228,7 +226,8 @@
 <span class="sd">        ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 
-<span class="sd">    &gt;&gt;&gt; class_schema(None)  # unsupported type</span>
+<span class="sd">    &gt;&gt;&gt; # noinspection PyTypeChecker</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(None) # unsupported type</span>
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">      ...</span>
 <span class="sd">    TypeError: None is not a dataclass and cannot be turned into one.</span>
