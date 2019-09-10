@@ -193,7 +193,8 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         ...
     marshmallow.exceptions.ValidationError: {'_schema': ['never valid']}
 
-    >>> class_schema(None)  # unsupported type
+    >>> # noinspection PyTypeChecker
+    >>> class_schema(None) # unsupported type
     Traceback (most recent call last):
       ...
     TypeError: None is not a dataclass and cannot be turned into one.
