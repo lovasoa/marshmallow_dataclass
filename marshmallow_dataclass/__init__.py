@@ -35,16 +35,15 @@ Full example::
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
 import dataclasses
+import datetime
+import decimal
+import inspect
+import uuid
+from enum import Enum, EnumMeta
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
 
 import marshmallow
-import datetime
-import uuid
-import decimal
-from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
-from enum import Enum, EnumMeta
 import typing_inspect
-import inspect
-
 
 __all__ = [
     'dataclass',
@@ -59,7 +58,13 @@ NoneType = type(None)
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
-def dataclass(_cls: type = None, *, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False) -> type:
+def dataclass(_cls: type = None, *,
+              repr: bool = True,
+              eq: bool = True,
+              order: bool = False,
+              unsafe_hash: bool = False,
+              frozen: bool = False
+              ) -> type:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
@@ -202,7 +207,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
     try:
         # noinspection PyDataclass
-        fields: Tuple[dataclasses.Field] = dataclasses.fields(clazz)
+        fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
             return class_schema(dataclasses.dataclass(clazz))
