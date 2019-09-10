@@ -113,32 +113,31 @@ class Point:
 
 ## Installation
 This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/).
+You can install it with a simple :
 
-There are two versions, depending on whether you want to use
-the latest stable release of marshmallow
-(marshmallow 2)
-or the newer unstable
-marshmallow 3 pre-release:
-
-#### For marshmallow 2
 ```shell
-pipenv install --pre marshmallow-dataclass
+pip3 install marshmallow-dataclass
 ```
 
-This package has the following optional features:
+This package also has the following optional features:
  - `enum`, for translating python enums to 
 [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
-
-You can install them with:
+ - `union`, for translating python
+ [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union)
+ into [`marshmallow-union`](https://pypi.org/project/marshmallow-union/)
+ fields.
+ 
+You can install these features with:
 
 ```shell 
-pipenv install marshmallow-dataclass[enum]
+pip3 install marshmallow-dataclass[enum,union]
 ```
 
-#### For marshmallow 3
-```shell
-pipenv install --pre marshmallow-dataclass
-```
+#### For marshmallow 2
+`marshmallow-dataclass` does not support the old
+marshmallow 2 anymore.
+You can install a version before `6.0`
+if you want marshmallow 2 support.
 
 ## Documentation
 
