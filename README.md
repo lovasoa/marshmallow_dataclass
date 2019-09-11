@@ -96,6 +96,38 @@ class Point:
   Schema: ClassVar[Type[Schema]] = Schema
 ```
 
+### Custom NewType declarations
+
+This library exports a `NewType` function
+to create new python types with a custom
+(de)serialization logic.
+
+All the additional keyword arguments to
+`NewType` are passed to the marshmallow
+field initializer:
+
+```python
+import marshmallow.validate
+from marshmallow_dataclass import NewType
+
+IPv4 = NewType('IPv4', str, validate=marshmallow.validate.Regexp(r'^([0-9]{1,3}\\.){3}[0-9]{1,3}$'))
+```
+
+You can also set a predefined marshmallow field
+for your new type:
+
+```python
+import marshmallow
+from marshmallow_dataclass import NewType
+
+Email = NewType('Email', str, field=marshmallow.fields.Email)
+```
+
+This feature allows you to implement a custom 
+serialization and deserialization logic using
+[custom marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
+
+### Using marshmallow's `Meta`
 You can specify the
 [`Meta`](https://marshmallow.readthedocs.io/en/3.0/api_reference.html#marshmallow.Schema.Meta)
 just as you would in a marshmallow Schema:

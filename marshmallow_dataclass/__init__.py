@@ -38,9 +38,10 @@ import dataclasses
 import datetime
 import decimal
 import inspect
+import typing
 import uuid
 from enum import Enum, EnumMeta
-from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, NewType
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, TypeVar
 
 import marshmallow
 import typing_inspect
@@ -49,7 +50,8 @@ __all__ = [
     'dataclass',
     'add_schema',
     'class_schema',
-    'field_for_schema'
+    'field_for_schema',
+    'NewType'
 ]
 
 NoneType = type(None)
@@ -122,7 +124,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     (one that has no equivalent python type), you can pass it as the
     ``marshmallow_field`` key in the metadata dictionary.
 
-    >>> Meters = NewType('Meters', float)
+    >>> Meters = typing.NewType('Meters', float)
     >>> @dataclasses.dataclass()
     ... class Building:
     ...   height: Optional[Meters]
@@ -278,10 +280,10 @@ def field_for_schema(
     >>> field_for_schema(typing.Union[int,str]).__class__
     <class 'marshmallow_union.Union'>
 
-    >>> field_for_schema(NewType('UserId', int)).__class__
+    >>> field_for_schema(typing.NewType('UserId', int)).__class__
     <class 'marshmallow.fields.Integer'>
 
-    >>> field_for_schema(NewType('UserId', int), default=0).default
+    >>> field_for_schema(typing.NewType('UserId', int), default=0).default
     0
 
     >>> class Color(Enum):
@@ -345,8 +347,17 @@ def field_for_schema(
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, '__supertype__', None)
     if newtype_supertype and inspect.isfunction(typ):
-        metadata.setdefault('description', typ.__name__)
-        return field_for_schema(newtype_supertype, metadata=metadata, default=default)
+        # Add the information coming our custom NewType implementation
+        metadata = {
+            "description": typ.__name__,
+            **getattr(typ, '_marshmallow_args', {}),
+            **metadata,
+        }
+        field = getattr(typ, '_marshmallow_field', None)
+        if field:
+            return field(**metadata)
+        else:
+            return field_for_schema(newtype_supertype, metadata=metadata, default=default)
 
     # enumerations
     if type(typ) is EnumMeta:
@@ -380,6 +391,54 @@ def _get_field_default(field: dataclasses.Field):
     elif field.default is dataclasses.MISSING:
         return marshmallow.missing
     return field.default
+
+
+_U = TypeVar('_U')
+
+
+def NewType(
+        name: str,
+        typ: Type[_U],
+        field: Optional[Type[marshmallow.fields.Field]] = None,
+        **kwargs
+) -> Type[_U]:
+    """NewType creates simple unique types
+    to which you can attach custom marshmallow attributes.
+    All the keyword arguments passed to this function will be transmitted
+    to the marshmallow field constructor.
+
+    >>> import marshmallow.validate
+    >>> IPv4 = NewType('IPv4', str, validate=marshmallow.validate.Regexp(r'^([0-9]{1,3}\\.){3}[0-9]{1,3}$'))
+    >>> @dataclass
+    ... class MyIps:
+    ...   ips: List[IPv4]
+    >>> MyIps.Schema().load({"ips": ["0.0.0.0", "grumble grumble"]})
+    Traceback (most recent call last):
+    ...
+    marshmallow.exceptions.ValidationError: {'ips': {1: ['String does not match expected pattern.']}}
+    >>> MyIps.Schema().load({"ips": ["127.0.0.1"]})
+    MyIps(ips=['127.0.0.1'])
+
+    >>> Email = NewType('Email', str, field=marshmallow.fields.Email)
+    >>> @dataclass
+    ... class ContactInfo:
+    ...   mail: Email = dataclasses.field(default="anonymous@example.org")
+    >>> ContactInfo.Schema().load({})
+    ContactInfo(mail='anonymous@example.org')
+    >>> ContactInfo.Schema().load({"mail": "grumble grumble"})
+    Traceback (most recent call last):
+    ...
+    marshmallow.exceptions.ValidationError: {'mail': ['Not a valid email address.']}
+    """
+
+    def new_type(x):
+        return x
+
+    new_type.__name__ = name
+    new_type.__supertype__ = typ
+    new_type._marshmallow_field = field
+    new_type._marshmallow_args = kwargs
+    return new_type
 
 
 if __name__ == "__main__":
