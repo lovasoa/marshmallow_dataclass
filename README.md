@@ -98,6 +98,11 @@ class Point:
 
 ### Custom NewType declarations
 
+> This feature is currently only available
+> in the latest pre-release, `6.1.0rc1`.
+> Please try it, and open an issue if you have
+> some feedback to give about it.
+
 This library exports a `NewType` function
 to create new python types with a custom
 (de)serialization logic.
