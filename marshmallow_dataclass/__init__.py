@@ -41,7 +41,7 @@ import inspect
 import typing
 import uuid
 from enum import Enum, EnumMeta
-from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, TypeVar
+from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, TypeVar, Callable
 
 import marshmallow
 import typing_inspect
@@ -65,11 +65,14 @@ def dataclass(_cls: type = None, *,
               eq: bool = True,
               order: bool = False,
               unsafe_hash: bool = False,
-              frozen: bool = False
+              frozen: bool = False,
+              custom_base_schema_class: Optional[Type[marshmallow.Schema]] = None
               ) -> type:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
+
+    :param custom_base_schema_class: marshmallow schema used as a base class when deriving dataclass schema
 
     >>> @dataclass
     ... class Artist:
@@ -88,13 +91,15 @@ def dataclass(_cls: type = None, *,
     Point(x=0.0, y=0.0)
     """
     dc = dataclasses.dataclass(_cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
-    return add_schema(dc) if _cls else lambda cls: add_schema(dc(cls))
+    return add_schema(dc, custom_base_schema_class) if _cls else lambda cls: add_schema(dc(cls), custom_base_schema_class)
 
 
-def add_schema(clazz: type) -> type:
+def add_schema(_cls = None, custom_base_schema_class: Optional[Type[marshmallow.Schema]] = None):
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
+
+    :param custom_base_schema_class: marshmallow schema used as a base class when deriving dataclass schema
 
     >>> @add_schema
     ... @dataclasses.dataclass
@@ -104,15 +109,25 @@ def add_schema(clazz: type) -> type:
     >>> artist
     Artist(names=('Martin', 'Ramirez'))
     """
-    clazz.Schema = class_schema(clazz)
-    return clazz
+    def decorator(clazz: type) -> type:
+        clazz.Schema = class_schema(clazz, custom_base_schema_class)
+        return clazz
+
+    if _cls:
+        return decorator(_cls)
+    else:
+        return decorator
 
 
-def class_schema(clazz: type) -> Type[marshmallow.Schema]:
+def class_schema(clazz: type,
+                 custom_base_schema_class: Optional[Type[marshmallow.Schema]] = None
+                 ) -> Type[marshmallow.Schema]:
+
     """
     Convert a class to a marshmallow schema
 
     :param clazz: A python class (may be a dataclass)
+    :param custom_base_schema_class: marshmallow schema used as a base class when deriving dataclass schema
     :return: A marshmallow Schema corresponding to the dataclass
 
     .. note::
@@ -212,7 +227,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
-            return class_schema(dataclasses.dataclass(clazz))
+            return class_schema(dataclasses.dataclass(clazz), custom_base_schema_class)
         except Exception:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one.")
@@ -221,11 +236,11 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
-        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata))
+        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata, custom_base_schema_class))
         for field in fields if field.init
     )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz),), attributes)
+    schema_class = type(clazz.__name__, (_base_schema(clazz, custom_base_schema_class),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -247,11 +262,14 @@ _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
 def field_for_schema(
         typ: type,
         default=marshmallow.missing,
-        metadata: Mapping[str, Any] = None
+        metadata: Mapping[str, Any] = None,
+        custom_base_schema_class: Optional[Type[marshmallow.Schema]] = None
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
+
+    :param custom_base_schema_class: marshmallow schema used as a base class when deriving dataclass schema
 
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
     >>> int_field.__class__
@@ -318,18 +336,18 @@ def field_for_schema(
         arguments = typing_inspect.get_args(typ, True)
         if origin in (list, List):
             return marshmallow.fields.List(
-                field_for_schema(arguments[0]),
+                field_for_schema(arguments[0], custom_base_schema_class=custom_base_schema_class),
                 **metadata
             )
         if origin in (tuple, Tuple):
             return marshmallow.fields.Tuple(
-                tuple(field_for_schema(arg) for arg in arguments),
+                tuple(field_for_schema(arg, custom_base_schema_class=custom_base_schema_class) for arg in arguments),
                 **metadata
             )
         elif origin in (dict, Dict):
             return marshmallow.fields.Dict(
-                keys=field_for_schema(arguments[0]),
-                values=field_for_schema(arguments[1]),
+                keys=field_for_schema(arguments[0], custom_base_schema_class=custom_base_schema_class),
+                values=field_for_schema(arguments[1], custom_base_schema_class=custom_base_schema_class),
                 **metadata
             )
         elif typing_inspect.is_optional_type(typ):
@@ -338,9 +356,12 @@ def field_for_schema(
             metadata['default'] = metadata.get('default', None)
             metadata['missing'] = metadata.get('missing', None)
             metadata['required'] = False
-            return field_for_schema(subtyp, metadata=metadata)
+            return field_for_schema(subtyp, metadata=metadata, custom_base_schema_class=custom_base_schema_class)
         elif typing_inspect.is_union_type(typ):
-            subfields = [field_for_schema(subtyp, metadata=metadata) for subtyp in arguments]
+            subfields = [
+                field_for_schema(subtyp, metadata=metadata, custom_base_schema_class=custom_base_schema_class)
+                for subtyp in arguments
+            ]
             import marshmallow_union
             return marshmallow_union.Union(subfields, **metadata)
 
@@ -357,7 +378,11 @@ def field_for_schema(
         if field:
             return field(**metadata)
         else:
-            return field_for_schema(newtype_supertype, metadata=metadata, default=default)
+            return field_for_schema(newtype_supertype,
+                                    metadata=metadata,
+                                    default=default,
+                                    custom_base_schema_class=custom_base_schema_class
+                                    )
 
     # enumerations
     if type(typ) is EnumMeta:
@@ -366,12 +391,23 @@ def field_for_schema(
 
     # Nested dataclasses
     forward_reference = getattr(typ, '__forward_arg__', None)
-    nested = forward_reference or class_schema(typ)
+    nested = forward_reference or class_schema(typ, custom_base_schema_class=custom_base_schema_class)
     return marshmallow.fields.Nested(nested, **metadata)
 
 
-def _base_schema(clazz: type) -> Type[marshmallow.Schema]:
-    class BaseSchema(marshmallow.Schema):
+def _base_schema(clazz: type,
+                 custom_base_schema_class: Optional[Type[marshmallow.Schema]] = None
+                 ) -> Type[marshmallow.Schema]:
+    """
+    Base schema factory that creates a schema for `clazz` derived either from `custom_base_schema_class`
+    or `BaseSchema`
+    """
+    if custom_base_schema_class is not None:
+        parent_schema = custom_base_schema_class
+    else:
+        parent_schema = marshmallow.Schema
+
+    class BaseSchema(parent_schema):
         @marshmallow.post_load
         def make_data_class(self, data, **_):
             return clazz(**data)

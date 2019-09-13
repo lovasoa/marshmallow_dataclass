@@ -96,6 +96,41 @@ class Point:
   Schema: ClassVar[Type[Schema]] = Schema
 ```
 
+It is also possible to derive all schemas from your own base class
+```python
+from dataclasses import dataclass
+
+import marshmallow
+import marshmallow_dataclass
+
+def camelcase(s):
+    parts = iter(s.split("_"))
+    return next(parts) + "".join(i.title() for i in parts)
+
+class BaseSchema(marshmallow.Schema):
+    """
+    camelCase transforming schema
+    """
+
+    def on_bind_field(self, field_name, field_obj):
+        field_obj.data_key = camelcase(field_obj.data_key or field_name)
+
+
+@dataclass
+class Sample:
+    very_interesting_text: str
+    small_integer: int
+
+
+schema = marshmallow_dataclass.class_schema(
+    Sample,
+    BaseSchema
+)()
+
+schema.dump(Sample("warm words", 1))
+schema.load({"veryInterestingText": "another essay", "smallInteger": 2})
+```
+
 ### Custom NewType declarations
 
 > This feature is currently only available
