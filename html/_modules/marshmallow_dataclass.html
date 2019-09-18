@@ -71,10 +71,9 @@
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">decimal</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">EnumMeta</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">EnumMeta</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span> <span class="nn">marshmallow</span>
 <span class="kn">import</span> <span class="nn">typing_inspect</span>
@@ -114,6 +113,7 @@
 <span class="sd">    &gt;&gt;&gt; Artist.Schema</span>
 <span class="sd">    &lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
 
+<span class="sd">    &gt;&gt;&gt; from typing import ClassVar</span>
 <span class="sd">    &gt;&gt;&gt; from marshmallow import Schema</span>
 <span class="sd">    &gt;&gt;&gt; @dataclass(order=True) # preserve field order</span>
 <span class="sd">    ... class Point:</span>
@@ -178,6 +178,7 @@
 <span class="sd">    (one that has no equivalent python type), you can pass it as the</span>
 <span class="sd">    ``marshmallow_field`` key in the metadata dictionary.</span>
 
+<span class="sd">    &gt;&gt;&gt; import typing</span>
 <span class="sd">    &gt;&gt;&gt; Meters = typing.NewType(&#39;Meters&#39;, float)</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class Building:</span>
@@ -329,6 +330,7 @@
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Optional[str]).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.String&#39;&gt;</span>
 
+<span class="sd">    &gt;&gt;&gt; from enum import Enum</span>
 <span class="sd">    &gt;&gt;&gt; import marshmallow_enum</span>
 <span class="sd">    &gt;&gt;&gt; field_for_schema(Enum(&quot;X&quot;, &quot;a b c&quot;)).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
