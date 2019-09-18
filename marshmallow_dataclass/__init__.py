@@ -230,16 +230,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
 
 
 _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
-    int: marshmallow.fields.Integer,
-    float: marshmallow.fields.Float,
-    str: marshmallow.fields.String,
-    bool: marshmallow.fields.Boolean,
-    datetime.datetime: marshmallow.fields.DateTime,
-    datetime.time: marshmallow.fields.Time,
-    datetime.timedelta: marshmallow.fields.TimeDelta,
-    datetime.date: marshmallow.fields.Date,
-    decimal.Decimal: marshmallow.fields.Decimal,
-    uuid.UUID: marshmallow.fields.UUID,
+    **marshmallow.Schema.TYPE_MAPPING,
     Any: marshmallow.fields.Raw,
 }
 
