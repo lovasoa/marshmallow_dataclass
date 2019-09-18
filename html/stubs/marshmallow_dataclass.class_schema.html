@@ -35,11 +35,14 @@
 <h1>marshmallow_dataclass.class_schema<a class="headerlink" href="#marshmallow-dataclass-class-schema" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="marshmallow_dataclass.class_schema">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>clazz</strong> – A python class (may be a dataclass)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clazz</strong> – A python class (may be a dataclass)</p></li>
+<li><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A marshmallow Schema corresponding to the dataclass</p>
