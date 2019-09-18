@@ -101,7 +101,7 @@ class Point:
 It is also possible to derive all schemas from your own 
 base Schema class
 (see [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html)).
-This allows you to implement a custom (de)serialization
+This allows you to implement custom (de)serialization
 behavior, for instance renaming fields:
 
 ```python
