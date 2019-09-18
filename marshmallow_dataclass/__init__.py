@@ -38,10 +38,9 @@ import dataclasses
 import datetime
 import decimal
 import inspect
-import typing
 import uuid
-from enum import Enum, EnumMeta
-from typing import Dict, Type, List, cast, Tuple, ClassVar, Optional, Any, Mapping, TypeVar
+from enum import EnumMeta
+from typing import Dict, Type, List, cast, Tuple, Optional, Any, Mapping, TypeVar
 
 import marshmallow
 import typing_inspect
