@@ -7,6 +7,7 @@ CLASSIFIERS = [
     'Environment :: Console',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
+    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries'
 ]
@@ -23,6 +24,7 @@ setup(
     url='https://github.com/lovasoa/marshmallow_dataclass',
     keywords=['marshmallow', 'dataclass', 'serialization'],
     classifiers=CLASSIFIERS,
+    python_requires=">=3.6",
     install_requires=['marshmallow>=3.0.0,<4.0', 'typing-inspect'],
     extras_require={
         'enum': ["marshmallow-enum"],
