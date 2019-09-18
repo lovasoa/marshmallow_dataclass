@@ -105,7 +105,8 @@ This allows you to implement a custom (de)serialization
 behavior, for instance renaming fields:
 
 ```python
-import marshmallow, marshmallow_dataclass
+import marshmallow
+import marshmallow_dataclass
 
 class BaseSchema(marshmallow.Schema):
     def on_bind_field(self, field_name, field_obj):
