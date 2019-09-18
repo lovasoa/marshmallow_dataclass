@@ -114,11 +114,11 @@ class BaseSchema(marshmallow.Schema):
 
 @marshmallow_dataclass.dataclass(base_schema=BaseSchema)
 class Sample:
-    text: str
-    num: int
+    my_text: str
+    my_int: int
 
 Sample.Schema().dump(Sample(my_text="warm words", my_int=1))
-# -> {"MY_TEXT": "another essay", "MY_INT": 2}
+# -> {"MY_TEXT": "warm words", "MY_INT": 1}
 ```
 
 ### Custom NewType declarations
