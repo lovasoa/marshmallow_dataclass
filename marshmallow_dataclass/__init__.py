@@ -76,6 +76,7 @@ def dataclass(_cls: type = None, *,
     >>> Artist.Schema
     <class 'marshmallow.schema.Artist'>
 
+    >>> from typing import ClassVar
     >>> from marshmallow import Schema
     >>> @dataclass(order=True) # preserve field order
     ... class Point:
@@ -123,6 +124,7 @@ def class_schema(clazz: type) -> Type[marshmallow.Schema]:
     (one that has no equivalent python type), you can pass it as the
     ``marshmallow_field`` key in the metadata dictionary.
 
+    >>> import typing
     >>> Meters = typing.NewType('Meters', float)
     >>> @dataclasses.dataclass()
     ... class Building:
@@ -271,6 +273,7 @@ def field_for_schema(
     >>> field_for_schema(Optional[str]).__class__
     <class 'marshmallow.fields.String'>
 
+    >>> from enum import Enum
     >>> import marshmallow_enum
     >>> field_for_schema(Enum("X", "a b c")).__class__
     <class 'marshmallow_enum.EnumField'>
