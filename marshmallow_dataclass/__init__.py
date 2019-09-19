@@ -45,29 +45,25 @@ from typing import Dict, Type, List, cast, Tuple, Optional, Any, Mapping, TypeVa
 import marshmallow
 import typing_inspect
 
-__all__ = [
-    'dataclass',
-    'add_schema',
-    'class_schema',
-    'field_for_schema',
-    'NewType'
-]
+__all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
 
 NoneType = type(None)
-_U = TypeVar('_U')
+_U = TypeVar("_U")
 
 
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
-def dataclass(_cls: type = None, *,
-              repr: bool = True,
-              eq: bool = True,
-              order: bool = False,
-              unsafe_hash: bool = False,
-              frozen: bool = False,
-              base_schema: Optional[Type[marshmallow.Schema]] = None
-              ) -> type:
+def dataclass(
+    _cls: type = None,
+    *,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+) -> type:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
@@ -91,13 +87,18 @@ def dataclass(_cls: type = None, *,
     >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
-    dc = dataclasses.dataclass(_cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
-    return add_schema(dc, base_schema) if _cls else lambda cls: add_schema(dc(cls), base_schema)
+    dc = dataclasses.dataclass(
+        _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
+    )
+    return (
+        add_schema(dc, base_schema)
+        if _cls
+        else lambda cls: add_schema(dc(cls), base_schema)
+    )
 
 
 def add_schema(
-        cls: Type[_U] = None,
-        base_schema: Optional[Type[marshmallow.Schema]] = None
+    cls: Type[_U] = None, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[_U]:
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
@@ -118,6 +119,7 @@ def add_schema(
     >>> artist
     Artist(names=('Martin', 'Ramirez'))
     """
+
     def decorator(clazz: type) -> type:
         clazz.Schema = class_schema(clazz, base_schema)
         return clazz
@@ -125,9 +127,9 @@ def add_schema(
     return decorator(cls) if cls else decorator
 
 
-def class_schema(clazz: type,
-                 base_schema: Optional[Type[marshmallow.Schema]] = None
-                 ) -> Type[marshmallow.Schema]:
+def class_schema(
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+) -> Type[marshmallow.Schema]:
 
     """
     Convert a class to a marshmallow schema
@@ -237,14 +239,21 @@ def class_schema(clazz: type,
             return class_schema(dataclasses.dataclass(clazz), base_schema)
         except Exception:
             raise TypeError(
-                f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one.")
+                f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
+            )
 
     # Copy all public members of the dataclass to the schema
-    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith('_')}
+    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith("_")}
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
-        (field.name, field_for_schema(field.type, _get_field_default(field), field.metadata, base_schema))
-        for field in fields if field.init
+        (
+            field.name,
+            field_for_schema(
+                field.type, _get_field_default(field), field.metadata, base_schema
+            ),
+        )
+        for field in fields
+        if field.init
     )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
@@ -258,10 +267,10 @@ _native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
 
 
 def field_for_schema(
-        typ: type,
-        default=marshmallow.missing,
-        metadata: Mapping[str, Any] = None,
-        base_schema: Optional[Type[marshmallow.Schema]] = None
+    typ: type,
+    default=marshmallow.missing,
+    metadata: Mapping[str, Any] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -314,14 +323,16 @@ def field_for_schema(
 
     metadata = {} if metadata is None else dict(metadata)
     if default is not marshmallow.missing:
-        metadata.setdefault('default', default)
-        if not metadata.get("required"):  # 'missing' must not be set for required fields.
-            metadata.setdefault('missing', default)
+        metadata.setdefault("default", default)
+        if not metadata.get(
+            "required"
+        ):  # 'missing' must not be set for required fields.
+            metadata.setdefault("missing", default)
     else:
-        metadata.setdefault('required', True)
+        metadata.setdefault("required", True)
 
     # If the field was already defined by the user
-    predefined_field = metadata.get('marshmallow_field')
+    predefined_field = metadata.get("marshmallow_field")
     if predefined_field:
         return predefined_field
 
@@ -335,26 +346,27 @@ def field_for_schema(
         arguments = typing_inspect.get_args(typ, True)
         if origin in (list, List):
             return marshmallow.fields.List(
-                field_for_schema(arguments[0], base_schema=base_schema),
-                **metadata
+                field_for_schema(arguments[0], base_schema=base_schema), **metadata
             )
         if origin in (tuple, Tuple):
             return marshmallow.fields.Tuple(
-                tuple(field_for_schema(arg, base_schema=base_schema) for arg in arguments),
-                **metadata
+                tuple(
+                    field_for_schema(arg, base_schema=base_schema) for arg in arguments
+                ),
+                **metadata,
             )
         elif origin in (dict, Dict):
             return marshmallow.fields.Dict(
                 keys=field_for_schema(arguments[0], base_schema=base_schema),
                 values=field_for_schema(arguments[1], base_schema=base_schema),
-                **metadata
+                **metadata,
             )
         elif typing_inspect.is_optional_type(typ):
             subtyp = next(t for t in arguments if t is not NoneType)
             # Treat optional types as types with a None default
-            metadata['default'] = metadata.get('default', None)
-            metadata['missing'] = metadata.get('missing', None)
-            metadata['required'] = False
+            metadata["default"] = metadata.get("default", None)
+            metadata["missing"] = metadata.get("missing", None)
+            metadata["required"] = False
             return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
             subfields = [
@@ -362,45 +374,49 @@ def field_for_schema(
                 for subtyp in arguments
             ]
             import marshmallow_union
+
             return marshmallow_union.Union(subfields, **metadata)
 
     # typing.NewType returns a function with a __supertype__ attribute
-    newtype_supertype = getattr(typ, '__supertype__', None)
+    newtype_supertype = getattr(typ, "__supertype__", None)
     if newtype_supertype and inspect.isfunction(typ):
         # Add the information coming our custom NewType implementation
         metadata = {
             "description": typ.__name__,
-            **getattr(typ, '_marshmallow_args', {}),
+            **getattr(typ, "_marshmallow_args", {}),
             **metadata,
         }
-        field = getattr(typ, '_marshmallow_field', None)
+        field = getattr(typ, "_marshmallow_field", None)
         if field:
             return field(**metadata)
         else:
-            return field_for_schema(newtype_supertype,
-                                    metadata=metadata,
-                                    default=default,
-                                    base_schema=base_schema
-                                    )
+            return field_for_schema(
+                newtype_supertype,
+                metadata=metadata,
+                default=default,
+                base_schema=base_schema,
+            )
 
     # enumerations
     if type(typ) is EnumMeta:
         import marshmallow_enum
+
         return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested dataclasses
-    forward_reference = getattr(typ, '__forward_arg__', None)
+    forward_reference = getattr(typ, "__forward_arg__", None)
     nested = forward_reference or class_schema(typ, base_schema=base_schema)
     return marshmallow.fields.Nested(nested, **metadata)
 
 
-def _base_schema(clazz: type,
-                 base_schema: Optional[Type[marshmallow.Schema]] = None
-                 ) -> Type[marshmallow.Schema]:
+def _base_schema(
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
     or `BaseSchema`
     """
+
     class BaseSchema(base_schema or marshmallow.Schema):
         @marshmallow.post_load
         def make_data_class(self, data, **_):
@@ -422,11 +438,12 @@ def _get_field_default(field: dataclasses.Field):
         return marshmallow.missing
     return field.default
 
+
 def NewType(
-        name: str,
-        typ: Type[_U],
-        field: Optional[Type[marshmallow.fields.Field]] = None,
-        **kwargs
+    name: str,
+    typ: Type[_U],
+    field: Optional[Type[marshmallow.fields.Field]] = None,
+    **kwargs,
 ) -> Type[_U]:
     """NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
