@@ -28,29 +28,30 @@ function.
 
 ```python
 from dataclasses import field
-from marshmallow_dataclass import dataclass # Importing from marshmallow_dataclass instead of dataclasses
+from marshmallow_dataclass import (
+    dataclass,
+)  # Importing from marshmallow_dataclass instead of dataclasses
 import marshmallow.validate
 from typing import List, Optional
 
+
 @dataclass
 class Building:
-  # The field metadata is used to instantiate the marshmallow field
-  height: float = field(metadata={'validate': marshmallow.validate.Range(min=0)})
-  name: str = field(default="anonymous")
+    # The field metadata is used to instantiate the marshmallow field
+    height: float = field(metadata={"validate": marshmallow.validate.Range(min=0)})
+    name: str = field(default="anonymous")
 
 
 @dataclass
 class City:
-  name: Optional[str]
-  buildings: List[Building] = field(default_factory=lambda: [])
+    name: Optional[str]
+    buildings: List[Building] = field(default_factory=lambda: [])
+
 
 # City.Schema contains a marshmallow schema class
-city = City.Schema().load({
-    "name": "Paris",
-    "buildings": [
-        {"name": "Eiffel Tower", "height":324}
-    ]
-})
+city = City.Schema().load(
+    {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
+)
 
 # Serializing city as a json string
 city_json = City.Schema().dumps(city)
@@ -73,10 +74,12 @@ from dataclasses import dataclass
 from datetime import datetime
 import marshmallow_dataclass
 
+
 @dataclass
 class Person:
     name: str
     birth: datetime
+
 
 PersonSchema = marshmallow_dataclass.class_schema(Person)
 ```
@@ -89,11 +92,12 @@ from marshmallow_dataclass import dataclass
 from marshmallow import Schema
 from typing import ClassVar, Type
 
+
 @dataclass
 class Point:
-  x:float
-  y:float
-  Schema: ClassVar[Type[Schema]] = Schema
+    x: float
+    y: float
+    Schema: ClassVar[Type[Schema]] = Schema
 ```
 
 ### Custom base Schema class
@@ -108,6 +112,7 @@ behavior, for instance renaming fields:
 import marshmallow
 import marshmallow_dataclass
 
+
 class BaseSchema(marshmallow.Schema):
     def on_bind_field(self, field_name, field_obj):
         field_obj.data_key = (field_obj.data_key or field_name).upper()
@@ -117,6 +122,7 @@ class BaseSchema(marshmallow.Schema):
 class Sample:
     my_text: str
     my_int: int
+
 
 Sample.Schema().dump(Sample(my_text="warm words", my_int=1))
 # -> {"MY_TEXT": "warm words", "MY_INT": 1}
@@ -141,7 +147,9 @@ field initializer:
 import marshmallow.validate
 from marshmallow_dataclass import NewType
 
-IPv4 = NewType('IPv4', str, validate=marshmallow.validate.Regexp(r'^([0-9]{1,3}\\.){3}[0-9]{1,3}$'))
+IPv4 = NewType(
+    "IPv4", str, validate=marshmallow.validate.Regexp(r"^([0-9]{1,3}\\.){3}[0-9]{1,3}$")
+)
 ```
 
 You can also set a predefined marshmallow field
@@ -151,7 +159,7 @@ for your new type:
 import marshmallow
 from marshmallow_dataclass import NewType
 
-Email = NewType('Email', str, field=marshmallow.fields.Email)
+Email = NewType("Email", str, field=marshmallow.fields.Email)
 ```
 
 This feature allows you to implement a custom 
@@ -166,12 +174,14 @@ just as you would in a marshmallow Schema:
 ```python
 from marshmallow_dataclass import dataclass
 
+
 @dataclass
 class Point:
-  x:float
-  y:float
-  class Meta:
-    ordered = True
+    x: float
+    y: float
+
+    class Meta:
+        ordered = True
 ```
 
 ## Installation
