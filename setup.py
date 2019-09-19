@@ -30,7 +30,7 @@ setup(
         'enum': ["marshmallow-enum"],
         'union': ["marshmallow-union"],
         ':python_version == "3.6"': ["dataclasses"],
-        'dev': 'sphinx',
+        'dev': ['sphinx', 'pre-commit~=1.18'],
     },
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )
