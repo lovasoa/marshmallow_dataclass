@@ -6,7 +6,7 @@ python:
   - "3.7"
   - "3.8-dev"
 install:
-  - pipenv install --pre -e '.[union,enum,dev]'
+  - pipenv install --pre -e '.[dev]'
 script:
   - pipenv run python -m doctest -v marshmallow_dataclass/*.py
   - pipenv run pre-commit run --all-files
@@ -19,6 +19,8 @@ jobs:
   include:
     - stage: deploy
       python: 3.7
+      install: pipenv install --pre -e '.[docs]'
+      script: cd docs && pipenv run make html && cd ..
       deploy:
         - provider: pages
           skip-cleanup: true

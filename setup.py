@@ -12,6 +12,20 @@ CLASSIFIERS = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries",
 ]
 
+EXTRAS_REQUIRE = {
+    "enum": ["marshmallow-enum"],
+    "union": ["marshmallow-union"],
+    ':python_version == "3.6"': ["dataclasses"],
+    "lint": ["pre-commit~=1.18"],
+    "docs": ["sphinx"],
+}
+EXTRAS_REQUIRE["dev"] = (
+    EXTRAS_REQUIRE["enum"]
+    + EXTRAS_REQUIRE["union"]
+    + EXTRAS_REQUIRE["lint"]
+    + EXTRAS_REQUIRE["docs"]
+)
+
 setup(
     name="marshmallow_dataclass",
     version=VERSION,
@@ -26,11 +40,6 @@ setup(
     classifiers=CLASSIFIERS,
     python_requires=">=3.6",
     install_requires=["marshmallow>=3.0.0,<4.0", "typing-inspect"],
-    extras_require={
-        "enum": ["marshmallow-enum"],
-        "union": ["marshmallow-union"],
-        ':python_version == "3.6"': ["dataclasses"],
-        "dev": ["sphinx", "pre-commit~=1.18"],
-    },
+    extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )
