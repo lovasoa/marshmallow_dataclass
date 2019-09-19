@@ -35,10 +35,7 @@ Full example::
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
 import dataclasses
-import datetime
-import decimal
 import inspect
-import uuid
 from enum import EnumMeta
 from typing import Dict, Type, List, cast, Tuple, Optional, Any, Mapping, TypeVar
 
@@ -193,7 +190,8 @@ def class_schema(
     >>> @dataclasses.dataclass()
     ... class C:
     ...   important: int = dataclasses.field(init=True, default=0)
-    ...   unimportant: int = dataclasses.field(init=False, default=0) # Only fields that are in the __init__ method will be added:
+    ...    # Only fields that are in the __init__ method will be added:
+    ...   unimportant: int = dataclasses.field(init=False, default=0)
     ...
     >>> c = class_schema(C)().load({
     ...     "important": 9, # This field will be imported
@@ -281,7 +279,7 @@ def field_for_schema(
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
     >>> int_field.__class__
     <class 'marshmallow.fields.Integer'>
-    
+
     >>> int_field.default
     9
 
