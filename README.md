@@ -29,13 +29,11 @@ class City:
 
 CitySchema = marshmallow_dataclass.class_schema(City)
 
-# Deserialize dict to an object
 city = CitySchema().load(
     {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
 )
 # => City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
 
-# Serializing object to a dict
 city_dict = CitySchema().dump(city)
 # => {'name': 'Paris', 'buildings': [{'name': 'Eiffel Tower', 'height': 324.0}]}
 ```
@@ -140,7 +138,6 @@ class City:
     buildings: List[Building] = field(default_factory=list)
 
 
-# City.Schema contains a marshmallow schema class
 city = City.Schema().load(
     {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
 )
