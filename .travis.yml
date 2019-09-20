@@ -14,7 +14,9 @@ script:
 stages:
   - test
   - deploy
-
+branches:
+    only:
+        - master
 jobs:
   include:
     - stage: deploy
