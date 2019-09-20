@@ -69,7 +69,9 @@ Install `marshmallow_dataclass<6.0` if you need marshmallow 2 compatibility.
 
 ## Usage
 
-Use the [`class_schema`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.class_schema) function to generate a marshmallow [Schema](https://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema) class from a [`dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass).
+Use the [`class_schema`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.class_schema)
+function to generate a marshmallow [Schema](https://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema)
+class from a [`dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass).
 
 ```python
 from dataclasses import dataclass
@@ -89,58 +91,46 @@ PersonSchema = marshmallow_dataclass.class_schema(Person)
 
 ### Customizing generated fields
 
-To pass arguments to the generated marshmallow fields (e.g., `validate`, `load_only`, `dump_only`, etc.), pass them to the `metadata` argument of the [`field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.field) function.
+To pass arguments to the generated marshmallow fields (e.g., `validate`, `load_only`, `dump_only`, etc.),
+pass them to the `metadata` argument of the
+[`field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.field) function.
 
 ```python
 from dataclasses import dataclass, field
-from typing import List, Optional
-
+import marshmallow_dataclass
 import marshmallow.validate
 
 
 @dataclass
-class Building:
-    height: float = field(metadata={"validate": marshmallow.validate.Range(min=0)})
-    name: str = field(default="anonymous")
+class Person:
+    name: str = field(
+        metadata=dict(description="The person's first name", load_only=True)
+    )
+    height: float = field(metadata=dict(validate=marshmallow.validate.Range(min=0)))
 
 
-@dataclass
-class City:
-    name: Optional[str]
-    buildings: List[Building] = field(default_factory=list)
-
-
-CitySchema = marshmallow_dataclass.class_schema(City)
+PersonSchema = marshmallow_dataclass.class_schema(Person)
 ```
 
 ### `@dataclass` shortcut
 
-`marshmallow_dataclass` provides a `@dataclass` decorator that behaves like the standard library's `@dataclasses.dataclass` and adds a `Schema` attribute with the generated marshmallow [Schema](https://marshmallow.readthedocs.io/en/2.x-line/api_reference.html#marshmallow.Schema).
+`marshmallow_dataclass` provides a `@dataclass` decorator that behaves like the standard library's 
+`@dataclasses.dataclass` and adds a `Schema` attribute with the generated marshmallow
+[Schema](https://marshmallow.readthedocs.io/en/2.x-line/api_reference.html#marshmallow.Schema).
 
 ```python
-from dataclasses import field
-from typing import List, Optional
-
 # Use marshmallow_dataclass's @dataclass shortcut
 from marshmallow_dataclass import dataclass
-import marshmallow.validate
 
 
 @dataclass
-class Building:
-    height: float = field(metadata={"validate": marshmallow.validate.Range(min=0)})
-    name: str = field(default="anonymous")
+class Point:
+    x: float
+    y: float
 
 
-@dataclass
-class City:
-    name: Optional[str]
-    buildings: List[Building] = field(default_factory=list)
-
-
-city = City.Schema().load(
-    {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
-)
+Point.Schema().dump(Point(4, 2))
+# => {'x': 4, 'y': 2}
 ```
 
 Note: Since the `.Schema` property is added dynamically, it can confuse type checkers.
