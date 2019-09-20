@@ -37,7 +37,20 @@ Full example::
 import dataclasses
 import inspect
 from enum import EnumMeta
-from typing import Dict, Type, List, cast, Tuple, Optional, Any, Mapping, TypeVar
+from typing import (
+    overload,
+    Dict,
+    Type,
+    List,
+    cast,
+    Tuple,
+    Optional,
+    Any,
+    Mapping,
+    TypeVar,
+    Union,
+    Callable,
+)
 
 import marshmallow
 import typing_inspect
@@ -52,7 +65,7 @@ _U = TypeVar("_U")
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
 def dataclass(
-    _cls: type = None,
+    _cls: Type[_U] = None,
     *,
     repr: bool = True,
     eq: bool = True,
@@ -60,7 +73,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> type:
+) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
@@ -84,19 +97,35 @@ def dataclass(
     >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
-    dc = dataclasses.dataclass(
+    # dataclass's typing doesn't expect it to be called as a function, so ignore type check
+    dc = dataclasses.dataclass(  # type: ignore
         _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
     )
-    return (
-        add_schema(dc, base_schema)
-        if _cls
-        else lambda cls: add_schema(dc(cls), base_schema)
-    )
+    if _cls is None:
+        return lambda cls: add_schema(dc(cls), base_schema)
+    return add_schema(dc, base_schema)
 
 
+@overload
+def add_schema(_cls: Type[_U]) -> Type[_U]:
+    ...
+
+
+@overload
 def add_schema(
-    cls: Type[_U] = None, base_schema: Optional[Type[marshmallow.Schema]] = None
+    base_schema: Type[marshmallow.Schema] = None
+) -> Callable[[Type[_U]], Type[_U]]:
+    ...
+
+
+@overload
+def add_schema(
+    _cls: Type[_U], base_schema: Type[marshmallow.Schema] = None
 ) -> Type[_U]:
+    ...
+
+
+def add_schema(_cls=None, base_schema=None):
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
@@ -117,11 +146,11 @@ def add_schema(
     Artist(names=('Martin', 'Ramirez'))
     """
 
-    def decorator(clazz: type) -> type:
-        clazz.Schema = class_schema(clazz, base_schema)
+    def decorator(clazz: Type[_U]) -> Type[_U]:
+        clazz.Schema = class_schema(clazz, base_schema)  # type: ignore
         return clazz
 
-    return decorator(cls) if cls else decorator
+    return decorator(_cls) if _cls else decorator
 
 
 def class_schema(
@@ -258,7 +287,7 @@ def class_schema(
     return cast(Type[marshmallow.Schema], schema_class)
 
 
-_native_to_marshmallow: Dict[type, Type[marshmallow.fields.Field]] = {
+_native_to_marshmallow: Dict[Union[type, Any], Type[marshmallow.fields.Field]] = {
     **marshmallow.Schema.TYPE_MAPPING,
     Any: marshmallow.fields.Raw,
 }
@@ -360,7 +389,7 @@ def field_for_schema(
                 **metadata,
             )
         elif typing_inspect.is_optional_type(typ):
-            subtyp = next(t for t in arguments if t is not NoneType)
+            subtyp = next(t for t in arguments if t is not NoneType)  # type: ignore
             # Treat optional types as types with a None default
             metadata["default"] = metadata.get("default", None)
             metadata["missing"] = metadata.get("missing", None)
@@ -408,14 +437,15 @@ def field_for_schema(
 
 
 def _base_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+    clazz: type, base_schema: Type[marshmallow.Schema] = None
 ) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
     or `BaseSchema`
     """
-
-    class BaseSchema(base_schema or marshmallow.Schema):
+    # Remove `type: ignore` when mypy handles dynamic base classes
+    # https://github.com/python/mypy/issues/2813
+    class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         @marshmallow.post_load
         def make_data_class(self, data, **_):
             return clazz(**data)
@@ -430,8 +460,10 @@ def _get_field_default(field: dataclasses.Field):
     >>> _get_field_default(dataclasses.field())
     <marshmallow.missing>
     """
-    if field.default_factory is not dataclasses.MISSING:
-        return field.default_factory
+    # Remove `type: ignore` when https://github.com/python/mypy/issues/6910 is fixed
+    default_factory = field.default_factory  # type: ignore
+    if default_factory is not dataclasses.MISSING:
+        return default_factory
     elif field.default is dataclasses.MISSING:
         return marshmallow.missing
     return field.default
@@ -442,7 +474,7 @@ def NewType(
     typ: Type[_U],
     field: Optional[Type[marshmallow.fields.Field]] = None,
     **kwargs,
-) -> Type[_U]:
+) -> Callable[[_U], _U]:
     """NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
     All the keyword arguments passed to this function will be transmitted
@@ -472,13 +504,13 @@ def NewType(
     marshmallow.exceptions.ValidationError: {'mail': ['Not a valid email address.']}
     """
 
-    def new_type(x):
+    def new_type(x: _U):
         return x
 
     new_type.__name__ = name
-    new_type.__supertype__ = typ
-    new_type._marshmallow_field = field
-    new_type._marshmallow_args = kwargs
+    new_type.__supertype__ = typ  # type: ignore
+    new_type._marshmallow_field = field  # type: ignore
+    new_type._marshmallow_args = kwargs  # type: ignore
     return new_type
 
 
