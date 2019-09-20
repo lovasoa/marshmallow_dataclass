@@ -1,43 +1,22 @@
-# marshmallow_dataclass
+# marshmallow-dataclass
+
 [![Build Status](https://travis-ci.org/lovasoa/marshmallow_dataclass.svg?branch=master)](https://travis-ci.org/lovasoa/marshmallow_dataclass)
 [![PyPI version](https://badge.fury.io/py/marshmallow-dataclass.svg)](https://badge.fury.io/py/marshmallow-dataclass)
+[![marshmallow 3 compatible](https://badgen.net/badge/marshmallow/3)](https://marshmallow.readthedocs.io/en/latest/upgrading.html)
 
 Automatic generation of [marshmallow](https://marshmallow.readthedocs.io/) schemas from dataclasses.
 
-Specifying a schema to which your data should conform is very useful, both for (de)serialization and for documentation.
-However, using schemas in python often means having both a class to represent your data and a class to represent its schema, which means duplicated code that could fall out of sync. With the new features of python 3.6, types can be defined for class members, and that allows libraries like this one to generate schemas automatically.
-
-An use case would be to document APIs (with [flasgger](https://github.com/rochacbruno/flasgger#flasgger), for instance) in a way that allows you to statically check that the code matches the documentation.
-
-## How to use
-
-You simply import
-[`marshmallow_dataclass.dataclass`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.dataclass)
-instead of
-[`dataclasses.dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass).
-It adds a `Schema` property to the generated class,
-containing a marshmallow
-[Schema](https://marshmallow.readthedocs.io/en/2.x-line/api_reference.html#marshmallow.Schema)
-class.
-
-If you need to specify custom properties on your marshmallow fields
-(such as `attribute`, `error`, `validate`, `required`, `dump_only`, `error_messages`, `description` ...)
-you can add them using the `metadata` argument of the
-[`field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.field)
-function.
-
 ```python
-from dataclasses import field
-from marshmallow_dataclass import (
-    dataclass,
-)  # Importing from marshmallow_dataclass instead of dataclasses
-import marshmallow.validate
+from dataclasses import dataclass, field
 from typing import List, Optional
+
+import marshmallow
+import marshmallow_dataclass
 
 
 @dataclass
 class Building:
-    # The field metadata is used to instantiate the marshmallow field
+    # field metadata is used to instantiate the marshmallow field
     height: float = field(metadata={"validate": marshmallow.validate.Range(min=0)})
     name: str = field(default="anonymous")
 
@@ -45,52 +24,123 @@ class Building:
 @dataclass
 class City:
     name: Optional[str]
-    buildings: List[Building] = field(default_factory=lambda: [])
+    buildings: List[Building] = field(default_factory=list)
 
 
-# City.Schema contains a marshmallow schema class
-city = City.Schema().load(
+CitySchema = marshmallow_dataclass.class_schema(City)
+
+city = CitySchema().load(
     {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
 )
+# => City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
 
-# Serializing city as a json string
-city_json = City.Schema().dumps(city)
+city_dict = CitySchema().dump(city)
+# => {'name': 'Paris', 'buildings': [{'name': 'Eiffel Tower', 'height': 324.0}]}
 ```
 
-The previous  syntax is very convenient, as the only change
-you have to apply to your existing code is update the
-`dataclass` import.
+## Why
 
-However, as the `.Schema` property is added dynamically,
-it can confuse type checkers.
-If you want to avoid that, you can also use the standard
-`dataclass` decorator, and generate the schema manually
-using
-[`class_schema`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.class_schema)
-:
+Using schemas in Python often means having both a class to represent your data and a class to represent its schema, which results in duplicated code that could fall out of sync.
+As of Python 3.6, types can be defined for class members, which allows libraries to generate schemas automatically.
+
+Therefore, you can document your APIs in a way that allows you to statically check that the code matches the documentation.
+
+## Installation
+
+This package [is hosted on PyPI](https://pypi.org/project/marshmallow-dataclass/).
+
+```shell
+pip3 install marshmallow-dataclass
+```
+
+You may optionally install the following extras:
+
+- `enum`, for translating python enums to [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
+- `union`, for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) into [`marshmallow-union`](https://pypi.org/project/marshmallow-union/) fields.
+
+```shell
+pip3 install marshmallow-dataclass[enum,union]
+```
+
+### marshmallow 2 support
+
+`marshmallow-dataclass` no longer supports marshmallow 2.
+Install `marshmallow_dataclass<6.0` if you need marshmallow 2 compatibility.
+
+## Usage
+
+Use the [`class_schema`](https://lovasoa.github.io/marshmallow_dataclass/html/marshmallow_dataclass.html#marshmallow_dataclass.class_schema)
+function to generate a marshmallow [Schema](https://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema)
+class from a [`dataclass`](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass).
 
 ```python
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
+
 import marshmallow_dataclass
 
 
 @dataclass
 class Person:
     name: str
-    birth: datetime
+    birth: date
 
 
 PersonSchema = marshmallow_dataclass.class_schema(Person)
 ```
 
-You can also declare the schema as a
-[`ClassVar`](https://docs.python.org/3/library/typing.html#typing.ClassVar):
+### Customizing generated fields
+
+To pass arguments to the generated marshmallow fields (e.g., `validate`, `load_only`, `dump_only`, etc.),
+pass them to the `metadata` argument of the
+[`field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.field) function.
 
 ```python
+from dataclasses import dataclass, field
+import marshmallow_dataclass
+import marshmallow.validate
+
+
+@dataclass
+class Person:
+    name: str = field(
+        metadata=dict(description="The person's first name", load_only=True)
+    )
+    height: float = field(metadata=dict(validate=marshmallow.validate.Range(min=0)))
+
+
+PersonSchema = marshmallow_dataclass.class_schema(Person)
+```
+
+### `@dataclass` shortcut
+
+`marshmallow_dataclass` provides a `@dataclass` decorator that behaves like the standard library's 
+`@dataclasses.dataclass` and adds a `Schema` attribute with the generated marshmallow
+[Schema](https://marshmallow.readthedocs.io/en/2.x-line/api_reference.html#marshmallow.Schema).
+
+```python
+# Use marshmallow_dataclass's @dataclass shortcut
+from marshmallow_dataclass import dataclass
+
+
+@dataclass
+class Point:
+    x: float
+    y: float
+
+
+Point.Schema().dump(Point(4, 2))
+# => {'x': 4, 'y': 2}
+```
+
+Note: Since the `.Schema` property is added dynamically, it can confuse type checkers.
+To avoid that, you can declare `Schema` as a [`ClassVar`](https://docs.python.org/3/library/typing.html#typing.ClassVar).
+
+```python
+from typing import ClassVar, Type
+
 from marshmallow_dataclass import dataclass
 from marshmallow import Schema
-from typing import ClassVar, Type
 
 
 @dataclass
@@ -100,33 +150,44 @@ class Point:
     Schema: ClassVar[Type[Schema]] = Schema
 ```
 
-### Custom base Schema class
+### Customizing the base Schema
 
-It is also possible to derive all schemas from your own 
-base Schema class
-(see [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html)).
-This allows you to implement custom (de)serialization
-behavior, for instance renaming fields:
+To customize the base `Schema` class, pass the `base_schema` argument.
+This allows you to implement custom (de)serialization behavior.
 
 ```python
 import marshmallow
 import marshmallow_dataclass
 
 
-class BaseSchema(marshmallow.Schema):
+class UppercaseSchema(marshmallow.Schema):
+    """A Schema that marshals data with uppercased keys."""
+
     def on_bind_field(self, field_name, field_obj):
         field_obj.data_key = (field_obj.data_key or field_name).upper()
 
 
-@marshmallow_dataclass.dataclass(base_schema=BaseSchema)
 class Sample:
     my_text: str
     my_int: int
 
 
+SampleSchema = marshmallow_dataclass.class_schema(Sample, base_schema=UppercaseSchema)
+
 Sample.Schema().dump(Sample(my_text="warm words", my_int=1))
 # -> {"MY_TEXT": "warm words", "MY_INT": 1}
 ```
+
+You can also pass `base_schema` to `marshmallow_dataclass.dataclass`.
+
+```python
+@marshmallow_dataclass.dataclass(base_schema=UppercaseSchema)
+class Sample:
+    my_text: str
+    my_int: int
+```
+
+See [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html).
 
 ### Custom NewType declarations
 
@@ -135,13 +196,9 @@ Sample.Schema().dump(Sample(my_text="warm words", my_int=1))
 > Please try it, and open an issue if you have
 > some feedback to give about it.
 
-This library exports a `NewType` function
-to create new python types with a custom
-(de)serialization logic.
+This library exports a `NewType` function to create types that generate [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
 
-All the additional keyword arguments to
-`NewType` are passed to the marshmallow
-field initializer:
+Keyword arguments to `NewType` are passed to the marshmallow field constructor.
 
 ```python
 import marshmallow.validate
@@ -152,8 +209,7 @@ IPv4 = NewType(
 )
 ```
 
-You can also set a predefined marshmallow field
-for your new type:
+You can also pass a marshmallow field `NewType`.
 
 ```python
 import marshmallow
@@ -162,14 +218,9 @@ from marshmallow_dataclass import NewType
 Email = NewType("Email", str, field=marshmallow.fields.Email)
 ```
 
-This feature allows you to implement a custom 
-serialization and deserialization logic using
-[custom marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
+### `Meta` options
 
-### Using marshmallow's `Meta`
-You can specify the
-[`Meta`](https://marshmallow.readthedocs.io/en/3.0/api_reference.html#marshmallow.Schema.Meta)
-just as you would in a marshmallow Schema:
+[`Meta` options](https://marshmallow.readthedocs.io/en/3.0/api_reference.html#marshmallow.Schema.Meta) are set the same way as a marshmallow `Schema`.
 
 ```python
 from marshmallow_dataclass import dataclass
@@ -184,42 +235,10 @@ class Point:
         ordered = True
 ```
 
-## Installation
-This package [is hosted on pypi](https://pypi.org/project/marshmallow-dataclass/).
-You can install it with a simple :
-
-```shell
-pip3 install marshmallow-dataclass
-```
-
-This package also has the following optional features:
- - `enum`, for translating python enums to 
-[marshmallow-enum](https://github.com/justanr/marshmallow_enum).
- - `union`, for translating python
- [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union)
- into [`marshmallow-union`](https://pypi.org/project/marshmallow-union/)
- fields.
- 
-You can install these features with:
-
-```shell 
-pip3 install marshmallow-dataclass[enum,union]
-```
-
-#### For marshmallow 2
-`marshmallow-dataclass` does not support the old
-marshmallow 2 anymore.
-You can install a version before `6.0`
-if you want marshmallow 2 support.
-
 ## Documentation
 
-The project documentation is hosted on github pages:
- - [documentation](https://lovasoa.github.io/marshmallow_dataclass/).
+The project documentation is hosted on GitHub Pages: https://lovasoa.github.io/marshmallow_dataclass/
 
 ## Usage warning
 
-This library depends on python's standard
-[typing](https://docs.python.org/3/library/typing.html)
-library, which is
-[provisional](https://docs.python.org/3/glossary.html#term-provisional-api).
+This library depends on python's standard [typing](https://docs.python.org/3/library/typing.html) library, which is [provisional](https://docs.python.org/3/glossary.html#term-provisional-api).
