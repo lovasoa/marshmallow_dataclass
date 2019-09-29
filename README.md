@@ -174,7 +174,7 @@ class Sample:
 
 SampleSchema = marshmallow_dataclass.class_schema(Sample, base_schema=UppercaseSchema)
 
-Sample.Schema().dump(Sample(my_text="warm words", my_int=1))
+SampleSchema().dump(Sample(my_text="warm words", my_int=1))
 # -> {"MY_TEXT": "warm words", "MY_INT": 1}
 ```
 
