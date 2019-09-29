@@ -152,8 +152,16 @@ class Point:
 
 ### Customizing the base Schema
 
-To customize the base `Schema` class, pass the `base_schema` argument.
-This allows you to implement custom (de)serialization behavior.
+> This feature is currently only available
+> in the latest pre-release, `6.1.0rc2`.
+> Please try it, and open an issue if you have
+> some feedback to give about it.
+
+It is also possible to derive all schemas from your own 
+base Schema class
+(see [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html)).
+This allows you to implement custom (de)serialization
+behavior, for instance renaming fields:
 
 ```python
 import marshmallow
