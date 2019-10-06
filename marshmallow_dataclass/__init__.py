@@ -455,7 +455,9 @@ def _base_schema(
         @marshmallow.post_load
         def make_data_class(self, data, **_):
             if skip_post_load:
-                return data
+                return {
+                    key: value for (key, value) in data.items() if value is not None
+                }
             return clazz(**data)
 
     return BaseSchema
