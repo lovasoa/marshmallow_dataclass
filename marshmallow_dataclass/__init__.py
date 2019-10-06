@@ -154,7 +154,9 @@ def add_schema(_cls=None, base_schema=None):
 
 
 def class_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    skip_post_load=False,
 ) -> Type[marshmallow.Schema]:
 
     """
@@ -283,7 +285,11 @@ def class_schema(
         if field.init
     )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(
+        clazz.__name__,
+        (_base_schema(clazz, base_schema, skip_post_load=skip_post_load),),
+        attributes,
+    )
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -437,7 +443,7 @@ def field_for_schema(
 
 
 def _base_schema(
-    clazz: type, base_schema: Type[marshmallow.Schema] = None
+    clazz: type, base_schema: Type[marshmallow.Schema] = None, skip_post_load=False
 ) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
@@ -448,6 +454,8 @@ def _base_schema(
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         @marshmallow.post_load
         def make_data_class(self, data, **_):
+            if skip_post_load:
+                return data
             return clazz(**data)
 
     return BaseSchema
