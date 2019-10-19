@@ -152,11 +152,6 @@ class Point:
 
 ### Customizing the base Schema
 
-> This feature is currently only available
-> in the latest pre-release, `6.1.0rc2`.
-> Please try it, and open an issue if you have
-> some feedback to give about it.
-
 It is also possible to derive all schemas from your own 
 base Schema class
 (see [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html)).
@@ -198,11 +193,6 @@ class Sample:
 See [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html).
 
 ### Custom NewType declarations
-
-> This feature is currently only available
-> in the latest pre-release, `6.1.0rc1`.
-> Please try it, and open an issue if you have
-> some feedback to give about it.
 
 This library exports a `NewType` function to create types that generate [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
 
