@@ -50,6 +50,7 @@ from typing import (
     TypeVar,
     Union,
     Callable,
+    Set,
 )
 
 import marshmallow
@@ -59,6 +60,9 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 
 NoneType = type(None)
 _U = TypeVar("_U")
+
+# Whitlist of dataclass members that will be copyied to generated schema.
+MEMBERS_WHITELIST: Set[str]  = {'Meta',}
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -269,8 +273,8 @@ def class_schema(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
             )
 
-    # Copy all public members of the dataclass to the schema
-    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith("_")}
+    # Copy all whitelisted members of the dataclass to the schema.
+    attributes = {k: v for k, v in inspect.getmembers(clazz) if k in MEMBERS_WHITELIST}
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
         (
