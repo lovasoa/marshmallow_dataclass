@@ -273,8 +273,9 @@ def class_schema(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
             )
 
-    # Copy all whitelisted members of the dataclass to the schema.
-    attributes = {k: v for k, v in inspect.getmembers(clazz) if k in MEMBERS_WHITELIST}
+    # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
+    attributes = {k: v for k, v in inspect.getmembers(clazz)
+                  if hasattr(v, '__marshmallow_hook__') or k in MEMBERS_WHITELIST}
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
         (
