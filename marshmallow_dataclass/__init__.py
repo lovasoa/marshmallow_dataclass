@@ -260,6 +260,53 @@ def class_schema(
     Traceback (most recent call last):
       ...
     TypeError: None is not a dataclass and cannot be turned into one.
+
+    >>> @dataclasses.dataclass
+    ... class Anything:
+    ...     class Meta:
+    ...         pass
+    ...     @marshmallow.validates('name')
+    ...     def validates(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.validates_schema
+    ...     def validates_schema(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.pre_dump
+    ...     def pre_dump(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.post_dump
+    ...     def post_dump(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.pre_load
+    ...     def pre_load(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.post_load
+    ...     def post_load(self, *args, **kwargs):
+    ...         pass
+    ...     def custom_method(self, *args, **kwargs):
+    ...         pass
+    ...     @property
+    ...     def custom_property(self, *args, **kwargs):
+    ...         return None
+
+    >>> hasattr(class_schema(Anything), 'Meta')
+    True
+    >>> hasattr(class_schema(Anything), 'validates')
+    True
+    >>> hasattr(class_schema(Anything), 'validates_schema')
+    True
+    >>> hasattr(class_schema(Anything), 'pre_dump')
+    True
+    >>> hasattr(class_schema(Anything), 'post_dump')
+    True
+    >>> hasattr(class_schema(Anything), 'pre_load')
+    True
+    >>> hasattr(class_schema(Anything), 'post_load')
+    True
+    >>> hasattr(class_schema(Anything), 'custom_method')
+    False
+    >>> hasattr(class_schema(Anything), 'custom_property')
+    False
     """
 
     try:
