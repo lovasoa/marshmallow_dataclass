@@ -61,7 +61,7 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 NoneType = type(None)
 _U = TypeVar("_U")
 
-# Whitlist of dataclass members that will be copyied to generated schema.
+# Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
 
@@ -271,41 +271,21 @@ def class_schema(
     ...     @marshmallow.validates_schema
     ...     def validates_schema(self, *args, **kwargs):
     ...         pass
-    ...     @marshmallow.pre_dump
-    ...     def pre_dump(self, *args, **kwargs):
-    ...         pass
-    ...     @marshmallow.post_dump
-    ...     def post_dump(self, *args, **kwargs):
-    ...         pass
-    ...     @marshmallow.pre_load
-    ...     def pre_load(self, *args, **kwargs):
-    ...         pass
-    ...     @marshmallow.post_load
-    ...     def post_load(self, *args, **kwargs):
-    ...         pass
     ...     def custom_method(self, *args, **kwargs):
     ...         pass
     ...     @property
     ...     def custom_property(self, *args, **kwargs):
     ...         return None
-
-    >>> hasattr(class_schema(Anything), 'Meta')
+    >>> AnythingSchema = class_schema(Anything)()
+    >>> hasattr(AnythingSchema, 'Meta')
     True
-    >>> hasattr(class_schema(Anything), 'validates')
+    >>> hasattr(AnythingSchema, 'validates')
     True
-    >>> hasattr(class_schema(Anything), 'validates_schema')
+    >>> hasattr(AnythingSchema, 'validates_schema')
     True
-    >>> hasattr(class_schema(Anything), 'pre_dump')
-    True
-    >>> hasattr(class_schema(Anything), 'post_dump')
-    True
-    >>> hasattr(class_schema(Anything), 'pre_load')
-    True
-    >>> hasattr(class_schema(Anything), 'post_load')
-    True
-    >>> hasattr(class_schema(Anything), 'custom_method')
+    >>> hasattr(AnythingSchema, 'custom_method')
     False
-    >>> hasattr(class_schema(Anything), 'custom_property')
+    >>> hasattr(AnythingSchema, 'custom_property')
     False
     """
 
