@@ -62,7 +62,7 @@ NoneType = type(None)
 _U = TypeVar("_U")
 
 # Whitlist of dataclass members that will be copyied to generated schema.
-MEMBERS_WHITELIST: Set[str]  = {'Meta',}
+MEMBERS_WHITELIST: Set[str] = {'Meta'}
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -321,8 +321,11 @@ def class_schema(
             )
 
     # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
-    attributes = {k: v for k, v in inspect.getmembers(clazz)
-                  if hasattr(v, '__marshmallow_hook__') or k in MEMBERS_WHITELIST}
+    attributes = {
+        k: v
+        for k, v in inspect.getmembers(clazz)
+        if hasattr(v, "__marshmallow_hook__") or k in MEMBERS_WHITELIST
+    }
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
         (
