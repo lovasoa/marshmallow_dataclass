@@ -62,7 +62,7 @@ NoneType = type(None)
 _U = TypeVar("_U")
 
 # Whitlist of dataclass members that will be copyied to generated schema.
-MEMBERS_WHITELIST: Set[str] = {'Meta'}
+MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
 
 # _cls should never be specified by keyword, so start it with an
