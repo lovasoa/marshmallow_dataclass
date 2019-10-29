@@ -50,6 +50,7 @@ from typing import (
     TypeVar,
     Union,
     Callable,
+    Set,
 )
 
 import marshmallow
@@ -59,6 +60,9 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 
 NoneType = type(None)
 _U = TypeVar("_U")
+
+# Whitelist of dataclass members that will be copied to generated schema.
+MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -256,6 +260,33 @@ def class_schema(
     Traceback (most recent call last):
       ...
     TypeError: None is not a dataclass and cannot be turned into one.
+
+    >>> @dataclasses.dataclass
+    ... class Anything:
+    ...     class Meta:
+    ...         pass
+    ...     @marshmallow.validates('name')
+    ...     def validates(self, *args, **kwargs):
+    ...         pass
+    ...     @marshmallow.validates_schema
+    ...     def validates_schema(self, *args, **kwargs):
+    ...         pass
+    ...     def custom_method(self, *args, **kwargs):
+    ...         pass
+    ...     @property
+    ...     def custom_property(self, *args, **kwargs):
+    ...         return None
+    >>> AnythingSchema = class_schema(Anything)()
+    >>> hasattr(AnythingSchema, 'Meta')
+    True
+    >>> hasattr(AnythingSchema, 'validates')
+    True
+    >>> hasattr(AnythingSchema, 'validates_schema')
+    True
+    >>> hasattr(AnythingSchema, 'custom_method')
+    False
+    >>> hasattr(AnythingSchema, 'custom_property')
+    False
     """
 
     try:
@@ -269,8 +300,12 @@ def class_schema(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
             )
 
-    # Copy all public members of the dataclass to the schema
-    attributes = {k: v for k, v in inspect.getmembers(clazz) if not k.startswith("_")}
+    # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
+    attributes = {
+        k: v
+        for k, v in inspect.getmembers(clazz)
+        if hasattr(v, "__marshmallow_hook__") or k in MEMBERS_WHITELIST
+    }
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     attributes.update(
         (
