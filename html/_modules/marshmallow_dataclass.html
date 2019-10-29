@@ -83,6 +83,7 @@
     <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Set</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">marshmallow</span>
@@ -92,6 +93,9 @@
 
 <span class="n">NoneType</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">_U</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_U&quot;</span><span class="p">)</span>
+
+<span class="c1"># Whitelist of dataclass members that will be copied to generated schema.</span>
+<span class="n">MEMBERS_WHITELIST</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Meta&quot;</span><span class="p">}</span>
 
 
 <span class="c1"># _cls should never be specified by keyword, so start it with an</span>
@@ -289,6 +293,33 @@
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">      ...</span>
 <span class="sd">    TypeError: None is not a dataclass and cannot be turned into one.</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
+<span class="sd">    ... class Anything:</span>
+<span class="sd">    ...     class Meta:</span>
+<span class="sd">    ...         pass</span>
+<span class="sd">    ...     @marshmallow.validates(&#39;name&#39;)</span>
+<span class="sd">    ...     def validates(self, *args, **kwargs):</span>
+<span class="sd">    ...         pass</span>
+<span class="sd">    ...     @marshmallow.validates_schema</span>
+<span class="sd">    ...     def validates_schema(self, *args, **kwargs):</span>
+<span class="sd">    ...         pass</span>
+<span class="sd">    ...     def custom_method(self, *args, **kwargs):</span>
+<span class="sd">    ...         pass</span>
+<span class="sd">    ...     @property</span>
+<span class="sd">    ...     def custom_property(self, *args, **kwargs):</span>
+<span class="sd">    ...         return None</span>
+<span class="sd">    &gt;&gt;&gt; AnythingSchema = class_schema(Anything)()</span>
+<span class="sd">    &gt;&gt;&gt; hasattr(AnythingSchema, &#39;Meta&#39;)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; hasattr(AnythingSchema, &#39;validates&#39;)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; hasattr(AnythingSchema, &#39;validates_schema&#39;)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; hasattr(AnythingSchema, &#39;custom_method&#39;)</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; hasattr(AnythingSchema, &#39;custom_property&#39;)</span>
+<span class="sd">    False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -302,8 +333,12 @@
                 <span class="n">f</span><span class="s2">&quot;{getattr(clazz, &#39;__name__&#39;, repr(clazz))} is not a dataclass and cannot be turned into one.&quot;</span>
             <span class="p">)</span>
 
-    <span class="c1"># Copy all public members of the dataclass to the schema</span>
-    <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)}</span>
+    <span class="c1"># Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.</span>
+    <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;__marshmallow_hook__&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">MEMBERS_WHITELIST</span>
+    <span class="p">}</span>
     <span class="c1"># Update the schema members to contain marshmallow fields instead of dataclass fields</span>
     <span class="n">attributes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
         <span class="p">(</span>
@@ -608,7 +643,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
