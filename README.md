@@ -10,8 +10,8 @@ Automatic generation of [marshmallow](https://marshmallow.readthedocs.io/) schem
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-import marshmallow
 import marshmallow_dataclass
+import marshmallow.validate
 
 
 @dataclass

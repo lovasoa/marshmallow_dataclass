@@ -5,7 +5,7 @@ dist: xenial
 install:
   - pip install --pre -e '.[dev]'
 script:
-  - python -m doctest -v marshmallow_dataclass/*.py
+  - python -m unittest
 
 stages:
   - pre-commit hooks
