@@ -8,8 +8,12 @@ script:
   - python -m doctest -v marshmallow_dataclass/*.py
 
 stages:
+  - pre-commit hooks
   - test
-  - deploy
+  - documentation generation
+  - name: deploy
+    if: branch =~ /^v\d+\.\d+(\.\d+)?(\S+)?$/
+
 branches:
   only:
     - master
