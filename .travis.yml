@@ -20,16 +20,16 @@ branches:
     - /^v\d+\.\d+(\.\d+)?(\S+)?$/
 
 python:
-  - "3.6"
-  - "3.7"
   - "3.8"
+  - "3.7"
+  - "3.6"
   - "nightly"
   - "pypy3"
 
 matrix:
   fast_finish: true
   allow_failures:
-    - python: nightly
+    - python: "nightly"
   include:
     - stage: pre-commit hooks
       script: pre-commit run --all-files
@@ -48,7 +48,7 @@ matrix:
           on:
             branch: master
         - provider: pypi
-          user: lovasoa
+          username: lovasoa
           password:
             secure: "WhUEch0YOZRtqr+r6BAd2KfgMY2IctHdoXNbl60qbyURjX3RzmICxB6GFHlAPkzu+b7GkY/WxKrAEa9NjjkHZ69M+x6ozORW4+YzicNVIgqxQkE65Su6l8zOCSexncMJrtmYceoxaRcX2Bsjy9r5fAv0gO6+WugOCAV6sZHkANqIjySTN82vAnla9/htWcesvw3JFckhdsPH/Lnu+o/hHKeM33vQUsJThQ73fatNuObyzglaoNu2L1PSjitI3wBA3jOpAL2o5v7bD/P7Krpu+YsGlaJNMHfHWkcNxypikZitCKcocoI7dWgQvSTqWA6TPV/MboRRF/2ZhnMKuw7ZY84GBx8Dyyw/len9s/1+m8kgu9ES1qJaIf03fvC60Uend2n2yk3sx6+rG1CCAvf21CJgMW+6XAqKpLI2tj0nPdBHvLGSdeRtTO5Ubpw8hDModlVai0RLhtYNkjLQkl+QrEehm2x/zhrP7gCudXQsKx8jvHHF70/pCN/WlvUhR42HEqWsPg7ZahkWi7YkFVY7e846ScxbWKjFL1s6vyCZso5U9DdUBvVEinshLoSZSbXotF4oHqdyKf17Hk0P6dPn/ocxGRB5rWWn5irhtEqcxZFKgawO8N1GYnTF64YewvO3O5gNqXrbpwCSScOrvDKDRosAWQ0yB/71ZvUEEcaYiFw="
           on:
