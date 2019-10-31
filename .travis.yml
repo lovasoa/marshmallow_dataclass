@@ -2,19 +2,22 @@ language: python
 dist: xenial
 
 matrix:
+  fast_finish: true
+  allow_failures:
+    - python: nightly
   include:
     - python: "3.6"
     - python: "3.7"
     - python: "3.8"
       env: RUN_PRE_COMMIT=1
-    - python: "pypy3"
-    - python: "nightly"
+    - python: pypy3
+    - python: nightly
 
 install:
   - pipenv install --pre -e '.[dev]'
 script:
   - pipenv run python -m doctest -v marshmallow_dataclass/*.py
-  - [ $ RUN_PRE_COMMIT ] && pipenv run pre-commit run --all-files
+  - "[ $ RUN_PRE_COMMIT ] && pipenv run pre-commit run --all-files"
   - cd docs && pipenv run make html && cd ..
 stages:
   - test
@@ -24,9 +27,6 @@ branches:
         - master
         - /^v\d+\.\d+(\.\d+)?(\S+)?$/
 jobs:
-  allow_failure:
-    - python: nightly
-  fast_finish: true
   include:
     - stage: deploy
       python: 3.7
