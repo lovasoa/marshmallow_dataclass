@@ -218,7 +218,7 @@ Email = NewType("Email", str, field=marshmallow.fields.Email)
 
 ### `Meta` options
 
-[`Meta` options](https://marshmallow.readthedocs.io/en/3.0/api_reference.html#marshmallow.Schema.Meta) are set the same way as a marshmallow `Schema`.
+[`Meta` options](https://marshmallow.readthedocs.io/en/stable/api_reference.html#marshmallow.Schema.Meta) are set the same way as a marshmallow `Schema`.
 
 ```python
 from marshmallow_dataclass import dataclass
