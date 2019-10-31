@@ -3,11 +3,11 @@ os: linux
 dist: xenial
 
 install:
-  - pipenv install --pre -e '.[dev]'
+  - pip install --pre -e '.[dev]'
 script:
-  - pipenv run python -m doctest -v marshmallow_dataclass/*.py
-  - "[ $RUN_PRE_COMMIT ] && pipenv run pre-commit run --all-files"
-  - cd docs && pipenv run make html && cd ..
+  - python -m doctest -v marshmallow_dataclass/*.py
+  - if [ $RUN_PRE_COMMIT ]; then pre-commit run --all-files; fi
+  - cd docs && make html && cd ..
 stages:
   - test
   - deploy
@@ -33,10 +33,10 @@ matrix:
       script: cd docs && pipenv run make html && cd ..
       deploy:
         - provider: pages
-          skip-cleanup: true
-          github-token: $GITHUB_TOKEN
-          keep-history: true
-          local-dir: docs
+          skip_cleanup: true
+          token: $GITHUB_TOKEN
+          keep_history: true
+          local_dir: docs
           on:
             branch: master
         - provider: pypi
