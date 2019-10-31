@@ -20,7 +20,7 @@ python:
   - "3.7"
   - "3.8"
   - "nightly"
-  - "pypy"
+  - "pypy3"
 
 matrix:
   fast_finish: true
