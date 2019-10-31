@@ -6,8 +6,7 @@ install:
   - pip install --pre -e '.[dev]'
 script:
   - python -m doctest -v marshmallow_dataclass/*.py
-  - if [ $RUN_PRE_COMMIT ]; then pre-commit run --all-files; fi
-  - cd docs && make html && cd ..
+
 stages:
   - test
   - deploy
@@ -16,21 +15,26 @@ branches:
     - master
     - /^v\d+\.\d+(\.\d+)?(\S+)?$/
 
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "nightly"
+  - "pypy"
+
 matrix:
   fast_finish: true
   allow_failures:
     - python: nightly
   include:
-    - python: "3.6"
-    - python: "3.7"
-    - python: "3.8"
-      env: RUN_PRE_COMMIT=1
-    - python: pypy3
-    - python: nightly
+    - stage: pre-commit hooks
+      script: pre-commit run --all-files
+    - stage: documentation generation
+      script: cd docs && make html && cd ..
     - stage: deploy
       python: 3.7
       install: pipenv install --pre -e '.[docs]'
-      script: cd docs && pipenv run make html && cd ..
+      script: cd docs && make html && cd ..
       deploy:
         - provider: pages
           skip_cleanup: true
