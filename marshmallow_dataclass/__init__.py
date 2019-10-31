@@ -263,30 +263,14 @@ def class_schema(
 
     >>> @dataclasses.dataclass
     ... class Anything:
-    ...     class Meta:
-    ...         pass
+    ...     name: str
     ...     @marshmallow.validates('name')
-    ...     def validates(self, *args, **kwargs):
-    ...         pass
-    ...     @marshmallow.validates_schema
-    ...     def validates_schema(self, *args, **kwargs):
-    ...         pass
-    ...     def custom_method(self, *args, **kwargs):
-    ...         pass
-    ...     @property
-    ...     def custom_property(self, *args, **kwargs):
-    ...         return None
-    >>> AnythingSchema = class_schema(Anything)()
-    >>> hasattr(AnythingSchema, 'Meta')
-    True
-    >>> hasattr(AnythingSchema, 'validates')
-    True
-    >>> hasattr(AnythingSchema, 'validates_schema')
-    True
-    >>> hasattr(AnythingSchema, 'custom_method')
-    False
-    >>> hasattr(AnythingSchema, 'custom_property')
-    False
+    ...     def validates(self, value):
+    ...         if len(value) > 5: raise marshmallow.ValidationError("Name too long")
+    >>> class_schema(Anything)().load({"name": "aaaaaargh"})
+    Traceback (most recent call last):
+    ...
+    marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
 
     try:
