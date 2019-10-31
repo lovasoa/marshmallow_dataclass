@@ -1,22 +1,29 @@
 language: python
 dist: xenial
-python:
-  - "3.6"
-  - "3.7.0"
-  - "3.7"
-  - "3.8-dev"
-  - "pypy3"
+
+matrix:
+  include:
+    - python: "3.6"
+    - python: "3.7"
+    - python: "3.8"
+      env: RUN_PRE_COMMIT=1
+    - python: "pypy3"
+    - python: "nightly"
+
 install:
   - pipenv install --pre -e '.[dev]'
 script:
   - pipenv run python -m doctest -v marshmallow_dataclass/*.py
-  - pipenv run pre-commit run --all-files
+  - [ $ RUN_PRE_COMMIT ] && pipenv run pre-commit run --all-files
   - cd docs && pipenv run make html && cd ..
 stages:
   - test
   - deploy
 
 jobs:
+  allow_failure:
+    - python: nightly
+  fast_finish: true
   include:
     - stage: deploy
       python: 3.7
