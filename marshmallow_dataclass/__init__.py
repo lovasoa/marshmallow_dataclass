@@ -331,40 +331,8 @@ def field_for_schema(
     >>> int_field.default
     9
 
-    >>> int_field.required
-    True
-
-    >>> field_for_schema(Dict[str,str]).__class__
-    <class 'marshmallow.fields.Dict'>
-
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
-
-    >>> field_for_schema(Optional[str]).__class__
-    <class 'marshmallow.fields.String'>
-
-    >>> from enum import Enum
-    >>> import marshmallow_enum
-    >>> field_for_schema(Enum("X", "a b c")).__class__
-    <class 'marshmallow_enum.EnumField'>
-
-    >>> import typing
-    >>> field_for_schema(typing.Union[int,str]).__class__
-    <class 'marshmallow_union.Union'>
-
-    >>> field_for_schema(typing.NewType('UserId', int)).__class__
-    <class 'marshmallow.fields.Integer'>
-
-    >>> field_for_schema(typing.NewType('UserId', int), default=0).default
-    0
-
-    >>> class Color(Enum):
-    ...   red = 1
-    >>> field_for_schema(Color).__class__
-    <class 'marshmallow_enum.EnumField'>
-
-    >>> field_for_schema(Any).__class__
-    <class 'marshmallow.fields.Raw'>
     """
 
     metadata = {} if metadata is None else dict(metadata)
