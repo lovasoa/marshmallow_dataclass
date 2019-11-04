@@ -207,7 +207,7 @@ IPv4 = NewType(
 )
 ```
 
-You can also pass a marshmallow field `NewType`.
+You can also pass a marshmallow field to `NewType`.
 
 ```python
 import marshmallow
