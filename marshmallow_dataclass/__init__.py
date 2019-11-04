@@ -341,9 +341,8 @@ def field_for_schema(
     metadata = {} if metadata is None else dict(metadata)
     if default is not marshmallow.missing:
         metadata.setdefault("default", default)
-        if not metadata.get(
-            "required"
-        ):  # 'missing' must not be set for required fields.
+        # 'missing' must not be set for required fields.
+        if not metadata.get("required"):
             metadata.setdefault("missing", default)
     else:
         metadata.setdefault("required", True)
@@ -362,16 +361,13 @@ def field_for_schema(
     if origin:
         arguments = typing_inspect.get_args(typ, True)
         if origin in (list, List):
-            return marshmallow.fields.List(
-                field_for_schema(arguments[0], base_schema=base_schema), **metadata
-            )
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            return marshmallow.fields.List(child_type, **metadata)
         if origin in (tuple, Tuple):
-            return marshmallow.fields.Tuple(
-                tuple(
-                    field_for_schema(arg, base_schema=base_schema) for arg in arguments
-                ),
-                **metadata,
+            children = tuple(
+                field_for_schema(arg, base_schema=base_schema) for arg in arguments
             )
+            return marshmallow.fields.Tuple(children, **metadata)
         elif origin in (dict, Dict):
             return marshmallow.fields.Dict(
                 keys=field_for_schema(arguments[0], base_schema=base_schema),
