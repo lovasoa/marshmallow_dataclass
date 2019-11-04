@@ -322,6 +322,9 @@ def field_for_schema(
     Get a marshmallow Field corresponding to the given python type.
     The metadata of the dataclass field is used as arguments to the marshmallow Field.
 
+    :param typ: The type for which a field should be generated
+    :param default: value to use for (de)serialization when the field is missing
+    :param metadata: Additional parameters to pass to the marshmallow field constructor
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
 
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
