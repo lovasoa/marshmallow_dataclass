@@ -352,6 +352,12 @@ def field_for_schema(
     if predefined_field:
         return predefined_field
 
+    # Generic types specified without type arguments
+    if typ is list:
+        typ = List[Any]
+    elif typ is dict:
+        typ = Dict[Any, Any]
+
     # Base types
     if typ in _native_to_marshmallow:
         return _native_to_marshmallow[typ](**metadata)
