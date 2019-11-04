@@ -1,5 +1,33 @@
 # marshmallow_dataclass change log
 
+## v7.1.0
+ - Improved documentation
+ - The library now has more unit tests
+ - `dict` and `list` without type parameters are now supported
+
+#### This is now supported
+```python
+from marshmallow_dataclass import dataclass
+
+
+@dataclass
+class Environment:
+    env_variables: dict
+```
+
+However, we do still recommend you
+to always use explicit type parameters, that is:
+
+```python
+from marshmallow_dataclass import dataclass
+from typing import Dict
+
+
+@dataclass
+class Environment:
+    env_variables: Dict[str, str]
+```
+
 ## v7.0.0
  - Methods are not copied from the dataclass to the generated Schema anymore. (See [#47](https://github.com/lovasoa/marshmallow_dataclass/issues/47)).
    This breaks backward compatibility, but hopefully should not impact anyone since marshmallow-specific methods are still copied.
