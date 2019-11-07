@@ -445,7 +445,7 @@ def field_for_schema(
 
 
 def _base_schema(
-    clazz: type, base_schema: Type[marshmallow.Schema] = None
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
