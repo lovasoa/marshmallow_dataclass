@@ -15,7 +15,7 @@ class TestFieldForSchema(unittest.TestCase):
 
         def attrs(x):
             return {
-                k: f"{repr(v)} ({repr(v.__mro__)})" if inspect.isclass(v) else repr(v)
+                k: f"{v!r} ({v.__mro__!r})" if inspect.isclass(v) else repr(v)
                 for k, v in x.__dict__.items()
                 if not k.startswith("_")
             }
