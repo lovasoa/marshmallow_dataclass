@@ -1,11 +1,12 @@
+import inspect
 import typing
 import unittest
 from enum import Enum
 from typing import Dict, Optional, Union, Any
 
-from marshmallow import fields
+from marshmallow import fields, Schema
 
-from marshmallow_dataclass import field_for_schema
+from marshmallow_dataclass import field_for_schema, dataclass
 
 
 class TestFieldForSchema(unittest.TestCase):
@@ -13,7 +14,11 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertEqual(a.__class__, b.__class__, "field class")
 
         def attrs(x):
-            return {k: repr(v) for k, v in x.__dict__.items() if not k.startswith("_")}
+            return {
+                k: f'{repr(v)} ({repr(v.__mro__)})' if inspect.isclass(v) else repr(v)
+                for k, v in x.__dict__.items()
+                if not k.startswith("_")
+            }
 
         self.assertEqual(attrs(a), attrs(b))
 
@@ -95,6 +100,19 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(typing.NewType("UserId", int), default=0),
             fields.Integer(required=False, description="UserId", default=0, missing=0),
+        )
+
+    def test_marshmellow_dataclass(self):
+        class NewSchema(Schema):
+            pass
+
+        @dataclass(base_schema=NewSchema)
+        class NewDataclass:
+            pass
+
+        self.assertFieldsEqual(
+            field_for_schema(NewDataclass, metadata=dict(required=False)),
+            fields.Nested(NewDataclass.Schema),
         )
 
 

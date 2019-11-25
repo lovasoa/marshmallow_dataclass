@@ -422,9 +422,13 @@ def field_for_schema(
 
         return marshmallow_enum.EnumField(typ, **metadata)
 
+    # Nested marshmallow dataclass
+    nested_schema = getattr(typ, 'Schema', None)
+
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
-    nested = forward_reference or class_schema(typ, base_schema=base_schema)
+    nested = nested_schema or forward_reference or class_schema(typ, base_schema=base_schema)
+
     return marshmallow.fields.Nested(nested, **metadata)
 
 
