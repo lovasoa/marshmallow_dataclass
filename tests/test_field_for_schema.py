@@ -102,7 +102,7 @@ class TestFieldForSchema(unittest.TestCase):
             fields.Integer(required=False, description="UserId", default=0, missing=0),
         )
 
-    def test_marshmellow_dataclass(self):
+    def test_marshmallow_dataclass(self):
         class NewSchema(Schema):
             pass
 
