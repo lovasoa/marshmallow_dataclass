@@ -51,10 +51,14 @@ from typing import (
     Union,
     Callable,
     Set,
+    get_type_hints,
 )
 
 import marshmallow
 import typing_inspect
+
+from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
+
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
 
@@ -151,7 +155,7 @@ def add_schema(_cls=None, base_schema=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
-        clazz.Schema = class_schema(clazz, base_schema)  # type: ignore
+        clazz.Schema = lazy_class_attribute(lambda _: class_schema(clazz, base_schema), "Schema")  # type: ignore
         return clazz
 
     return decorator(_cls) if _cls else decorator
@@ -212,7 +216,7 @@ def class_schema(
     >>> @dataclasses.dataclass()
     ... class Person:
     ...   name: str = dataclasses.field(default="Anonymous")
-    ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
+    ...   friends: 'List["self"]' = dataclasses.field(default_factory=lambda:[]) # Recursive field
     ...
     >>> person = class_schema(Person)().load({
     ...     "friends": [{"name": "Roger Boucher"}]
@@ -290,12 +294,17 @@ def class_schema(
         for k, v in inspect.getmembers(clazz)
         if hasattr(v, "__marshmallow_hook__") or k in MEMBERS_WHITELIST
     }
+
     # Update the schema members to contain marshmallow fields instead of dataclass fields
+    type_hints = get_type_hints(clazz)
     attributes.update(
         (
             field.name,
             field_for_schema(
-                field.type, _get_field_default(field), field.metadata, base_schema
+                type_hints[field.name],
+                _get_field_default(field),
+                field.metadata,
+                base_schema,
             ),
         )
         for field in fields
