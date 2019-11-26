@@ -1,5 +1,11 @@
 # marshmallow_dataclass change log
 
+## v7.1.1
+ - Fix behavior when `base_schema` is passed to a nested dataclass/schema
+   ([#52](https://github.com/lovasoa/marshmallow_dataclass/issues/52)).
+   Thanks [@ADR-007-SoftServe](https://github.com/ADR-007-SoftServe)
+   for the catch and patch.
+
 ## v7.1.0
  - Improved documentation
  - The library now has more unit tests
