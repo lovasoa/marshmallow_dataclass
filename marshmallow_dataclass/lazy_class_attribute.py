@@ -11,20 +11,23 @@ class LazyClassAttribute:
     operates.
     """
 
-    __slots__ = ("func", "name", "called")
+    __slots__ = ("func", "name", "called", "forward_value")
 
-    def __init__(self, func: Callable[[type], Any], name: str = None):
+    def __init__(
+        self, func: Callable[[type], Any], name: str = None, forward_value: Any = None
+    ):
         self.func = func
         self.name = name
         self.called = False
+        self.forward_value = forward_value
 
     def __get__(self, instance, cls=None):
         if not cls:
             cls = type(instance)
 
-        # avoid recursion when get_type_hints is called on the class
+        # avoid recursion
         if self.called:
-            return
+            return self.forward_value
 
         self.called = True
 

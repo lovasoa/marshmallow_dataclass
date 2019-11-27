@@ -38,20 +38,20 @@ import dataclasses
 import inspect
 from enum import EnumMeta
 from typing import (
-    overload,
-    Dict,
-    Type,
-    List,
-    cast,
-    Tuple,
-    Optional,
     Any,
+    Callable,
+    Dict,
+    List,
     Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
     TypeVar,
     Union,
-    Callable,
-    Set,
+    cast,
     get_type_hints,
+    overload,
 )
 
 import marshmallow
@@ -155,7 +155,9 @@ def add_schema(_cls=None, base_schema=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
-        clazz.Schema = lazy_class_attribute(lambda _: class_schema(clazz, base_schema), "Schema")  # type: ignore
+        clazz.Schema = lazy_class_attribute(  # type: ignore
+            lambda _: class_schema(clazz, base_schema), "Schema", clazz.__name__
+        )
         return clazz
 
     return decorator(_cls) if _cls else decorator
