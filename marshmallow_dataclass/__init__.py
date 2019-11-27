@@ -36,6 +36,7 @@ Full example::
 """
 import dataclasses
 import inspect
+from contextlib import suppress
 from enum import EnumMeta
 from typing import (
     Any,
@@ -56,6 +57,7 @@ from typing import (
 
 import marshmallow
 import typing_inspect
+from marshmallow import class_registry
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
@@ -166,7 +168,6 @@ def add_schema(_cls=None, base_schema=None):
 def class_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
-
     """
     Convert a class to a marshmallow schema
 
@@ -434,6 +435,7 @@ def field_for_schema(
         return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested marshmallow dataclass
+    # it would be just a class name instead of actual schema util the schema is not ready yet
     nested_schema = getattr(typ, "Schema", None)
 
     # Nested dataclasses
@@ -452,6 +454,7 @@ def _base_schema(
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
     or `BaseSchema`
     """
+
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
