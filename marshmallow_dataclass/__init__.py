@@ -191,7 +191,9 @@ def add_schema(_cls=None, base_schema=None):
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
         # noinspection PyTypeHints
-        clazz.Schema = lazy_class_attribute(lambda _: class_schema(clazz, base_schema), "Schema")  # type: ignore
+        clazz.Schema = lazy_class_attribute(  # type: ignore
+            lambda _: class_schema(clazz, base_schema), "Schema", clazz.__name__
+        )
         return clazz
 
     return decorator(_cls) if _cls else decorator
