@@ -38,6 +38,7 @@ import collections.abc
 import dataclasses
 import inspect
 import warnings
+from contextlib import suppress
 from enum import EnumMeta
 from functools import lru_cache
 from typing import (
@@ -61,6 +62,7 @@ from typing import (
 
 import marshmallow
 import typing_inspect
+from marshmallow import class_registry
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
@@ -624,6 +626,7 @@ def field_for_schema(
         return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested marshmallow dataclass
+    # it would be just a class name instead of actual schema util the schema is not ready yet
     nested_schema = getattr(typ, "Schema", None)
 
     # Nested dataclasses
