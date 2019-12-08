@@ -3,7 +3,12 @@ import textwrap
 import os
 import unittest
 
-import mypy.api
+mypy_installed = True
+try:
+    import mypy.api
+except ImportError:
+    # mypy not installed on pypy (see setup.py)
+    mypy_installed = False
 
 HERE = os.path.dirname(__file__)
 TEST_OUTPUT_DIR = os.path.join(HERE, "test-output")
@@ -14,6 +19,7 @@ plugins = marshmallow_dataclass.mypy
 """
 
 
+@unittest.skipUnless(mypy_installed, "mypy required")
 class TestMypyPlugin(unittest.TestCase):
     maxDiff = None
 

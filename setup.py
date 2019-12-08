@@ -18,7 +18,7 @@ EXTRAS_REQUIRE = {
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
-    "tests": ["mypy"],
+    "tests": ["mypy; implementation_name != 'pypy'"],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["enum"]
