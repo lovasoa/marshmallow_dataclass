@@ -18,12 +18,14 @@ EXTRAS_REQUIRE = {
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
+    "tests": ["mypy"],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["enum"]
     + EXTRAS_REQUIRE["union"]
     + EXTRAS_REQUIRE["lint"]
     + EXTRAS_REQUIRE["docs"]
+    + EXTRAS_REQUIRE["tests"]
 )
 
 setup(
