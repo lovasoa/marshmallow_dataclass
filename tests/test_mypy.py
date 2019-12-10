@@ -1,4 +1,4 @@
-import shutil
+import tempfile
 import textwrap
 import os
 import unittest
@@ -10,8 +10,6 @@ except ImportError:
     # mypy not installed on pypy (see setup.py)
     mypy_installed = False
 
-HERE = os.path.dirname(__file__)
-TEST_OUTPUT_DIR = os.path.join(HERE, "test-output")
 MYPY_INI = """\
 [mypy]
 follow_imports = silent
@@ -25,21 +23,17 @@ class TestMypyPlugin(unittest.TestCase):
 
     def setUp(self):
         """
-        Prepare a clean test directory at tests/test-output/test_mypy-{testname}.
+        Prepare a clean temporary test directory.
         Also cd into it for the duration of the test to get simple filenames in mypy output.
         """
-        testname = self.id().split(".")[-1]
-        self.testdir = os.path.join(TEST_OUTPUT_DIR, f"test_mypy-{testname}")
-        if os.path.exists(self.testdir):
-            shutil.rmtree(self.testdir)
-        os.makedirs(self.testdir)
+        self.testdir = tempfile.mkdtemp()
         self.old_cwd = os.getcwd()
         os.chdir(self.testdir)
 
     def tearDown(self):
         os.chdir(self.old_cwd)
 
-    def mypy_test(self, contents: str, expected: str):
+    def assert_mypy_output(self, contents: str, expected: str):
         """
         Run mypy and assert output matches ``expected``.
 
@@ -59,7 +53,7 @@ class TestMypyPlugin(unittest.TestCase):
         self.assertEqual(out.strip(), textwrap.dedent(expected).strip(), err_msg)
 
     def test_basic(self):
-        self.mypy_test(
+        self.assert_mypy_output(
             """
             from dataclasses import dataclass
             import marshmallow as ma
