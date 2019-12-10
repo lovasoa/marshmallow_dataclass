@@ -20,9 +20,11 @@ EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": [
         "pytest",
-        # typed-ast (a dependency of mypy) fails to install on pypy
+        # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
         # https://github.com/python/typed_ast/issues/111
-        "mypy; implementation_name != 'pypy'",
+        # re: win32: pytest-mypy-plugins depends on capturer, which isn't supported on
+        # windows
+        "pytest-mypy-plugins; implementation_name != 'pypy' and sys.platform != 'win32'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
