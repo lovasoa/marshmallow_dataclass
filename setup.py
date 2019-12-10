@@ -18,6 +18,7 @@ EXTRAS_REQUIRE = {
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
+    # typed-ast (a dependency of mypy) fails to install on pypy: https://github.com/python/typed_ast/issues/111
     "tests": ["mypy; implementation_name != 'pypy'"],
 }
 EXTRAS_REQUIRE["dev"] = (
