@@ -5,7 +5,7 @@ dist: xenial
 install:
   - pip install --pre -e '.[dev]'
 script:
-  - python -m unittest
+  - pytest
 
 stages:
   - pre-commit hooks

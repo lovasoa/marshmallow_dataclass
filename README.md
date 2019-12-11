@@ -216,6 +216,16 @@ from marshmallow_dataclass import NewType
 Email = NewType("Email", str, field=marshmallow.fields.Email)
 ```
 
+Note: if you are using `mypy`, you will notice that `mypy` throws an error if a variable defined with
+`NewType` is used in a type annotation. To resolve this, add the `marshmallow_dataclass.mypy` plugin 
+to your `mypy` configuration, e.g.:
+
+```ini
+[mypy]
+plugins = marshmallow_dataclass.mypy
+# ...
+```
+
 ### `Meta` options
 
 [`Meta` options](https://marshmallow.readthedocs.io/en/stable/api_reference.html#marshmallow.Schema.Meta) are set the same way as a marshmallow `Schema`.

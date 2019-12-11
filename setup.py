@@ -18,12 +18,21 @@ EXTRAS_REQUIRE = {
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
+    "tests": [
+        "pytest",
+        # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
+        # https://github.com/python/typed_ast/issues/111
+        # re: win32: pytest-mypy-plugins depends on capturer, which isn't supported on
+        # windows
+        "pytest-mypy-plugins; implementation_name != 'pypy' and sys.platform != 'win32'",
+    ],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["enum"]
     + EXTRAS_REQUIRE["union"]
     + EXTRAS_REQUIRE["lint"]
     + EXTRAS_REQUIRE["docs"]
+    + EXTRAS_REQUIRE["tests"]
 )
 
 setup(
