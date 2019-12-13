@@ -22,8 +22,6 @@ EXTRAS_REQUIRE = {
         "pytest",
         # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
         # https://github.com/python/typed_ast/issues/111
-        # re: win32: pytest-mypy-plugins depends on capturer, which isn't supported on
-        # windows
         "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
     ],
 }
