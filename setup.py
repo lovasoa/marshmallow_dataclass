@@ -39,7 +39,9 @@ setup(
     description="Python library to convert dataclasses into marshmallow schemas.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    packages=find_packages(
+        include=["marshmallow_dataclass", "marshmallow_dataclass.*"]
+    ),
     author="Ophir LOJKINE",
     author_email="pere.jobs@gmail.com",
     url="https://github.com/lovasoa/marshmallow_dataclass",
