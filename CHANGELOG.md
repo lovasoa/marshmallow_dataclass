@@ -1,9 +1,13 @@
 # marshmallow_dataclass change log
 
+## v7.2.1
+ - Exclude the `test` subdirectory from the published package.
+   ([#59](https://github.com/lovasoa/marshmallow_dataclass/pull/59))
+
 ## v7.2.0
-- Add mypy plugin that handles `NewType`
-  ([#50](https://github.com/lovasoa/marshmallow_dataclass/issues/50)).
-  Thanks [@selimb](https://github.com/selimb).
+ - Add mypy plugin that handles `NewType`
+   ([#50](https://github.com/lovasoa/marshmallow_dataclass/issues/50)).
+   Thanks [@selimb](https://github.com/selimb).
 
 ## v7.1.1
  - Fix behavior when `base_schema` is passed to a nested dataclass/schema
