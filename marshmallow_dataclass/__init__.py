@@ -51,7 +51,8 @@ from typing import (
     Union,
     Callable,
     Set,
-    Iterable)
+    Iterable,
+)
 
 import marshmallow
 import typing_inspect
@@ -69,14 +70,14 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
 def dataclass(
-        _cls: Type[_U] = None,
-        *,
-        repr: bool = True,
-        eq: bool = True,
-        order: bool = False,
-        unsafe_hash: bool = False,
-        frozen: bool = False,
-        base_schema: Optional[Type[marshmallow.Schema]] = None,
+    _cls: Type[_U] = None,
+    *,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -117,14 +118,14 @@ def add_schema(_cls: Type[_U]) -> Type[_U]:
 
 @overload
 def add_schema(
-        base_schema: Type[marshmallow.Schema] = None,
+    base_schema: Type[marshmallow.Schema] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
 
 @overload
 def add_schema(
-        _cls: Type[_U], base_schema: Type[marshmallow.Schema] = None
+    _cls: Type[_U], base_schema: Type[marshmallow.Schema] = None
 ) -> Type[_U]:
     ...
 
@@ -158,10 +159,10 @@ def add_schema(_cls=None, base_schema=None):
 
 
 def class_schema(
-        clazz: type,
-        base_schema: Optional[Type[marshmallow.Schema]] = None,
-        *,
-        filter_init_false: bool = True
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    *,
+    filter_init_false: bool = True,
 ) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
@@ -318,10 +319,10 @@ _native_to_marshmallow: Dict[Union[type, Any], Type[marshmallow.fields.Field]] =
 
 
 def field_for_schema(
-        typ: type,
-        default=marshmallow.missing,
-        metadata: Mapping[str, Any] = None,
-        base_schema: Optional[Type[marshmallow.Schema]] = None,
+    typ: type,
+    default=marshmallow.missing,
+    metadata: Mapping[str, Any] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -433,14 +434,14 @@ def field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
     nested = (
-            nested_schema or forward_reference or class_schema(typ, base_schema=base_schema)
+        nested_schema or forward_reference or class_schema(typ, base_schema=base_schema)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
 
 
 def _base_schema(
-        clazz: type, base_schema: Type[marshmallow.Schema] = None
+    clazz: type, base_schema: Type[marshmallow.Schema] = None
 ) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
@@ -453,13 +454,11 @@ def _base_schema(
         @marshmallow.post_load
         def make_data_class(self, data, **_):
             # noinspection PyUnresolvedReferences
-            not_init_args = set(data) - {x for x in clazz.__init__.__annotations__ if x != 'return'}
-
-            init_args = {
-                k: v
-                for k, v in data.items()
-                if k not in not_init_args
+            not_init_args = set(data) - {
+                x for x in clazz.__init__.__annotations__ if x != "return"
             }
+
+            init_args = {k: v for k, v in data.items() if k not in not_init_args}
 
             result = clazz(**init_args)
             for k in not_init_args:
@@ -487,10 +486,10 @@ def _get_field_default(field: dataclasses.Field):
 
 
 def NewType(
-        name: str,
-        typ: Type[_U],
-        field: Optional[Type[marshmallow.fields.Field]] = None,
-        **kwargs,
+    name: str,
+    typ: Type[_U],
+    field: Optional[Type[marshmallow.fields.Field]] = None,
+    **kwargs,
 ) -> Callable[[_U], _U]:
     """NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
