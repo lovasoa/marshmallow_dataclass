@@ -51,7 +51,7 @@ from typing import (
     Union,
     Callable,
     Set,
-)
+    Iterable)
 
 import marshmallow
 import typing_inspect
@@ -159,12 +159,16 @@ def add_schema(_cls=None, base_schema=None):
 
 def class_schema(
         clazz: type,
-        base_schema: Optional[Type[marshmallow.Schema]] = None) -> Type[marshmallow.Schema]:
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        *,
+        filter_init_false: bool = True
+) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
 
     :param clazz: A python class (may be a dataclass)
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+    :param filter_init_false: boolean to indicate if fields with init=False should be in the schema or not
     :return: A marshmallow Schema corresponding to the dataclass
 
     .. note::
@@ -274,7 +278,7 @@ def class_schema(
 
     try:
         # noinspection PyDataclass
-        fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
+        fields: Iterable[dataclasses.Field] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
             return class_schema(dataclasses.dataclass(clazz), base_schema)
@@ -282,6 +286,9 @@ def class_schema(
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
             )
+
+    if filter_init_false:
+        fields = (field_ for field_ in fields if field_.init)
 
     # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
     attributes = {
@@ -298,7 +305,6 @@ def class_schema(
             ),
         )
         for field in fields
-        if field.init
     )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
