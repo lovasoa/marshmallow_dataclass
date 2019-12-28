@@ -452,7 +452,20 @@ def _base_schema(
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         @marshmallow.post_load
         def make_data_class(self, data, **_):
-            return clazz(**data)
+            # noinspection PyUnresolvedReferences
+            not_init_args = set(data) - {x for x in clazz.__init__.__annotations__ if x != 'return'}
+
+            init_args = {
+                k: v
+                for k, v in data.items()
+                if k not in not_init_args
+            }
+
+            result = clazz(**init_args)
+            for k in not_init_args:
+                setattr(result, k, data[k])
+
+            return result
 
     return BaseSchema
 
