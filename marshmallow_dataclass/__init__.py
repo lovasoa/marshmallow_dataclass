@@ -308,7 +308,7 @@ def class_schema(
         for field in fields
     )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(f'{clazz.__name__}Schema', (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
