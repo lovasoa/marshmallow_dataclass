@@ -157,6 +157,9 @@ def add_schema(_cls=None, base_schema=None):
     return decorator(_cls) if _cls else decorator
 
 
+SCHEMA_REGISTRY: Dict[type, Type[marshmallow.Schema]] = {}
+
+
 def class_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
@@ -272,6 +275,9 @@ def class_schema(
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
+    cached_schema = SCHEMA_REGISTRY.get(clazz, None)
+    if cached_schema is not None:
+        return cached_schema
 
     try:
         # noinspection PyDataclass
@@ -303,7 +309,9 @@ def class_schema(
     )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
-    return cast(Type[marshmallow.Schema], schema_class)
+    result = cast(Type[marshmallow.Schema], schema_class)
+    SCHEMA_REGISTRY[clazz] = result
+    return result
 
 
 _native_to_marshmallow: Dict[Union[type, Any], Type[marshmallow.fields.Field]] = {
