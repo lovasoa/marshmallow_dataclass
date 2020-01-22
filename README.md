@@ -207,13 +207,23 @@ IPv4 = NewType(
 )
 ```
 
-You can also pass a marshmallow field `NewType`.
+You can also pass a marshmallow field to `NewType`.
 
 ```python
 import marshmallow
 from marshmallow_dataclass import NewType
 
 Email = NewType("Email", str, field=marshmallow.fields.Email)
+```
+
+Note: if you are using `mypy`, you will notice that `mypy` throws an error if a variable defined with
+`NewType` is used in a type annotation. To resolve this, add the `marshmallow_dataclass.mypy` plugin 
+to your `mypy` configuration, e.g.:
+
+```ini
+[mypy]
+plugins = marshmallow_dataclass.mypy
+# ...
 ```
 
 ### `Meta` options

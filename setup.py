@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "7.1.0"
+VERSION = "7.2.1"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -18,12 +18,19 @@ EXTRAS_REQUIRE = {
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
+    "tests": [
+        "pytest",
+        # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
+        # https://github.com/python/typed_ast/issues/111
+        "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
+    ],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["enum"]
     + EXTRAS_REQUIRE["union"]
     + EXTRAS_REQUIRE["lint"]
     + EXTRAS_REQUIRE["docs"]
+    + EXTRAS_REQUIRE["tests"]
 )
 
 setup(
@@ -32,7 +39,9 @@ setup(
     description="Python library to convert dataclasses into marshmallow schemas.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    packages=find_packages(
+        include=["marshmallow_dataclass", "marshmallow_dataclass.*"]
+    ),
     author="Ophir LOJKINE",
     author_email="pere.jobs@gmail.com",
     url="https://github.com/lovasoa/marshmallow_dataclass",
