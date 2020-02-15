@@ -417,7 +417,7 @@ def field_for_schema(
             )
 
     # enumerations
-    if type(typ) is EnumMeta:
+    if isinstance(typ, EnumMeta):
         import marshmallow_enum
 
         return marshmallow_enum.EnumField(typ, **metadata)
