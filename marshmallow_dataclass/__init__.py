@@ -68,6 +68,7 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 # Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
+
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
