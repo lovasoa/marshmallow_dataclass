@@ -157,7 +157,7 @@ def add_schema(_cls=None, base_schema=None):
     return decorator(_cls) if _cls else decorator
 
 
-SCHEMA_REGISTRY: Dict[type, Type[marshmallow.Schema]] = {}
+SCHEMA_REGISTRY: Dict[Tuple[type, Optional[Type[marshmallow.Schema]]], Type[marshmallow.Schema]] = {}
 
 
 def class_schema(
@@ -274,8 +274,30 @@ def class_schema(
     Traceback (most recent call last):
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
+    >>> @dataclasses.dataclass
+    ... class Simple:
+    ...     one: str = dataclasses.field()
+    ...     two: str = dataclasses.field()
+    >>> @dataclasses.dataclass
+    ... class ComplexNested:
+    ...     three: int = dataclasses.field()
+    ...     four: Simple = dataclasses.field()
+    >>> id(class_schema(ComplexNested)) == id(class_schema(ComplexNested))
+    True
+    >>> class_schema(ComplexNested) is class_schema(ComplexNested)
+    True
+    >>> id(class_schema(Simple)) == id(class_schema(Simple))
+    True
+    >>> class_schema(Simple) is class_schema(Simple)
+    True
+    >>> class_schema(Simple) is class_schema(ComplexNested)._declared_fields["four"].nested
+    True
+    >>> len(set([class_schema(ComplexNested), class_schema(ComplexNested, base_schema=None), class_schema(ComplexNested, None)]))
+    1
+    >>> len(set([class_schema(Simple), class_schema(Simple, base_schema=None), class_schema(Simple, None)]))
+    1
     """
-    cached_schema = SCHEMA_REGISTRY.get(clazz, None)
+    cached_schema = SCHEMA_REGISTRY.get((clazz, base_schema), None)
     if cached_schema is not None:
         return cached_schema
 
@@ -310,7 +332,7 @@ def class_schema(
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
     result = cast(Type[marshmallow.Schema], schema_class)
-    SCHEMA_REGISTRY[clazz] = result
+    SCHEMA_REGISTRY[(clazz, base_schema)] = result
     return result
 
 
