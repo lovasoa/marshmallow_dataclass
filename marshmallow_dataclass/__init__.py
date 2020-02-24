@@ -36,6 +36,7 @@ Full example::
 """
 import dataclasses
 import inspect
+from functools import lru_cache
 from enum import EnumMeta
 from typing import (
     overload,
@@ -63,6 +64,9 @@ _U = TypeVar("_U")
 
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
+
+# Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.
+MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -188,7 +192,6 @@ def class_schema(
     ...
     >>> class_schema(Building) # Returns a marshmallow schema class (not an instance)
     <class 'marshmallow.schema.Building'>
-
     >>> @dataclasses.dataclass()
     ... class City:
     ...   name: str = dataclasses.field(metadata={'required':True})
@@ -272,6 +275,13 @@ def class_schema(
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
+    return _proxied_class_schema(clazz, base_schema)
+
+
+@lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
+def _proxied_class_schema(
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+) -> Type[marshmallow.Schema]:
 
     try:
         # noinspection PyDataclass
