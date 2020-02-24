@@ -36,6 +36,7 @@ Full example::
 """
 import dataclasses
 import inspect
+from functools import lru_cache
 from enum import EnumMeta
 from typing import (
     overload,
@@ -64,6 +65,8 @@ _U = TypeVar("_U")
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
+# Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.
+MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
@@ -155,9 +158,6 @@ def add_schema(_cls=None, base_schema=None):
         return clazz
 
     return decorator(_cls) if _cls else decorator
-
-
-SCHEMA_REGISTRY: Dict[Tuple[type, Optional[Type[marshmallow.Schema]]], Type[marshmallow.Schema]] = {}
 
 
 def class_schema(
@@ -274,9 +274,13 @@ def class_schema(
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
-    cached_schema = SCHEMA_REGISTRY.get((clazz, base_schema), None)
-    if cached_schema is not None:
-        return cached_schema
+    return _proxied_class_schema(clazz, base_schema)
+
+
+@lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
+def _proxied_class_schema(
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+) -> Type[marshmallow.Schema]:
 
     try:
         # noinspection PyDataclass
@@ -309,7 +313,6 @@ def class_schema(
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
     result = cast(Type[marshmallow.Schema], schema_class)
-    SCHEMA_REGISTRY[(clazz, base_schema)] = result
     return result
 
 
