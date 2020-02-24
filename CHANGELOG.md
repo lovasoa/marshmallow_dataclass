@@ -1,5 +1,9 @@
 # marshmallow_dataclass change log
 
+## v7.3.0
+ - Cache the generated schemas
+   ([#70](https://github.com/lovasoa/marshmallow_dataclass/pull/70))
+
 ## v7.2.1
  - Exclude the `test` subdirectory from the published package.
    ([#59](https://github.com/lovasoa/marshmallow_dataclass/pull/59))
