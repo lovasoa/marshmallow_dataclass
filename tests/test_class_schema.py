@@ -16,15 +16,11 @@ class TestClassSchema(unittest.TestCase):
             three: int = dataclasses.field()
             four: Simple = dataclasses.field()
 
-        self.assertEqual(
-            id(class_schema(ComplexNested)), id(class_schema(ComplexNested))
-        )
-        self.assertTrue(class_schema(ComplexNested) is class_schema(ComplexNested))
-        self.assertEqual(id(class_schema(Simple)), id(class_schema(Simple)))
-        self.assertTrue(class_schema(Simple) is class_schema(Simple))
-        self.assertTrue(
-            class_schema(Simple)
-            is class_schema(ComplexNested)._declared_fields["four"].nested
+        self.assertIs(class_schema(ComplexNested), class_schema(ComplexNested))
+        self.assertIs(class_schema(Simple), class_schema(Simple))
+        self.assertIs(
+            class_schema(Simple),
+            class_schema(ComplexNested)._declared_fields["four"].nested,
         )
 
         complex_set = {
