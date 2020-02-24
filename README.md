@@ -250,3 +250,18 @@ The project documentation is hosted on GitHub Pages: https://lovasoa.github.io/m
 ## Usage warning
 
 This library depends on python's standard [typing](https://docs.python.org/3/library/typing.html) library, which is [provisional](https://docs.python.org/3/glossary.html#term-provisional-api).
+
+## Contributing
+
+```py
+python3 -m venv venv
+. venv/bin/activate
+pip install '.[dev]'
+# Make your changes
+git commit # Pre-commit hooks should be run, checking your code
+```
+
+Every commit is checked with pre-commit hooks for :
+ - style consistency with [flake8](https://flake8.pycqa.org/en/latest/manpage.html)
+ - type safety with [mypy](http://mypy-lang.org/)
+ - test conformance by running [tests](./tests) with [pytest](https://docs.pytest.org/en/latest/)
