@@ -313,8 +313,7 @@ def _proxied_class_schema(
     )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
-    result = cast(Type[marshmallow.Schema], schema_class)
-    return result
+    return cast(Type[marshmallow.Schema], schema_class)
 
 
 _native_to_marshmallow: Dict[Union[type, Any], Type[marshmallow.fields.Field]] = {
