@@ -1,6 +1,6 @@
 # marshmallow_dataclass change log
 
-## v7.3.0
+## v7.4.0
  - Cache the generated schemas
    ([#70](https://github.com/lovasoa/marshmallow_dataclass/pull/70))
 
