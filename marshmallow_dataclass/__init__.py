@@ -316,10 +316,14 @@ def _proxied_class_schema(
     return cast(Type[marshmallow.Schema], schema_class)
 
 
-_native_to_marshmallow: Dict[Union[type, Any], Type[marshmallow.fields.Field]] = {
-    **marshmallow.Schema.TYPE_MAPPING,
-    Any: marshmallow.fields.Raw,
-}
+def _field_by_type(
+    typ: Union[type, Any], base_schema: Optional[Type[marshmallow.Schema]]
+) -> Optional[Type[marshmallow.fields.Field]]:
+    if typ is Any:
+        return marshmallow.fields.Raw
+    else:
+        type_mapping = (base_schema or marshmallow.Schema).TYPE_MAPPING
+        return type_mapping.get(typ)
 
 
 def field_for_schema(
@@ -369,8 +373,9 @@ def field_for_schema(
         typ = Dict[Any, Any]
 
     # Base types
-    if typ in _native_to_marshmallow:
-        return _native_to_marshmallow[typ](**metadata)
+    field = _field_by_type(typ, base_schema)
+    if field:
+        return field(**metadata)
 
     # Generic types
     origin = typing_inspect.get_origin(typ)

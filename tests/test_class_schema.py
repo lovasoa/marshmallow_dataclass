@@ -1,7 +1,10 @@
 import dataclasses
 import unittest
+from uuid import UUID
 
 from marshmallow_dataclass import class_schema
+from marshmallow import Schema
+from marshmallow.fields import Field, UUID as UUIDField
 
 
 class TestClassSchema(unittest.TestCase):
@@ -35,6 +38,31 @@ class TestClassSchema(unittest.TestCase):
         }
         self.assertEqual(len(complex_set), 1)
         self.assertEqual(len(simple_set), 1)
+
+    def test_use_marshmallow_type_mapping(self):
+        @dataclasses.dataclass
+        class WithUUID:
+            uuid: UUID = dataclasses.field()
+
+        schema = class_schema(WithUUID)()
+        self.assertIsInstance(schema.fields["uuid"], UUIDField)
+
+    def test_use_type_mapping_from_base_schema(self):
+        class CustomType:
+            pass
+
+        class CustomField(Field):
+            pass
+
+        class BaseSchema(Schema):
+            TYPE_MAPPING = {CustomType: CustomField}
+
+        @dataclasses.dataclass
+        class WithCustomField:
+            custom: CustomType = dataclasses.field()
+
+        schema = class_schema(WithCustomField, base_schema=BaseSchema)()
+        self.assertIsInstance(schema.fields["custom"], CustomField)
 
 
 if __name__ == "__main__":
