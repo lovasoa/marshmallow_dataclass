@@ -322,8 +322,9 @@ def _field_by_type(
     if typ is Any:
         return marshmallow.fields.Raw
     else:
-        type_mapping = (base_schema or marshmallow.Schema).TYPE_MAPPING
-        return type_mapping.get(typ)
+        return (
+            base_schema and base_schema.TYPE_MAPPING.get(typ)
+        ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
 
 
 def field_for_schema(
