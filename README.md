@@ -156,7 +156,23 @@ It is also possible to derive all schemas from your own
 base Schema class
 (see [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html)).
 This allows you to implement custom (de)serialization
-behavior, for instance renaming fields:
+behavior, for instance specifying a custom mapping between your classes and marshmallow fields,
+or renaming fields on serialization.
+
+#### Custom mapping between classes and fields
+
+```python
+class BaseSchema(marshmallow.Schema):
+    TYPE_MAPPING = {CustomType: CustomField}
+    
+class Sample:
+    my_custom: CustomType
+
+SampleSchema = marshmallow_dataclass.class_schema(Sample, base_schema=BaseSchema)
+# SampleSchema now serializes my_custom using the CustomField marshmallow field
+```
+
+#### Renaming fields on serialization
 
 ```python
 import marshmallow
