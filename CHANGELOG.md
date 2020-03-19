@@ -1,5 +1,9 @@
 # marshmallow_dataclass change log
 
+## v7.5.0
+ - Allow the use of BaseSchema to specify a custom mapping from python types to marshmallow fields
+   ([#72](https://github.com/lovasoa/marshmallow_dataclass/pull/72))
+
 ## v7.4.0
  - Cache the generated schemas
    ([#70](https://github.com/lovasoa/marshmallow_dataclass/pull/70))
