@@ -164,9 +164,11 @@ or renaming fields on serialization.
 ```python
 class BaseSchema(marshmallow.Schema):
     TYPE_MAPPING = {CustomType: CustomField}
-    
+
+
 class Sample:
     my_custom: CustomType
+
 
 SampleSchema = marshmallow_dataclass.class_schema(Sample, base_schema=BaseSchema)
 # SampleSchema now serializes my_custom using the CustomField marshmallow field
