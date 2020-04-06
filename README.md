@@ -59,7 +59,7 @@ You may optionally install the following extras:
 - `union`, for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) into [`marshmallow-union`](https://pypi.org/project/marshmallow-union/) fields.
 
 ```shell
-pip3 install marshmallow-dataclass[enum,union]
+pip3 install "marshmallow-dataclass[enum,union]"
 ```
 
 ### marshmallow 2 support
