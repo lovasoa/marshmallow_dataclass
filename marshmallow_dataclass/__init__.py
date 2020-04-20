@@ -35,7 +35,6 @@ Full example::
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
 import inspect
-import typing
 from enum import EnumMeta
 from functools import lru_cache
 from typing import (
@@ -462,7 +461,7 @@ def _base_schema(
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
-        def load(self, data: typing.Mapping, *, many: bool = None, **kwargs):
+        def load(self, data: Mapping, *, many: bool = None, **kwargs):
             all_loaded = super().load(data, many=many, **kwargs)
             if many:
                 return [clazz(**loaded) for loaded in all_loaded]
