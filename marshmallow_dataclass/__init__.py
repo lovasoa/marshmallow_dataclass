@@ -463,6 +463,7 @@ def _base_schema(
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         def load(self, data: Mapping, *, many: bool = None, **kwargs):
             all_loaded = super().load(data, many=many, **kwargs)
+            many = self.many if many is None else bool(many)
             if many:
                 return [clazz(**loaded) for loaded in all_loaded]
             else:
