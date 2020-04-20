@@ -62,7 +62,8 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 NoneType = type(None)
 _U = TypeVar("_U")
 
-T_SchemaType = TypeVar('T_SchemaType', bound=Type[marshmallow.Schema])
+T_Schema = TypeVar('T_Schema', bound=Type[marshmallow.Schema])
+T_SchemaType = Type[T_Schema]
 
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
