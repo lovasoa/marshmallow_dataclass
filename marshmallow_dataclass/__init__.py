@@ -36,6 +36,7 @@ Full example::
 """
 import dataclasses
 import inspect
+import typing
 from functools import lru_cache
 from enum import EnumMeta
 from typing import (
@@ -62,7 +63,7 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 NoneType = type(None)
 _U = TypeVar("_U")
 
-T_Schema = TypeVar('T_Schema', bound=Type[marshmallow.Schema])
+T_Schema = TypeVar("T_Schema", bound=marshmallow.Schema)
 T_SchemaType = Type[T_Schema]
 
 # Whitelist of dataclass members that will be copied to generated schema.
@@ -165,7 +166,7 @@ def add_schema(_cls=None, base_schema=None):
 
 
 @typing.overload
-def class_schema(clazz: type, base_schema: None) -> Type[marshmallow.Schema]:
+def class_schema(clazz: type, base_schema: None = None) -> Type[marshmallow.Schema]:
     ...
 
 
