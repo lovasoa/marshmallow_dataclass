@@ -163,9 +163,17 @@ def add_schema(_cls=None, base_schema=None):
     return decorator(_cls) if _cls else decorator
 
 
-def class_schema(
-    clazz: type, base_schema: Optional[T_SchemaType] = None
-) -> T_SchemaType:
+@typing.overload
+def class_schema(clazz: type, base_schema: None) -> Type[marshmallow.Schema]:
+    ...
+
+
+@typing.overload
+def class_schema(clazz: type, base_schema: T_SchemaType) -> T_SchemaType:
+    ...
+
+
+def class_schema(clazz, base_schema=None):
 
     """
     Convert a class to a marshmallow schema
