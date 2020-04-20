@@ -62,6 +62,8 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 NoneType = type(None)
 _U = TypeVar("_U")
 
+T_SchemaType = TypeVar('T_SchemaType', bound=Type[marshmallow.Schema])
+
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
@@ -162,8 +164,8 @@ def add_schema(_cls=None, base_schema=None):
 
 
 def class_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
-) -> Type[marshmallow.Schema]:
+    clazz: type, base_schema: Optional[T_SchemaType] = None
+) -> T_SchemaType:
 
     """
     Convert a class to a marshmallow schema
