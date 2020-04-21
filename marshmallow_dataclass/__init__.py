@@ -34,11 +34,9 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
-import dataclasses
 import inspect
-import typing
-from functools import lru_cache
 from enum import EnumMeta
+from functools import lru_cache
 from typing import (
     overload,
     Dict,
@@ -55,6 +53,7 @@ from typing import (
     Set,
 )
 
+import dataclasses
 import marshmallow
 import typing_inspect
 
@@ -62,9 +61,6 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 
 NoneType = type(None)
 _U = TypeVar("_U")
-
-T_Schema = TypeVar("T_Schema", bound=marshmallow.Schema)
-T_SchemaType = Type[T_Schema]
 
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
@@ -165,12 +161,16 @@ def add_schema(_cls=None, base_schema=None):
     return decorator(_cls) if _cls else decorator
 
 
-@typing.overload
+T_Schema = TypeVar("T_Schema", bound=marshmallow.Schema)
+T_SchemaType = Type[T_Schema]
+
+
+@overload
 def class_schema(clazz: type, base_schema: None = None) -> Type[marshmallow.Schema]:
     ...
 
 
-@typing.overload
+@overload
 def class_schema(clazz: type, base_schema: T_SchemaType) -> T_SchemaType:
     ...
 
@@ -469,12 +469,17 @@ def _base_schema(
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
     or `BaseSchema`
     """
+
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
-        @marshmallow.post_load
-        def make_data_class(self, data, **_):
-            return clazz(**data)
+        def load(self, data: Mapping, *, many: bool = None, **kwargs):
+            all_loaded = super().load(data, many=many, **kwargs)
+            many = self.many if many is None else bool(many)
+            if many:
+                return [clazz(**loaded) for loaded in all_loaded]
+            else:
+                return clazz(**all_loaded)
 
     return BaseSchema
 
