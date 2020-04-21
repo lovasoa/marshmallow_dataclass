@@ -1,5 +1,12 @@
 # marshmallow_dataclass change log
 
+## v7.5.1
+ - Fix an inconsistency in the behavior of `marshmallow.post_load`.
+   The input to [`post_load`](https://marshmallow.readthedocs.io/en/stable/extending.html)
+   hooks was either a dict or a dataclass instance depending on the method name.
+   It is now always a dict.
+   ([#75](https://github.com/lovasoa/marshmallow_dataclass/issues/75))
+
 ## v7.5.0
  - Allow the use of BaseSchema to specify a custom mapping from python types to marshmallow fields
    ([#72](https://github.com/lovasoa/marshmallow_dataclass/pull/72))
