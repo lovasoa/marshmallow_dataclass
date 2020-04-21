@@ -34,10 +34,9 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
-import dataclasses
 import inspect
-from functools import lru_cache
 from enum import EnumMeta
+from functools import lru_cache
 from typing import (
     overload,
     Dict,
@@ -54,6 +53,7 @@ from typing import (
     Set,
 )
 
+import dataclasses
 import marshmallow
 import typing_inspect
 
@@ -457,12 +457,17 @@ def _base_schema(
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
     or `BaseSchema`
     """
+
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
-        @marshmallow.post_load
-        def make_data_class(self, data, **_):
-            return clazz(**data)
+        def load(self, data: Mapping, *, many: bool = None, **kwargs):
+            all_loaded = super().load(data, many=many, **kwargs)
+            many = self.many if many is None else bool(many)
+            if many:
+                return [clazz(**loaded) for loaded in all_loaded]
+            else:
+                return clazz(**all_loaded)
 
     return BaseSchema
 
