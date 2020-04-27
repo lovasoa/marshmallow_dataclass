@@ -2,7 +2,7 @@ import inspect
 import typing
 import unittest
 from enum import Enum
-from typing import Dict, Optional, Union, Any
+from typing import Dict, Optional, Union, Any, List
 
 from marshmallow import fields, Schema
 
@@ -113,6 +113,21 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(NewDataclass, metadata=dict(required=False)),
             fields.Nested(NewDataclass.Schema),
+        )
+
+    def test_force_generic_types(self):
+        from marshmallow.fields import List as BaseList
+
+        class MyList(BaseList):
+            ...
+
+        self.assertIsInstance(
+            field_for_schema(List[int]), BaseList
+        )
+
+        self.assertIsInstance(
+            field_for_schema(List[int], generic_types={List: MyList}),
+            MyList
         )
 
 
