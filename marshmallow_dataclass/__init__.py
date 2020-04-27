@@ -405,13 +405,9 @@ def field_for_schema(
             metadata["required"] = False
             return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
-            subfields = [
-                field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
-                for subtyp in arguments
-            ]
-            import marshmallow_union
+            from .polyfield import field_for_union
 
-            return marshmallow_union.Union(subfields, **metadata)
+            return field_for_union(arguments, **metadata)
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)

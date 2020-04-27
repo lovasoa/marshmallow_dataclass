@@ -89,13 +89,11 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_union(self):
-        import marshmallow_union
+        import marshmallow_polyfield
 
         self.assertFieldsEqual(
             field_for_schema(Union[int, str]),
-            marshmallow_union.Union(
-                fields=[fields.Integer(), fields.String()], required=True
-            ),
+            marshmallow_polyfield.PolyField(required=True),
         )
 
     def test_newtype(self):
