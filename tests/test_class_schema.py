@@ -1,10 +1,12 @@
-import dataclasses
 import unittest
+from typing import Any
 from uuid import UUID
 
-from marshmallow_dataclass import class_schema
+import dataclasses
 from marshmallow import Schema
 from marshmallow.fields import Field, UUID as UUIDField
+
+from marshmallow_dataclass import class_schema
 
 
 class TestClassSchema(unittest.TestCase):
@@ -57,6 +59,16 @@ class TestClassSchema(unittest.TestCase):
         schema = class_schema(WithCustomField, base_schema=BaseSchema)()
         self.assertIsInstance(schema.fields["custom"], CustomField)
         self.assertIsInstance(schema.fields["uuid"], UUIDField)
+
+    def test_any_none(self):
+        # See: https://github.com/lovasoa/marshmallow_dataclass/issues/80
+        @dataclasses.dataclass
+        class A:
+            data: Any
+
+        schema = class_schema(A)()
+        self.assertEqual(A(data=None), schema.load({"data": None}))
+        self.assertEqual(schema.dump(A(data=None)), {"data": None})
 
 
 if __name__ == "__main__":

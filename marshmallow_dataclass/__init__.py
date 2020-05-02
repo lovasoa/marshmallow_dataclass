@@ -319,12 +319,9 @@ def _proxied_class_schema(
 def _field_by_type(
     typ: Union[type, Any], base_schema: Optional[Type[marshmallow.Schema]]
 ) -> Optional[Type[marshmallow.fields.Field]]:
-    if typ is Any:
-        return marshmallow.fields.Raw
-    else:
-        return (
-            base_schema and base_schema.TYPE_MAPPING.get(typ)
-        ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
+    return (
+        base_schema and base_schema.TYPE_MAPPING.get(typ)
+    ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
 
 
 def field_for_schema(
@@ -377,6 +374,9 @@ def field_for_schema(
     field = _field_by_type(typ, base_schema)
     if field:
         return field(**metadata)
+
+    if typ is Any:
+        return marshmallow.fields.Raw(allow_none=True, **metadata)
 
     # Generic types
     origin = typing_inspect.get_origin(typ)
