@@ -3,7 +3,7 @@ from typing import Any
 from uuid import UUID
 
 import dataclasses
-from marshmallow import Schema
+from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField
 
 from marshmallow_dataclass import class_schema
@@ -69,6 +69,14 @@ class TestClassSchema(unittest.TestCase):
         schema = class_schema(A)()
         self.assertEqual(A(data=None), schema.load({"data": None}))
         self.assertEqual(schema.dump(A(data=None)), {"data": None})
+
+    def test_any_none_disallowed(self):
+        @dataclasses.dataclass
+        class A:
+            data: Any = dataclasses.field(metadata={"allow_none": False})
+
+        schema = class_schema(A)()
+        self.assertRaises(ValidationError, lambda: schema.load({"data": None}))
 
 
 if __name__ == "__main__":

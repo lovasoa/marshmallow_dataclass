@@ -376,7 +376,8 @@ def field_for_schema(
         return field(**metadata)
 
     if typ is Any:
-        return marshmallow.fields.Raw(allow_none=True, **metadata)
+        metadata.setdefault("allow_none", True)
+        return marshmallow.fields.Raw(**metadata)
 
     # Generic types
     origin = typing_inspect.get_origin(typ)
