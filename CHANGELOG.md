@@ -1,5 +1,10 @@
 # marshmallow_dataclass change log
 
+## v7.5.2
+ - Fix fields of type `Any` incorrectly always rejecting the value `None`.
+   `None` can still be disallowed by explicitly setting the marshmallow attribute `allow_none=False`.
+   ([#80](https://github.com/lovasoa/marshmallow_dataclass/issues/80))
+
 ## v7.5.1
  - Fix an inconsistency in the behavior of `marshmallow.post_load`.
    The input to [`post_load`](https://marshmallow.readthedocs.io/en/stable/extending.html)
