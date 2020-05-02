@@ -29,7 +29,9 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_any(self):
-        self.assertFieldsEqual(field_for_schema(Any), fields.Raw(required=True))
+        self.assertFieldsEqual(
+            field_for_schema(Any), fields.Raw(required=True, allow_none=True)
+        )
 
     def test_dict_from_typing(self):
         self.assertFieldsEqual(
@@ -45,8 +47,8 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(dict),
             fields.Dict(
-                keys=fields.Raw(required=True),
-                values=fields.Raw(required=True),
+                keys=fields.Raw(required=True, allow_none=True),
+                values=fields.Raw(required=True, allow_none=True),
                 required=True,
             ),
         )
@@ -54,7 +56,7 @@ class TestFieldForSchema(unittest.TestCase):
     def test_builtin_list(self):
         self.assertFieldsEqual(
             field_for_schema(list, metadata=dict(required=False)),
-            fields.List(fields.Raw(required=True), required=False),
+            fields.List(fields.Raw(required=True, allow_none=True), required=False),
         )
 
     def test_explicit_field(self):
