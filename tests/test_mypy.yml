@@ -24,3 +24,16 @@
 
     User(id=42, email="user@email.com")  # E: Argument "id" to "User" has incompatible type "int"; expected "str"
     User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "List[str]"; expected "str"
+- case: marshmallow_dataclass_keyword_arguments
+  mypy_config: |
+    follow_imports = silent
+    plugins = marshmallow_dataclass.mypy
+  main: |
+    from marshmallow_dataclass import dataclass
+
+    @dataclass
+    class User:
+        id: int
+        name: str
+
+    user = User(id=4, name='Johny')
