@@ -3,6 +3,7 @@ from typing import Callable, Optional, Type
 
 from mypy import nodes
 from mypy.plugin import DynamicClassDefContext, Plugin
+from mypy.plugins import dataclasses
 
 import marshmallow_dataclass
 
@@ -19,6 +20,11 @@ class MarshmallowDataclassPlugin(Plugin):
     ) -> Optional[Callable[[DynamicClassDefContext], None]]:
         if fullname == "marshmallow_dataclass.NewType":
             return new_type_hook
+        return None
+
+    def get_class_decorator_hook(self, fullname: str):
+        if fullname == "marshmallow_dataclass.dataclass":
+            return dataclasses.dataclass_class_maker_callback
         return None
 
 
