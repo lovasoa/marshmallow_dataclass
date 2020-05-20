@@ -2,7 +2,7 @@ import inspect
 import typing
 import unittest
 from enum import Enum
-from typing import Dict, Optional, Union, Any
+from typing import Dict, Optional, Union, Any, List, Tuple
 
 from marshmallow import fields, Schema
 
@@ -116,6 +116,26 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(NewDataclass, metadata=dict(required=False)),
             fields.Nested(NewDataclass.Schema),
         )
+
+    def test_override_container_type_with_type_mapping(self):
+        type_mapping = [
+            (List, fields.List, List[int]),
+            (Dict, fields.Dict, Dict[str, int]),
+            (Tuple, fields.Tuple, Tuple[int, str, bytes]),
+        ]
+        for base_type, marshmallow_field, schema in type_mapping:
+
+            class MyType(marshmallow_field):
+                ...
+
+            self.assertIsInstance(field_for_schema(schema), marshmallow_field)
+
+            class BaseSchema(Schema):
+                TYPE_MAPPING = {base_type: MyType}
+
+            self.assertIsInstance(
+                field_for_schema(schema, base_schema=BaseSchema), MyType
+            )
 
 
 if __name__ == "__main__":

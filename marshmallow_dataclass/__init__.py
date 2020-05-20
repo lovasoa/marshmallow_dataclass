@@ -351,6 +351,7 @@ def field_for_schema(
     """
 
     metadata = {} if metadata is None else dict(metadata)
+
     if default is not marshmallow.missing:
         metadata.setdefault("default", default)
         # 'missing' must not be set for required fields.
@@ -383,16 +384,22 @@ def field_for_schema(
     origin = typing_inspect.get_origin(typ)
     if origin:
         arguments = typing_inspect.get_args(typ, True)
+        # Override base_schema.TYPE_MAPPING to change the class used for generic types below
+        type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
+
         if origin in (list, List):
             child_type = field_for_schema(arguments[0], base_schema=base_schema)
-            return marshmallow.fields.List(child_type, **metadata)
+            list_type = type_mapping.get(List, marshmallow.fields.List)
+            return list_type(child_type, **metadata)
         if origin in (tuple, Tuple):
             children = tuple(
                 field_for_schema(arg, base_schema=base_schema) for arg in arguments
             )
-            return marshmallow.fields.Tuple(children, **metadata)
+            tuple_type = type_mapping.get(Tuple, marshmallow.fields.Tuple)
+            return tuple_type(children, **metadata)
         elif origin in (dict, Dict):
-            return marshmallow.fields.Dict(
+            dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
+            return dict_type(
                 keys=field_for_schema(arguments[0], base_schema=base_schema),
                 values=field_for_schema(arguments[1], base_schema=base_schema),
                 **metadata,
