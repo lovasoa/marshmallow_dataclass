@@ -81,14 +81,12 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    generic_types: Optional[Dict[Type, Type[marshmallow.Schema]]] = None,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
 
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param generic_types: dict to map generic type to custom marshmallow schema
 
     >>> @dataclass
     ... class Artist:
@@ -112,8 +110,8 @@ def dataclass(
         _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
     )
     if _cls is None:
-        return lambda cls: add_schema(dc(cls), base_schema, generic_types)
-    return add_schema(dc, base_schema, generic_types)
+        return lambda cls: add_schema(dc(cls), base_schema)
+    return add_schema(dc, base_schema)
 
 
 @overload
@@ -124,28 +122,24 @@ def add_schema(_cls: Type[_U]) -> Type[_U]:
 @overload
 def add_schema(
     base_schema: Type[marshmallow.Schema] = None,
-    generic_types: Optional[Dict[Type, Type[marshmallow.Schema]]] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
 
 @overload
 def add_schema(
-    _cls: Type[_U],
-    base_schema: Type[marshmallow.Schema] = None,
-    generic_types: Optional[Dict[Type, Type[marshmallow.Schema]]] = None,
+    _cls: Type[_U], base_schema: Type[marshmallow.Schema] = None
 ) -> Type[_U]:
     ...
 
 
-def add_schema(_cls=None, base_schema=None, generic_types=None):
+def add_schema(_cls=None, base_schema=None):
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
 
     :param type cls: The dataclass to which a Schema should be added
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param generic_types: dict to map generic type to custom marshmallow schema
 
     >>> class BaseSchema(marshmallow.Schema):
     ...   def on_bind_field(self, field_name, field_obj):
@@ -161,16 +155,14 @@ def add_schema(_cls=None, base_schema=None, generic_types=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
-        clazz.Schema = class_schema(clazz, base_schema, generic_types)  # type: ignore
+        clazz.Schema = class_schema(clazz, base_schema)  # type: ignore
         return clazz
 
     return decorator(_cls) if _cls else decorator
 
 
 def class_schema(
-    clazz: type,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    generic_types: Optional[Dict[Type, Type[marshmallow.Schema]]] = None,
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
 
     """
@@ -178,7 +170,6 @@ def class_schema(
 
     :param clazz: A python class (may be a dataclass)
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param generic_types: dict to map generic type to custom marshmallow schema
     :return: A marshmallow Schema corresponding to the dataclass
 
     .. note::
@@ -284,16 +275,12 @@ def class_schema(
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
-    # convert to hashable type (tuple) for lru_cache
-    generic_types_hashable = tuple(generic_types.items()) if generic_types else ()
-    return _proxied_class_schema(clazz, base_schema, generic_types_hashable)
+    return _proxied_class_schema(clazz, base_schema)
 
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _proxied_class_schema(
-    clazz: type,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    generic_types: Tuple = (),
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
 
     try:
@@ -301,9 +288,7 @@ def _proxied_class_schema(
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
-            return class_schema(
-                dataclasses.dataclass(clazz), base_schema, dict(generic_types)
-            )
+            return class_schema(dataclasses.dataclass(clazz), base_schema)
         except Exception:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -320,11 +305,7 @@ def _proxied_class_schema(
         (
             field.name,
             field_for_schema(
-                field.type,
-                _get_field_default(field),
-                field.metadata,
-                base_schema,
-                dict(generic_types),
+                field.type, _get_field_default(field), field.metadata, base_schema
             ),
         )
         for field in fields
@@ -348,7 +329,6 @@ def field_for_schema(
     default=marshmallow.missing,
     metadata: Mapping[str, Any] = None,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    generic_types: Optional[Dict[Type, Type[marshmallow.Schema]]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -358,7 +338,6 @@ def field_for_schema(
     :param default: value to use for (de)serialization when the field is missing
     :param metadata: Additional parameters to pass to the marshmallow field constructor
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param generic_types: dict to map generic type to custom marshmallow schema
 
     >>> int_field = field_for_schema(int, default=9, metadata=dict(required=True))
     >>> int_field.__class__
@@ -372,7 +351,6 @@ def field_for_schema(
     """
 
     metadata = {} if metadata is None else dict(metadata)
-    generic_types = dict(generic_types) if generic_types else {}
 
     if default is not marshmallow.missing:
         metadata.setdefault("default", default)
@@ -406,29 +384,24 @@ def field_for_schema(
     origin = typing_inspect.get_origin(typ)
     if origin:
         arguments = typing_inspect.get_args(typ, True)
+        # Override base_schema.TYPE_MAPPING to change the class used for generic types below
+        type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
+
         if origin in (list, List):
-            child_type = field_for_schema(
-                arguments[0], base_schema=base_schema, generic_types=generic_types
-            )
-            list_type = generic_types.get(List, marshmallow.fields.List)
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            list_type = type_mapping.get(List, marshmallow.fields.List)
             return list_type(child_type, **metadata)
         if origin in (tuple, Tuple):
             children = tuple(
-                field_for_schema(
-                    arg, base_schema=base_schema, generic_types=generic_types
-                )
-                for arg in arguments
+                field_for_schema(arg, base_schema=base_schema) for arg in arguments
             )
-            return marshmallow.fields.Tuple(children, **metadata)
+            tuple_type = type_mapping.get(Tuple, marshmallow.fields.Tuple)
+            return tuple_type(children, **metadata)
         elif origin in (dict, Dict):
-            dict_type = generic_types.get(Dict, marshmallow.fields.Dict)
+            dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
-                keys=field_for_schema(
-                    arguments[0], base_schema=base_schema, generic_types=generic_types
-                ),
-                values=field_for_schema(
-                    arguments[1], base_schema=base_schema, generic_types=generic_types
-                ),
+                keys=field_for_schema(arguments[0], base_schema=base_schema),
+                values=field_for_schema(arguments[1], base_schema=base_schema),
                 **metadata,
             )
         elif typing_inspect.is_optional_type(typ):
@@ -437,12 +410,7 @@ def field_for_schema(
             metadata["default"] = metadata.get("default", None)
             metadata["missing"] = metadata.get("missing", None)
             metadata["required"] = False
-            return field_for_schema(
-                subtyp,
-                metadata=metadata,
-                base_schema=base_schema,
-                generic_types=generic_types,
-            )
+            return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
             subfields = [
                 field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
@@ -470,7 +438,6 @@ def field_for_schema(
                 metadata=metadata,
                 default=default,
                 base_schema=base_schema,
-                generic_types=generic_types,
             )
 
     # enumerations
@@ -485,9 +452,7 @@ def field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
     nested = (
-        nested_schema
-        or forward_reference
-        or class_schema(typ, base_schema=base_schema, generic_types=generic_types)
+        nested_schema or forward_reference or class_schema(typ, base_schema=base_schema)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
