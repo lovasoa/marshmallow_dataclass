@@ -3,8 +3,9 @@ from typing import Any
 from uuid import UUID
 
 import dataclasses
+import typing
 from marshmallow import Schema, ValidationError
-from marshmallow.fields import Field, UUID as UUIDField
+from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
 
 from marshmallow_dataclass import class_schema
 
@@ -48,17 +49,24 @@ class TestClassSchema(unittest.TestCase):
         class CustomField(Field):
             pass
 
+        class CustomListField(ListField):
+            pass
+
         class BaseSchema(Schema):
-            TYPE_MAPPING = {CustomType: CustomField}
+            TYPE_MAPPING = {CustomType: CustomField, typing.List: CustomListField}
 
         @dataclasses.dataclass
         class WithCustomField:
             custom: CustomType
+            custom_list: typing.List[float]
             uuid: UUID
+            n: int
 
         schema = class_schema(WithCustomField, base_schema=BaseSchema)()
         self.assertIsInstance(schema.fields["custom"], CustomField)
+        self.assertIsInstance(schema.fields["custom_list"], CustomListField)
         self.assertIsInstance(schema.fields["uuid"], UUIDField)
+        self.assertIsInstance(schema.fields["n"], Integer)
 
     def test_any_none(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/80
