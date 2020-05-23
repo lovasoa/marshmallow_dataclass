@@ -163,15 +163,17 @@ or renaming fields on serialization.
 
 ```python
 class BaseSchema(marshmallow.Schema):
-    TYPE_MAPPING = {CustomType: CustomField}
+    TYPE_MAPPING = {CustomType: CustomField, List: CustomListField}
 
 
 class Sample:
     my_custom: CustomType
+    my_custom_list: List[int]
 
 
 SampleSchema = marshmallow_dataclass.class_schema(Sample, base_schema=BaseSchema)
 # SampleSchema now serializes my_custom using the CustomField marshmallow field
+# and serializes my_custom_list using the CustomListField marshmallow field
 ```
 
 #### Renaming fields on serialization

@@ -1,5 +1,35 @@
 # marshmallow_dataclass change log
 
+## v7.6.0
+ - Allow setting a custom marshmallow field for collection types. This lets you write code such as :
+    ```python
+    class FilteringListField(ListField):
+        def __init__(self, cls: Union[Field, type], min: typing.Any, **kwargs):
+            super().__init__(cls, **kwargs)
+            self.min = min
+
+        def _deserialize(self, value, attr, data, **kwargs) -> typing.List[typing.Any]:
+            loaded = super(FilteringListField, self)._deserialize(
+                value, attr, data, **kwargs
+            )
+            return [x for x in loaded if self.min <= x]
+
+
+    class BaseSchema(Schema):
+        TYPE_MAPPING = {typing.List: FilteringListField}
+
+
+    @dataclasses.dataclass
+    class WithCustomField:
+        constrained_floats: typing.List[float] = dataclasses.field(metadata={"min": 1})
+
+
+    schema = class_schema(WithCustomField, base_schema=BaseSchema)()
+    schema.load({"constrained_floats": [0, 1, 2, 3]})
+    # -> WithCustomField(constrained_floats=[1.0, 2.0, 3.0])
+    ```
+    (See [#66](https://github.com/lovasoa/marshmallow_dataclass/issues/66))
+
 ## v7.5.2
  - Fix fields of type `Any` incorrectly always rejecting the value `None`.
    `None` can still be disallowed by explicitly setting the marshmallow attribute `allow_none=False`.
