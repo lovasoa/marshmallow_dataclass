@@ -56,7 +56,8 @@ pip3 install marshmallow-dataclass
 You may optionally install the following extras:
 
 - `enum`, for translating python enums to [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
-- `union`, for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) into [`marshmallow-polyfield`](https://pypi.org/project/marshmallow-polyfield/) fields.
+- `union`, for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) into [`marshmallow-union`](https://pypi.org/project/marshmallow-union/) fields.
+- `union-polyfield`, is an alternative option for Union types using [`marshmallow-polyfield`](https://pypi.org/project/marshmallow-polyfield/)
 
 ```shell
 pip3 install "marshmallow-dataclass[enum,union]"

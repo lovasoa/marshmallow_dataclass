@@ -1,9 +1,15 @@
+import importlib
 import unittest
 import marshmallow
+import pytest
 from marshmallow_dataclass import dataclass
 from typing import List, Union, Dict
 
 
+@pytest.mark.skipif(
+    not importlib.util.find_spec("marshmallow_polyfield"),
+    reason="needs marshmallow_polyfield to pass those tests",
+)
 class TestClassSchema(unittest.TestCase):
     def test_simple_union(self):
         @dataclass

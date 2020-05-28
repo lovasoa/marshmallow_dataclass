@@ -14,7 +14,8 @@ CLASSIFIERS = [
 
 EXTRAS_REQUIRE = {
     "enum": ["marshmallow-enum"],
-    "union": ["marshmallow-polyfield"],
+    "union": ["marshmallow-union"],
+    "union-polyfield": ["marshmallow-polyfield"],
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],

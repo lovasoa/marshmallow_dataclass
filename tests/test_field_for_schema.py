@@ -1,4 +1,6 @@
+import importlib
 import inspect
+import pytest
 import typing
 import unittest
 from enum import Enum
@@ -88,12 +90,28 @@ class TestFieldForSchema(unittest.TestCase):
             marshmallow_enum.EnumField(enum=Color, required=True),
         )
 
-    def test_union(self):
-        import marshmallow_polyfield
+    def test_union_polyfield(self):
+        marshmallow_polyfield = pytest.importorskip(
+            "marshmallow_polyfield", "marshmallow_polyfield not installed"
+        )
 
         self.assertFieldsEqual(
             field_for_schema(Union[int, str]),
             marshmallow_polyfield.PolyField(required=True),
+        )
+
+    @pytest.mark.skipif(
+        importlib.util.find_spec("marshmallow_polyfield"),
+        reason="skip marshmallow_union specific test",
+    )
+    def test_union(self):
+        import marshmallow_union
+
+        self.assertFieldsEqual(
+            field_for_schema(Union[int, str]),
+            marshmallow_union.Union(
+                fields=[fields.Integer(), fields.String()], required=True
+            ),
         )
 
     def test_newtype(self):

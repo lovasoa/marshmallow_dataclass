@@ -405,9 +405,7 @@ def field_for_schema(
             metadata["required"] = False
             return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
-            from .polyfield import field_for_union
-
-            return field_for_union(arguments, **metadata)
+            return union_or_polyfield(base_schema, arguments, **metadata)
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
@@ -528,6 +526,21 @@ def NewType(
     new_type._marshmallow_field = field  # type: ignore
     new_type._marshmallow_args = kwargs  # type: ignore
     return new_type
+
+
+def union_or_polyfield(base_schema, arguments, **metadata):
+    try:
+        from .polyfield import field_for_union
+
+        return field_for_union(arguments, **metadata)
+    except ModuleNotFoundError:
+        import marshmallow_union
+
+        subfields = [
+            field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
+            for subtyp in arguments
+        ]
+        return marshmallow_union.Union(subfields, **metadata)
 
 
 if __name__ == "__main__":
