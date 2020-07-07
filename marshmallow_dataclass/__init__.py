@@ -173,7 +173,7 @@ def class_schema(
     :return: A marshmallow Schema corresponding to the dataclass
 
     .. note::
-        All the arguments supported by marshmallow field classes are can
+        All the arguments supported by marshmallow field classes can
         be passed in the `metadata` dictionary of a field.
 
 
