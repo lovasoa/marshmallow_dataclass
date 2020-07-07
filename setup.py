@@ -19,7 +19,7 @@ EXTRAS_REQUIRE = {
     "lint": ["pre-commit~=1.18"],
     "docs": ["sphinx"],
     "tests": [
-        "pytest",
+        "pytest>=5.4",
         # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
         # https://github.com/python/typed_ast/issues/111
         "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
