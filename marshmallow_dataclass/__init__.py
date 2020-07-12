@@ -424,9 +424,22 @@ def field_for_schema(
     newtype_supertype = getattr(typ, "__supertype__", None)
     if newtype_supertype and inspect.isfunction(typ):
         # Add the information coming our custom NewType implementation
+
+        typ_args = getattr(typ, "_marshmallow_args", {})
+
+        # Handle multiple validators from both `typ` and `metadata`. See https://github.com/lovasoa/marshmallow_dataclass/issues/91
+        new_validators = []
+        for meta_dict in (typ_args, metadata):
+            if 'validate' in meta_dict:
+                if marshmallow.utils.is_iterable_but_not_string(meta_dict['validate']):
+                    new_validators.extend(meta_dict['validate'])
+                elif callable(meta_dict['validate']):
+                    new_validators.append(meta_dict['validate'])
+        metadata['validate'] = new_validators
+
         metadata = {
             "description": typ.__name__,
-            **getattr(typ, "_marshmallow_args", {}),
+            **typ_args,
             **metadata,
         }
         field = getattr(typ, "_marshmallow_field", None)
