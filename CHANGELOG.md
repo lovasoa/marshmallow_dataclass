@@ -6,6 +6,7 @@
     ```python
     CustomType = NewType("CustomType", str, validate=marshmallow.validate.Length(min=3))
 
+
     @dataclass
     class CustomObject:
         some_field: CustomType = field(metadata={"validate": marshmallow.validate.URL()})
