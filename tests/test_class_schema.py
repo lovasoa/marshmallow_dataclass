@@ -6,8 +6,9 @@ from uuid import UUID
 import dataclasses
 from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
+from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema
+from marshmallow_dataclass import class_schema, NewType
 
 
 class TestClassSchema(unittest.TestCase):
@@ -130,6 +131,114 @@ class TestClassSchema(unittest.TestCase):
 
         schema = class_schema(A)()
         self.assertRaises(ValidationError, lambda: schema.load({"data": None}))
+
+    def test_validator_stacking(self):
+        # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91
+        class SimpleValidator(Validator):
+            # Marshmallow checks for valid validators at construction time only using `callable`
+            def __call__(self):
+                pass
+
+        validator_a = SimpleValidator()
+        validator_b = SimpleValidator()
+        validator_c = SimpleValidator()
+        validator_d = SimpleValidator()
+
+        CustomTypeOneValidator = NewType(
+            "CustomTypeOneValidator", str, validate=validator_a
+        )
+        CustomTypeNoneValidator = NewType("CustomTypeNoneValidator", str, validate=None)
+        CustomTypeMultiValidator = NewType(
+            "CustomTypeNoneValidator", str, validate=[validator_a, validator_b]
+        )
+
+        @dataclasses.dataclass
+        class A:
+            data: CustomTypeNoneValidator = dataclasses.field()
+
+        schema_a = class_schema(A)()
+        self.assertListEqual(schema_a.fields["data"].validators, [])
+
+        @dataclasses.dataclass
+        class B:
+            data: CustomTypeNoneValidator = dataclasses.field(
+                metadata={"validate": validator_a}
+            )
+
+        schema_b = class_schema(B)()
+        self.assertListEqual(schema_b.fields["data"].validators, [validator_a])
+
+        @dataclasses.dataclass
+        class C:
+            data: CustomTypeNoneValidator = dataclasses.field(
+                metadata={"validate": [validator_a, validator_b]}
+            )
+
+        schema_c = class_schema(C)()
+        self.assertListEqual(
+            schema_c.fields["data"].validators, [validator_a, validator_b]
+        )
+
+        @dataclasses.dataclass
+        class D:
+            data: CustomTypeOneValidator = dataclasses.field()
+
+        schema_d = class_schema(D)()
+        self.assertListEqual(schema_d.fields["data"].validators, [validator_a])
+
+        @dataclasses.dataclass
+        class E:
+            data: CustomTypeOneValidator = dataclasses.field(
+                metadata={"validate": validator_b}
+            )
+
+        schema_e = class_schema(E)()
+        self.assertListEqual(
+            schema_e.fields["data"].validators, [validator_a, validator_b]
+        )
+
+        @dataclasses.dataclass
+        class F:
+            data: CustomTypeOneValidator = dataclasses.field(
+                metadata={"validate": [validator_b, validator_c]}
+            )
+
+        schema_f = class_schema(F)()
+        self.assertListEqual(
+            schema_f.fields["data"].validators, [validator_a, validator_b, validator_c]
+        )
+
+        @dataclasses.dataclass
+        class G:
+            data: CustomTypeMultiValidator = dataclasses.field()
+
+        schema_g = class_schema(G)()
+        self.assertListEqual(
+            schema_g.fields["data"].validators, [validator_a, validator_b]
+        )
+
+        @dataclasses.dataclass
+        class H:
+            data: CustomTypeMultiValidator = dataclasses.field(
+                metadata={"validate": validator_c}
+            )
+
+        schema_h = class_schema(H)()
+        self.assertListEqual(
+            schema_h.fields["data"].validators, [validator_a, validator_b, validator_c]
+        )
+
+        @dataclasses.dataclass
+        class J:
+            data: CustomTypeMultiValidator = dataclasses.field(
+                metadata={"validate": [validator_c, validator_d]}
+            )
+
+        schema_j = class_schema(J)()
+        self.assertListEqual(
+            schema_j.fields["data"].validators,
+            [validator_a, validator_b, validator_c, validator_d],
+        )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,18 @@
 # marshmallow_dataclass change log
 
+## v8.0.0
+ - Added support for validator stacking. This breaks backwards compatability. See https://github.com/lovasoa/marshmallow_dataclass/issues/91.
+    ### What this means:
+    ```python
+    CustomType = NewType("CustomType", str, validate=marshmallow.validate.Length(min=3))
+
+
+    @dataclass
+    class CustomObject:
+        some_field: CustomType = field(metadata={"validate": marshmallow.validate.URL()})
+    ```
+    The following code will produce a field with the following list of validators: `[marshmallow.validate.Length(min=3), marshmallow.validate.URL()]` instead of the previous: `[marshmallow.validate.URL()]`.
+
 ## v7.6.0
  - Allow setting a custom marshmallow field for collection types. This lets you write code such as :
     ```python
