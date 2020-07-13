@@ -4,11 +4,12 @@
  - Added support for validator stacking. This breaks backwards compatability. See https://github.com/lovasoa/marshmallow_dataclass/issues/91.
     ### What this means:
     ```python
-        CustomType = NewType("CustomType", str, validate=marshmallow.validate.bla())
+    CustomType = NewType("CustomType", str, validate=marshmallow.validate.bla())
 
-        @dataclass
-        class CustomObject:
-            some_field: CustomType = field(metadata={"validate": marshmallow.validate.URL()})
+
+    @dataclass
+    class CustomObject:
+        some_field: CustomType = field(metadata={"validate": marshmallow.validate.URL()})
     ```
     The following code will produce a field with the following list of validators: `[marshmallow.validate.bla(), marshmallow.validate.URL()]` instead of the previous: `[marshmallow.validate.URL()]`.
 

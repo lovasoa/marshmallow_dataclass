@@ -34,26 +34,26 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+import dataclasses
 import inspect
 from enum import EnumMeta
 from functools import lru_cache
 from typing import (
-    overload,
-    Dict,
-    Type,
-    List,
-    cast,
-    Tuple,
-    Optional,
     Any,
+    Callable,
+    Dict,
+    List,
     Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
     TypeVar,
     Union,
-    Callable,
-    Set,
+    cast,
+    overload,
 )
 
-import dataclasses
 import marshmallow
 import typing_inspect
 
@@ -427,21 +427,18 @@ def field_for_schema(
 
         typ_args = getattr(typ, "_marshmallow_args", {})
 
-        # Handle multiple validators from both `typ` and `metadata`. See https://github.com/lovasoa/marshmallow_dataclass/issues/91
-        new_validators = []
+        # Handle multiple validators from both `typ` and `metadata`.
+        # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
+        new_validators: List[Callable] = []
         for meta_dict in (typ_args, metadata):
-            if 'validate' in meta_dict:
-                if marshmallow.utils.is_iterable_but_not_string(meta_dict['validate']):
-                    new_validators.extend(meta_dict['validate'])
-                elif callable(meta_dict['validate']):
-                    new_validators.append(meta_dict['validate'])
-        metadata['validate'] = new_validators
+            if "validate" in meta_dict:
+                if marshmallow.utils.is_iterable_but_not_string(meta_dict["validate"]):
+                    new_validators.extend(meta_dict["validate"])
+                elif callable(meta_dict["validate"]):
+                    new_validators.append(meta_dict["validate"])
+        metadata["validate"] = new_validators
 
-        metadata = {
-            "description": typ.__name__,
-            **typ_args,
-            **metadata,
-        }
+        metadata = {"description": typ.__name__, **typ_args, **metadata}
         field = getattr(typ, "_marshmallow_field", None)
         if field:
             return field(**metadata)
