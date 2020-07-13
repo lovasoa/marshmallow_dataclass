@@ -324,6 +324,41 @@ def _field_by_type(
     ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
 
 
+def _field_by_supertype(
+    typ: Type,
+    default: marshmallow.missing,
+    newtype_supertype: Type,
+    metadata: dict,
+    base_schema: Optional[Type[marshmallow.Schema]],
+) -> marshmallow.fields.Field:
+    # Add the information coming our custom NewType implementation
+
+    typ_args = getattr(typ, "_marshmallow_args", {})
+
+    # Handle multiple validators from both `typ` and `metadata`.
+    # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
+    new_validators: List[Callable] = []
+    for meta_dict in (typ_args, metadata):
+        if "validate" in meta_dict:
+            if marshmallow.utils.is_iterable_but_not_string(meta_dict["validate"]):
+                new_validators.extend(meta_dict["validate"])
+            elif callable(meta_dict["validate"]):
+                new_validators.append(meta_dict["validate"])
+    metadata["validate"] = new_validators
+
+    metadata = {"description": typ.__name__, **typ_args, **metadata}
+    field = getattr(typ, "_marshmallow_field", None)
+    if field:
+        return field(**metadata)
+    else:
+        return field_for_schema(
+            newtype_supertype,
+            metadata=metadata,
+            default=default,
+            base_schema=base_schema,
+        )
+
+
 def field_for_schema(
     typ: type,
     default=marshmallow.missing,
@@ -423,32 +458,13 @@ def field_for_schema(
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
     if newtype_supertype and inspect.isfunction(typ):
-        # Add the information coming our custom NewType implementation
-
-        typ_args = getattr(typ, "_marshmallow_args", {})
-
-        # Handle multiple validators from both `typ` and `metadata`.
-        # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
-        new_validators: List[Callable] = []
-        for meta_dict in (typ_args, metadata):
-            if "validate" in meta_dict:
-                if marshmallow.utils.is_iterable_but_not_string(meta_dict["validate"]):
-                    new_validators.extend(meta_dict["validate"])
-                elif callable(meta_dict["validate"]):
-                    new_validators.append(meta_dict["validate"])
-        metadata["validate"] = new_validators
-
-        metadata = {"description": typ.__name__, **typ_args, **metadata}
-        field = getattr(typ, "_marshmallow_field", None)
-        if field:
-            return field(**metadata)
-        else:
-            return field_for_schema(
-                newtype_supertype,
-                metadata=metadata,
-                default=default,
-                base_schema=base_schema,
-            )
+        return _field_by_supertype(
+            typ=typ,
+            default=default,
+            newtype_supertype=newtype_supertype,
+            metadata=metadata,
+            base_schema=base_schema,
+        )
 
     # enumerations
     if isinstance(typ, EnumMeta):
