@@ -331,6 +331,9 @@ def _field_by_supertype(
     metadata: dict,
     base_schema: Optional[Type[marshmallow.Schema]],
 ) -> marshmallow.fields.Field:
+    """
+    Return a new field for fields based on a super field. (Usually spawned from NewType)
+    """
     # Add the information coming our custom NewType implementation
 
     typ_args = getattr(typ, "_marshmallow_args", {})
