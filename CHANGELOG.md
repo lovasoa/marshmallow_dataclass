@@ -4,7 +4,11 @@
  - Added support for validator stacking. This breaks backwards compatability. See https://github.com/lovasoa/marshmallow_dataclass/issues/91.
     ### What this means:
     ```python
+<<<<<<< HEAD
     CustomType = NewType("CustomType", str, validate=marshmallow.validate.Length(min=3))
+=======
+        CustomType = NewType("CustomType", str, validate=marshmallow.validate.Length(min=3))
+>>>>>>> 55797124700e269c817c9ee56785c0b4d76b5a1d
 
 
     @dataclass
