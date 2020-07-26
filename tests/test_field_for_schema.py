@@ -92,7 +92,11 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(Union[int, str]),
             union_field.Union(
-                [(int, fields.Integer()), (str, fields.String())], required=True
+                [
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
+                ],
+                required=True,
             ),
         )
 
