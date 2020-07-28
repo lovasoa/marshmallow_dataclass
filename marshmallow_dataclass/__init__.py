@@ -34,7 +34,6 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
-import dataclasses
 import inspect
 from enum import EnumMeta
 from functools import lru_cache
@@ -54,6 +53,7 @@ from typing import (
     overload,
 )
 
+import dataclasses
 import marshmallow
 import typing_inspect
 
@@ -450,13 +450,20 @@ def field_for_schema(
             metadata["required"] = False
             return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
-            subfields = [
-                field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
-                for subtyp in arguments
-            ]
-            import marshmallow_union
+            from . import union_field
 
-            return marshmallow_union.Union(subfields, **metadata)
+            return union_field.Union(
+                [
+                    (
+                        subtyp,
+                        field_for_schema(
+                            subtyp, metadata=metadata, base_schema=base_schema
+                        ),
+                    )
+                    for subtyp in arguments
+                ],
+                **metadata,
+            )
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)

@@ -6,7 +6,7 @@ from typing import Dict, Optional, Union, Any, List, Tuple
 
 from marshmallow import fields, Schema
 
-from marshmallow_dataclass import field_for_schema, dataclass
+from marshmallow_dataclass import field_for_schema, dataclass, union_field
 
 
 class TestFieldForSchema(unittest.TestCase):
@@ -89,12 +89,14 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_union(self):
-        import marshmallow_union
-
         self.assertFieldsEqual(
             field_for_schema(Union[int, str]),
-            marshmallow_union.Union(
-                fields=[fields.Integer(), fields.String()], required=True
+            union_field.Union(
+                [
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
+                ],
+                required=True,
             ),
         )
 
