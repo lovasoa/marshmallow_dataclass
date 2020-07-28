@@ -1,6 +1,7 @@
 # marshmallow_dataclass change log
 
 ## v8.0.0
+ - Better support for unions (See [#93](https://github.com/lovasoa/marshmallow_dataclass/pull/93)).
  - Added support for validator stacking. This breaks backwards compatability. See https://github.com/lovasoa/marshmallow_dataclass/issues/91.
     ### What this means:
     ```python
