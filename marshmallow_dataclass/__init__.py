@@ -81,7 +81,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
+):
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
@@ -164,7 +164,6 @@ def add_schema(_cls=None, base_schema=None):
 def class_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
-
     """
     Convert a class to a marshmallow schema
 

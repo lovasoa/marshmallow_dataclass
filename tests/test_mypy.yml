@@ -37,3 +37,14 @@
         name: str
 
     user = User(id=4, name='Johny')
+- case: marshmallow_dataclass_type_inference
+  mypy_config: |
+    follow_imports = silent
+    plugins = marshmallow_dataclass.mypy
+  main: |
+    from marshmallow_dataclass import dataclass
+
+    @dataclass(frozen=True)
+    class User:
+        id: int
+        name: str
