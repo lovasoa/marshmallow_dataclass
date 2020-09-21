@@ -442,14 +442,16 @@ def field_for_schema(
                 values=field_for_schema(arguments[1], base_schema=base_schema),
                 **metadata,
             )
-        elif typing_inspect.is_optional_type(typ):
-            subtyp = next(t for t in arguments if t is not NoneType)  # type: ignore
-            # Treat optional types as types with a None default
-            metadata["default"] = metadata.get("default", None)
-            metadata["missing"] = metadata.get("missing", None)
-            metadata["required"] = False
-            return field_for_schema(subtyp, metadata=metadata, base_schema=base_schema)
         elif typing_inspect.is_union_type(typ):
+            if typing_inspect.is_optional_type(typ):
+                metadata["default"] = metadata.get("default", None)
+                metadata["missing"] = metadata.get("missing", None)
+                metadata["required"] = False
+            subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
+            if len(subtypes) == 1:
+                return field_for_schema(
+                    subtypes[0], metadata=metadata, base_schema=base_schema
+                )
             from . import union_field
 
             return union_field.Union(
@@ -460,7 +462,7 @@ def field_for_schema(
                             subtyp, metadata=metadata, base_schema=base_schema
                         ),
                     )
-                    for subtyp in arguments
+                    for subtyp in subtypes
                 ],
                 **metadata,
             )
