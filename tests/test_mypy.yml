@@ -31,7 +31,7 @@
   main: |
     from marshmallow_dataclass import dataclass
 
-    @dataclass
+    @dataclass(order=True)
     class User:
         id: int
         name: str
