@@ -100,6 +100,54 @@ class TestFieldForSchema(unittest.TestCase):
             ),
         )
 
+    def test_union_multiple_types_with_none(self):
+        self.assertFieldsEqual(
+            field_for_schema(Union[int, str, None]),
+            union_field.Union(
+                [
+                    (
+                        int,
+                        fields.Integer(
+                            allow_none=True, required=False, default=None, missing=None
+                        ),
+                    ),
+                    (
+                        str,
+                        fields.String(
+                            allow_none=True, required=False, default=None, missing=None
+                        ),
+                    ),
+                ],
+                required=False,
+                default=None,
+                missing=None,
+            ),
+        )
+
+    def test_optional_multiple_types(self):
+        self.assertFieldsEqual(
+            field_for_schema(Optional[Union[int, str]]),
+            union_field.Union(
+                [
+                    (
+                        int,
+                        fields.Integer(
+                            allow_none=True, required=False, default=None, missing=None
+                        ),
+                    ),
+                    (
+                        str,
+                        fields.String(
+                            allow_none=True, required=False, default=None, missing=None
+                        ),
+                    ),
+                ],
+                required=False,
+                default=None,
+                missing=None,
+            ),
+        )
+
     def test_newtype(self):
         self.assertFieldsEqual(
             field_for_schema(typing.NewType("UserId", int), default=0),
