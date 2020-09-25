@@ -69,6 +69,33 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 
+@overload
+def dataclass(
+    _cls: Type[_U],
+    *,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+) -> Type[_U]:
+    ...
+
+
+@overload
+def dataclass(
+    *,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+) -> Callable[[Type[_U]], Type[_U]]:
+    ...
+
+
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
