@@ -1,5 +1,5 @@
 import unittest
-from typing import List, Union, Dict
+from typing import List, Optional, Union, Dict
 
 import marshmallow
 
@@ -133,3 +133,24 @@ class TestClassSchema(unittest.TestCase):
         data_in = {"value": [1.4, 4.2]}
         with self.assertRaises(marshmallow.exceptions.ValidationError):
             self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+    def test_union_optional_object(self):
+        @dataclass
+        class Elm1:
+            elm1: str
+
+        @dataclass
+        class Elm2:
+            elm2: str
+
+        @dataclass
+        class Dclass:
+            value: Optional[Union[Elm1, Elm2]]
+
+        schema = Dclass.Schema()
+
+        for data_in in [{"value": {"elm1": "hello"}}, {"value": {"elm2": "hello"}}]:
+            self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+        for data_in in [{"value": None}, {}]:
+            self.assertEqual(schema.dump(schema.load(data_in)), {"value": None})
