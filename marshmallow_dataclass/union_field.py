@@ -36,6 +36,8 @@ class Union(fields.Field):
 
     def _serialize(self, value: Any, attr: str, obj, **kwargs) -> Any:
         errors = []
+        if value is None and not self.required:
+            return value
         for typ, field in self.union_fields:
             try:
                 typeguard.check_type(attr, value, typ)
