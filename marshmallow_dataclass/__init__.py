@@ -166,7 +166,7 @@ def add_schema(_cls=None, base_schema=None):
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
 
-    :param type cls: The dataclass to which a Schema should be added
+    :param type _cls: The dataclass to which a Schema should be added
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
 
     >>> class BaseSchema(marshmallow.Schema):
@@ -183,6 +183,7 @@ def add_schema(_cls=None, base_schema=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
+        # noinspection PyTypeHints
         clazz.Schema = class_schema(clazz, base_schema)  # type: ignore
         return clazz
 
@@ -304,7 +305,7 @@ def class_schema(
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _internal_class_schema(
-        clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
     try:
         # noinspection PyDataclass
@@ -313,12 +314,13 @@ def _internal_class_schema(
         try:
             warnings.warn(
                 f"marshmallow_dataclass was called on the class {clazz}, which is not a dataclass. "
-                f"It is going to try and convert the class into a dataclass, which may have undesirable side effects. "
-                f"To avoid this message, make sure all your classes and all the classes of their fields are either "
-                f"explicitly supported by marshmallow_datcalass, or are already dataclasses. "
-                f"For more information, see https://github.com/lovasoa/marshmallow_dataclass/issues/51",
+                f"It is going to try and convert the class into a dataclass, which may have "
+                f"undesirable side effects. To avoid this message, make sure all your classes and "
+                f"all the classes of their fields are either explicitly supported by "
+                f"marshmallow_datcalass, or are already dataclasses. For more information, see "
+                f"https://github.com/lovasoa/marshmallow_dataclass/issues/51"
             )
-            created_dataclass = dataclasses.dataclass(clazz)
+            created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema)
         except Exception:
             raise TypeError(
@@ -521,7 +523,7 @@ def field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
     nested = (
-            nested_schema or forward_reference or _internal_class_schema(typ, base_schema)
+        nested_schema or forward_reference or _internal_class_schema(typ, base_schema)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
@@ -604,8 +606,11 @@ def NewType(
         return x
 
     new_type.__name__ = name
+    # noinspection PyTypeHints
     new_type.__supertype__ = typ  # type: ignore
+    # noinspection PyTypeHints
     new_type._marshmallow_field = field  # type: ignore
+    # noinspection PyTypeHints
     new_type._marshmallow_args = kwargs  # type: ignore
     return new_type
 
