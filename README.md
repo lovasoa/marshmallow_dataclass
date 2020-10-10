@@ -27,14 +27,14 @@ class City:
     buildings: List[Building] = field(default_factory=list)
 
 
-CitySchema = marshmallow_dataclass.class_schema(City)
+city_schema = marshmallow_dataclass.class_schema(City)()
 
-city = CitySchema().load(
+city = city_schema.load(
     {"name": "Paris", "buildings": [{"name": "Eiffel Tower", "height": 324}]}
 )
 # => City(name='Paris', buildings=[Building(height=324.0, name='Eiffel Tower')])
 
-city_dict = CitySchema().dump(city)
+city_dict = city_schema.dump(city)
 # => {'name': 'Paris', 'buildings': [{'name': 'Eiffel Tower', 'height': 324.0}]}
 ```
 
@@ -88,6 +88,10 @@ class Person:
 
 PersonSchema = marshmallow_dataclass.class_schema(Person)
 ```
+
+The type of your fields must be either basic 
+[types supported by marshmallow](https://marshmallow.readthedocs.io/en/stable/api_reference.html#marshmallow.Schema.TYPE_MAPPING)
+(such as `float`, `str`, `bytes`, `datetime`, ...), or other dataclasses.
 
 ### Customizing generated fields
 

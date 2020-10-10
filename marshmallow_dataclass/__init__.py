@@ -34,7 +34,9 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+import dataclasses
 import inspect
+import warnings
 from enum import EnumMeta
 from functools import lru_cache
 from typing import (
@@ -53,7 +55,6 @@ from typing import (
     overload,
 )
 
-import dataclasses
 import marshmallow
 import typing_inspect
 
@@ -285,12 +286,6 @@ def class_schema(
         ...
     marshmallow.exceptions.ValidationError: {'_schema': ['never valid']}
 
-    >>> # noinspection PyTypeChecker
-    >>> class_schema(None) # unsupported type
-    Traceback (most recent call last):
-      ...
-    TypeError: None is not a dataclass and cannot be turned into one.
-
     >>> @dataclasses.dataclass
     ... class Anything:
     ...     name: str
@@ -302,20 +297,29 @@ def class_schema(
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
     """
-    return _proxied_class_schema(clazz, base_schema)
+    if not dataclasses.is_dataclass(clazz):
+        clazz = dataclasses.dataclass(clazz)
+    return _internal_class_schema(clazz, base_schema)
 
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
-def _proxied_class_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+def _internal_class_schema(
+        clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
-
     try:
         # noinspection PyDataclass
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
     except TypeError:  # Not a dataclass
         try:
-            return class_schema(dataclasses.dataclass(clazz), base_schema)
+            warnings.warn(
+                f"marshmallow_dataclass was called on the class {clazz}, which is not a dataclass. "
+                f"It is going to try and convert the class into a dataclass, which may have undesirable side effects. "
+                f"To avoid this message, make sure all your classes and all the classes of their fields are either "
+                f"explicitly supported by marshmallow_datcalass, or are already dataclasses. "
+                f"For more information, see https://github.com/lovasoa/marshmallow_dataclass/issues/51",
+            )
+            created_dataclass = dataclasses.dataclass(clazz)
+            return _internal_class_schema(created_dataclass, base_schema)
         except Exception:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -517,7 +521,7 @@ def field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
     nested = (
-        nested_schema or forward_reference or class_schema(typ, base_schema=base_schema)
+            nested_schema or forward_reference or _internal_class_schema(typ, base_schema)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
