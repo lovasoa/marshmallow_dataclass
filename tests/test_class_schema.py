@@ -146,9 +146,8 @@ class TestClassSchema(unittest.TestCase):
         self.assertEqual(A(data="a"), schema.load({"data": "a"}))
         self.assertEqual(schema.dump(A(data="a")), {"data": "a"})
         for data in ["b", 2, 2.34, False]:
-            self.assertRaises(
-                ValidationError, lambda data=data: schema.load({"data": data})
-            )
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
 
     def test_literal_multiple_types(self):
         @dataclasses.dataclass
@@ -160,9 +159,8 @@ class TestClassSchema(unittest.TestCase):
             self.assertEqual(A(data=data), schema.load({"data": data}))
             self.assertEqual(schema.dump(A(data=data)), {"data": data})
         for data in ["b", 2, 2.34, False]:
-            self.assertRaises(
-                ValidationError, lambda data=data: schema.load({"data": data})
-            )
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
 
     def test_validator_stacking(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91
