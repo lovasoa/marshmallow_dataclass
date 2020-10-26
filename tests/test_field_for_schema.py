@@ -5,9 +5,9 @@ from enum import Enum
 from typing import Dict, Optional, Union, Any, List, Tuple
 
 try:
-    from typing import Literal  # type: ignore
+    from typing import Literal
 except ImportError:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # type: ignore
 
 from marshmallow import fields, Schema, validate
 
