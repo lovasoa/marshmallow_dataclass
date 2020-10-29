@@ -13,7 +13,6 @@ CLASSIFIERS = [
 ]
 
 EXTRAS_REQUIRE = {
-    "enum": ["marshmallow-enum"],
     "union": ["typeguard"],
     ':python_version == "3.6"': ["dataclasses"],
     "lint": ["pre-commit~=1.18"],
@@ -26,8 +25,7 @@ EXTRAS_REQUIRE = {
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["enum"]
-    + EXTRAS_REQUIRE["union"]
+    EXTRAS_REQUIRE["union"]
     + EXTRAS_REQUIRE["lint"]
     + EXTRAS_REQUIRE["docs"]
     + EXTRAS_REQUIRE["tests"]

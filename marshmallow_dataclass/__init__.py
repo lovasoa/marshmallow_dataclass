@@ -58,6 +58,10 @@ from typing import (
 import marshmallow
 import typing_inspect
 
+from typing import DefaultDict, TypedDict
+
+from blib.attributes import SerializableAttribute, SerializableAttributeTag
+
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
 
 NoneType = type(None)
@@ -70,6 +74,14 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 
+class BaseSchema(marshmallow.Schema):
+    TYPE_MAPPING = {
+        SerializableAttribute: marshmallow.fields.Mapping,
+        SerializableAttributeTag: marshmallow.fields.Mapping,
+        TypedDict: marshmallow.fields.Mapping,
+    }
+
+
 @overload
 def dataclass(
     _cls: Type[_U],
@@ -79,7 +91,7 @@ def dataclass(
     order: bool = False,
     unsafe_hash: bool = False,
     frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = BaseSchema,
 ) -> Type[_U]:
     ...
 
@@ -92,7 +104,7 @@ def dataclass(
     order: bool = False,
     unsafe_hash: bool = False,
     frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = BaseSchema,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
@@ -108,7 +120,7 @@ def dataclass(
     order: bool = False,
     unsafe_hash: bool = False,
     frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = BaseSchema,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -185,6 +197,7 @@ def add_schema(_cls=None, base_schema=None):
     def decorator(clazz: Type[_U]) -> Type[_U]:
         # noinspection PyTypeHints
         clazz.Schema = class_schema(clazz, base_schema)  # type: ignore
+        clazz.to_dict = lambda self: type(self).Schema().dump(self)
         return clazz
 
     return decorator(_cls) if _cls else decorator
@@ -322,10 +335,10 @@ def _internal_class_schema(
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema)
-        except Exception:
+        except Exception as e:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
-            )
+            ) from e
 
     # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
     attributes = {
@@ -515,7 +528,7 @@ def field_for_schema(
     if isinstance(typ, EnumMeta):
         import marshmallow_enum
 
-        return marshmallow_enum.EnumField(typ, **metadata)
+        return marshmallow_enum.EnumField(typ, by_value=True, **metadata)
 
     # Nested marshmallow dataclass
     nested_schema = getattr(typ, "Schema", None)
