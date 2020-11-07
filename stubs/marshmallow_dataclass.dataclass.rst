@@ -1,4 +1,4 @@
-marshmallow\_dataclass.dataclass
+﻿marshmallow\_dataclass.dataclass
 ================================
 
 .. currentmodule:: marshmallow_dataclass

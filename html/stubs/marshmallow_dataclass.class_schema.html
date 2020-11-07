@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>marshmallow_dataclass.class_schema &#8212; marshmallow_dataclass 0.1.0 documentation</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="marshmallow_dataclass.dataclass" href="marshmallow_dataclass.dataclass.html" />
@@ -33,9 +34,9 @@
             
   <div class="section" id="marshmallow-dataclass-class-schema">
 <h1>marshmallow_dataclass.class_schema<a class="headerlink" href="#marshmallow-dataclass-class-schema" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
+<dl class="py function">
 <dt id="marshmallow_dataclass.class_schema">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clazz</span><span class="p">:</span> <span class="n">type</span></em>, <em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -50,13 +51,13 @@
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All the arguments supported by marshmallow field classes are can
+<p>All the arguments supported by marshmallow field classes can
 be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <p>If you want to use a custom marshmallow field
 (one that has no equivalent python type), you can pass it as the
 <code class="docutils literal notranslate"><span class="pre">marshmallow_field</span></code> key in the metadata dictionary.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Meters</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Meters&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
@@ -67,9 +68,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
 <span class="go">&lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
 <span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
@@ -81,18 +80,18 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">[</span><span class="s1">&#39;best_building&#39;</span><span class="p">]</span> <span class="c1"># We get an OrderedDict because we specified order = True in the Meta class</span>
 <span class="go">OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
@@ -104,7 +103,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">Person(name=&#39;Anonymous&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">important</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="gp">... </span>   <span class="c1"># Only fields that are in the __init__ method will be added:</span>
@@ -118,7 +117,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">C(important=9, unimportant=0)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Website</span><span class="p">:</span>
 <span class="gp">... </span> <span class="n">url</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
 <span class="gp">... </span>   <span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()</span> <span class="c1"># Custom marshmallow field</span>
@@ -130,7 +129,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">NeverValid</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
 <span class="gp">... </span>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
@@ -142,39 +141,16 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># noinspection PyTypeChecker</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># unsupported type</span>
-<span class="gt">Traceback (most recent call last):</span>
-  <span class="c">...</span>
-<span class="gr">TypeError</span>: <span class="n">None is not a dataclass and cannot be turned into one.</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Anything</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
 <span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">custom_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="nd">@property</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">custom_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">return</span> <span class="kc">None</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">AnythingSchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Anything</span><span class="p">)()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;Meta&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;validates&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;validates_schema&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;custom_method&#39;</span><span class="p">)</span>
-<span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;custom_property&#39;</span><span class="p">)</span>
-<span class="go">False</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span> <span class="k">raise</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Name too long&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Anything</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;aaaaaargh&quot;</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;name&#39;: [&#39;Name too long&#39;]}</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -234,7 +210,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -251,7 +227,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

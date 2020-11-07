@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>marshmallow_dataclass package &#8212; marshmallow_dataclass 0.1.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="marshmallow_dataclass.dataclass" href="stubs/marshmallow_dataclass.dataclass.html" />
@@ -44,7 +45,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>([_cls, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass" title="marshmallow_dataclass.dataclass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.dataclass</span></code></a>()</p></td>
 <td><p>This decorator does the same as dataclasses.dataclass, but also applies <code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshmallow_dataclass.class_schema</span></code></a>(clazz[, …])</p></td>
@@ -59,8 +60,8 @@
 to <code class="xref py py-mod docutils literal notranslate"><span class="pre">marshmallow</span></code> schemas.</p>
 <p>It takes a python class, and generates a marshmallow schema for it.</p>
 <p>Simple example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span>
-<span class="kn">from</span> <span class="nn">marshmallow_dataclass</span> <span class="k">import</span> <span class="n">dataclass</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="kn">from</span> <span class="nn">marshmallow_dataclass</span> <span class="kn">import</span> <span class="n">dataclass</span>
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
@@ -72,9 +73,9 @@ to <code class="xref py py-mod docutils literal notranslate"><span class="pre">m
 </pre></div>
 </div>
 <p>Full example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="k">import</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">marshmallow_dataclass</span> <span class="k">import</span> <span class="n">dataclass</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">marshmallow_dataclass</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 
 <span class="nd">@dataclass</span>
@@ -88,56 +89,63 @@ to <code class="xref py py-mod docutils literal notranslate"><span class="pre">m
   <span class="n">Schema</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Schema</span> <span class="c1"># For the type checker</span>
 </pre></div>
 </div>
-<dl class="function">
-<dt id="marshmallow_dataclass.dataclass">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">dataclass</code><span class="sig-paren">(</span><em class="sig-param">_cls: Type[_U] = None</em>, <em class="sig-param">*</em>, <em class="sig-param">repr: bool = True</em>, <em class="sig-param">eq: bool = True</em>, <em class="sig-param">order: bool = False</em>, <em class="sig-param">unsafe_hash: bool = False</em>, <em class="sig-param">frozen: bool = False</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; Union[Type[_U], Callable[[Type[_U]], Type[_U]]]<a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
-<dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
-It adds a <cite>.Schema</cite> attribute to the class object</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p>
-</dd>
-</dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
-<span class="gp">... </span>   <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span>
-<span class="go">&lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
+<dl class="py function">
+<dt id="marshmallow_dataclass.NewType">
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">NewType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">typ</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>_U<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">field</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Type<span class="p">[</span>marshmallow.fields.Field<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span> &#x2192; Callable<span class="p">[</span><span class="p">[</span>_U<span class="p">]</span><span class="p">, </span>_U<span class="p">]</span><a class="reference internal" href="_modules/marshmallow_dataclass.html#NewType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.NewType" title="Permalink to this definition">¶</a></dt>
+<dd><p>NewType creates simple unique types
+to which you can attach custom marshmallow attributes.
+All the keyword arguments passed to this function will be transmitted
+to the marshmallow field constructor.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">marshmallow.validate</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">IPv4</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;IPv4&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">validate</span><span class="o">.</span><span class="n">Regexp</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^([0-9]{1,3}\.)</span><span class="si">{3}</span><span class="s1">[0-9]{1,3}$&#39;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">MyIps</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">ips</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">IPv4</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MyIps</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;ips&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="s2">&quot;grumble grumble&quot;</span><span class="p">]})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;ips&#39;: {1: [&#39;String does not match expected pattern.&#39;]}}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MyIps</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;ips&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">]})</span>
+<span class="go">MyIps(ips=[&#39;127.0.0.1&#39;])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">ClassVar</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># preserve field order</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">x</span><span class="p">:</span><span class="nb">float</span>
-<span class="gp">... </span>  <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
-<span class="gp">... </span>  <span class="n">Schema</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Schema</span> <span class="c1"># For the type checker</span>
-<span class="gp">...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span> <span class="c1"># This line can be statically type checked</span>
-<span class="go">Point(x=0.0, y=0.0)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Email</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Email&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Email</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">ContactInfo</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">mail</span><span class="p">:</span> <span class="n">Email</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous@example.org&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ContactInfo</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
+<span class="go">ContactInfo(mail=&#39;anonymous@example.org&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ContactInfo</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;mail&quot;</span><span class="p">:</span> <span class="s2">&quot;grumble grumble&quot;</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;mail&#39;: [&#39;Not a valid email address.&#39;]}</span>
 </pre></div>
 </div>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="marshmallow_dataclass.add_schema">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">add_schema</code><span class="sig-paren">(</span><em class="sig-param">_cls=None</em>, <em class="sig-param">base_schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marshmallow_dataclass.html#add_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.add_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">add_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_cls</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>_U<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Type<span class="p">[</span>_U<span class="p">]</span><a class="reference internal" href="_modules/marshmallow_dataclass.html#add_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.add_schema" title="Permalink to this definition">¶</a></dt>
+<dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">add_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">'None'</span></em><span class="sig-paren">)</span> &#x2192; Callable<span class="p">[</span><span class="p">[</span>Type<span class="p">[</span>_U<span class="p">]</span><span class="p">]</span><span class="p">, </span>Type<span class="p">[</span>_U<span class="p">]</span><span class="p">]</span></dt>
+<dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">add_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_cls</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>_U<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">'None'</span></em><span class="sig-paren">)</span> &#x2192; Type<span class="p">[</span>_U<span class="p">]</span></dt>
 <dd><p>This decorator adds a marshmallow schema as the ‘Schema’ attribute in a dataclass.
 It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema" title="marshmallow_dataclass.class_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">class_schema()</span></code></a> internally.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cls</strong> (<em>type</em>) – The dataclass to which a Schema should be added</p></li>
+<li><p><strong>_cls</strong> (<em>type</em>) – The dataclass to which a Schema should be added</p></li>
 <li><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p></li>
 </ul>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">BaseSchema</span><span class="p">(</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">BaseSchema</span><span class="p">(</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>
 <span class="gp">... </span>  <span class="k">def</span> <span class="nf">on_bind_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_obj</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">field_obj</span><span class="o">.</span><span class="n">data_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">field_obj</span><span class="o">.</span><span class="n">data_key</span> <span class="ow">or</span> <span class="n">field_name</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@add_schema</span><span class="p">(</span><span class="n">base_schema</span><span class="o">=</span><span class="n">BaseSchema</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@add_schema</span><span class="p">(</span><span class="n">base_schema</span><span class="o">=</span><span class="n">BaseSchema</span><span class="p">)</span>
 <span class="gp">... </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
 <span class="gp">... </span>   <span class="n">names</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
@@ -148,9 +156,9 @@ It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_sc
 </div>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="marshmallow_dataclass.class_schema">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param">clazz: type</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; Type[marshmallow.schema.Schema]<a class="reference internal" href="_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">class_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clazz</span><span class="p">:</span> <span class="n">type</span></em>, <em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><a class="reference internal" href="_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -165,13 +173,13 @@ It uses <a class="reference internal" href="stubs/marshmallow_dataclass.class_sc
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All the arguments supported by marshmallow field classes are can
+<p>All the arguments supported by marshmallow field classes can
 be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <p>If you want to use a custom marshmallow field
 (one that has no equivalent python type), you can pass it as the
 <code class="docutils literal notranslate"><span class="pre">marshmallow_field</span></code> key in the metadata dictionary.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Meters</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Meters&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Building</span><span class="p">:</span>
@@ -182,9 +190,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Building</span><span class="p">)</span> <span class="c1"># Returns a marshmallow schema class (not an instance)</span>
 <span class="go">&lt;class &#39;marshmallow.schema.Building&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">City</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
 <span class="gp">... </span>  <span class="n">best_building</span><span class="p">:</span> <span class="n">Building</span> <span class="c1"># Reference to another dataclasses. A schema will be created for it too.</span>
@@ -196,18 +202,18 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">City(name=&#39;Paris&#39;, best_building=Building(height=None, name=&#39;Eiffel Tower&#39;), other_buildings=[])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span> <span class="o">=</span> <span class="n">citySchema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">city_json</span><span class="p">[</span><span class="s1">&#39;best_building&#39;</span><span class="p">]</span> <span class="c1"># We get an OrderedDict because we specified order = True in the Meta class</span>
 <span class="go">OrderedDict([(&#39;height&#39;, None), (&#39;name&#39;, &#39;Eiffel Tower&#39;)])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Person</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Anonymous&quot;</span><span class="p">)</span>
 <span class="gp">... </span>  <span class="n">friends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s1">&#39;Person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:[])</span> <span class="c1"># Recursive field</span>
@@ -219,7 +225,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">Person(name=&#39;Anonymous&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">()</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
 <span class="gp">... </span>  <span class="n">important</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="gp">... </span>   <span class="c1"># Only fields that are in the __init__ method will be added:</span>
@@ -233,7 +239,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="go">C(important=9, unimportant=0)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Website</span><span class="p">:</span>
 <span class="gp">... </span> <span class="n">url</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
 <span class="gp">... </span>   <span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()</span> <span class="c1"># Custom marshmallow field</span>
@@ -245,7 +251,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">NeverValid</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
 <span class="gp">... </span>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
@@ -257,139 +263,79 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># noinspection PyTypeChecker</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># unsupported type</span>
-<span class="gt">Traceback (most recent call last):</span>
-  <span class="c">...</span>
-<span class="gr">TypeError</span>: <span class="n">None is not a dataclass and cannot be turned into one.</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="gp">... </span><span class="k">class</span> <span class="nc">Anything</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
 <span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="nd">@marshmallow</span><span class="o">.</span><span class="n">validates_schema</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">custom_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">pass</span>
-<span class="gp">... </span>    <span class="nd">@property</span>
-<span class="gp">... </span>    <span class="k">def</span> <span class="nf">custom_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="k">return</span> <span class="kc">None</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">AnythingSchema</span> <span class="o">=</span> <span class="n">class_schema</span><span class="p">(</span><span class="n">Anything</span><span class="p">)()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;Meta&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;validates&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;validates_schema&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;custom_method&#39;</span><span class="p">)</span>
-<span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">AnythingSchema</span><span class="p">,</span> <span class="s1">&#39;custom_property&#39;</span><span class="p">)</span>
-<span class="go">False</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">validates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span> <span class="k">raise</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Name too long&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Anything</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;aaaaaargh&quot;</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;name&#39;: [&#39;Name too long&#39;]}</span>
 </pre></div>
 </div>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="marshmallow_dataclass.dataclass">
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">dataclass</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_cls</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>_U<span class="p">]</span></span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">repr</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'True'</span></em>, <em class="sig-param"><span class="n">eq</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'True'</span></em>, <em class="sig-param"><span class="n">order</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">unsafe_hash</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">frozen</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">'None'</span></em><span class="sig-paren">)</span> &#x2192; Type<span class="p">[</span>_U<span class="p">]</span><a class="reference internal" href="_modules/marshmallow_dataclass.html#dataclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.dataclass" title="Permalink to this definition">¶</a></dt>
+<dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">dataclass</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">repr</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'True'</span></em>, <em class="sig-param"><span class="n">eq</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'True'</span></em>, <em class="sig-param"><span class="n">order</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">unsafe_hash</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">frozen</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">'False'</span></em>, <em class="sig-param"><span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Type<span class="p">[</span>marshmallow.schema.Schema<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">'None'</span></em><span class="sig-paren">)</span> &#x2192; Callable<span class="p">[</span><span class="p">[</span>Type<span class="p">[</span>_U<span class="p">]</span><span class="p">]</span><span class="p">, </span>Type<span class="p">[</span>_U<span class="p">]</span><span class="p">]</span></dt>
+<dd><p>This decorator does the same as dataclasses.dataclass, but also applies <a class="reference internal" href="#marshmallow_dataclass.add_schema" title="marshmallow_dataclass.add_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_schema()</span></code></a>.
+It adds a <cite>.Schema</cite> attribute to the class object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Artist</span><span class="p">:</span>
+<span class="gp">... </span>   <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Artist</span><span class="o">.</span><span class="n">Schema</span>
+<span class="go">&lt;class &#39;marshmallow.schema.Artist&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># preserve field order</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
+<span class="gp">... </span>  <span class="n">x</span><span class="p">:</span><span class="nb">float</span>
+<span class="gp">... </span>  <span class="n">y</span><span class="p">:</span><span class="nb">float</span>
+<span class="gp">... </span>  <span class="n">Schema</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Schema</span> <span class="c1"># For the type checker</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span> <span class="c1"># This line can be statically type checked</span>
+<span class="go">Point(x=0.0, y=0.0)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt id="marshmallow_dataclass.field_for_schema">
 <code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">field_for_schema</code><span class="sig-paren">(</span><em class="sig-param">typ: type</em>, <em class="sig-param">default=&lt;marshmallow.missing&gt;</em>, <em class="sig-param">metadata: Mapping[str</em>, <em class="sig-param">Any] = None</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a marshmallow Field corresponding to the given python type.
 The metadata of the dataclass field is used as arguments to the marshmallow Field.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>typ</strong> – The type for which a field should be generated</p></li>
+<li><p><strong>default</strong> – value to use for (de)serialization when the field is missing</p></li>
+<li><p><strong>metadata</strong> – Additional parameters to pass to the marshmallow field constructor</p></li>
+<li><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p></li>
+</ul>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="vm">__class__</span>
 <span class="go">&lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="n">default</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="n">default</span>
 <span class="go">9</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_field</span><span class="o">.</span><span class="n">required</span>
-<span class="go">True</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow.fields.Dict&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()})</span><span class="o">.</span><span class="vm">__class__</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;marshmallow_field&quot;</span><span class="p">:</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Url</span><span class="p">()})</span><span class="o">.</span><span class="vm">__class__</span>
 <span class="go">&lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow.fields.String&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">marshmallow_enum</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;a b c&quot;</span><span class="p">))</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">typing</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">])</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow_union.Union&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow.fields.Integer&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">default</span>
-<span class="go">0</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="gp">... </span>  <span class="n">red</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow_enum.EnumField&#39;&gt;</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">Any</span><span class="p">)</span><span class="o">.</span><span class="vm">__class__</span>
-<span class="go">&lt;class &#39;marshmallow.fields.Raw&#39;&gt;</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="marshmallow_dataclass.NewType">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">NewType</code><span class="sig-paren">(</span><em class="sig-param">name: str, typ: Type[_U], field: Optional[Type[marshmallow.fields.Field]] = None, **kwargs</em><span class="sig-paren">)</span> &#x2192; Callable[[_U], _U]<a class="reference internal" href="_modules/marshmallow_dataclass.html#NewType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.NewType" title="Permalink to this definition">¶</a></dt>
-<dd><p>NewType creates simple unique types
-to which you can attach custom marshmallow attributes.
-All the keyword arguments passed to this function will be transmitted
-to the marshmallow field constructor.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">marshmallow.validate</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">IPv4</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;IPv4&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">validate</span><span class="o">.</span><span class="n">Regexp</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^([0-9]{1,3}\.)</span><span class="si">{3}</span><span class="s1">[0-9]{1,3}$&#39;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">MyIps</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">ips</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">IPv4</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">MyIps</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;ips&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="s2">&quot;grumble grumble&quot;</span><span class="p">]})</span>
-<span class="gt">Traceback (most recent call last):</span>
-<span class="c">...</span>
-<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;ips&#39;: {1: [&#39;String does not match expected pattern.&#39;]}}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">MyIps</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;ips&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">]})</span>
-<span class="go">MyIps(ips=[&#39;127.0.0.1&#39;])</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Email</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Email&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Email</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclass</span>
-<span class="gp">... </span><span class="k">class</span> <span class="nc">ContactInfo</span><span class="p">:</span>
-<span class="gp">... </span>  <span class="n">mail</span><span class="p">:</span> <span class="n">Email</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;anonymous@example.org&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ContactInfo</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
-<span class="go">ContactInfo(mail=&#39;anonymous@example.org&#39;)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ContactInfo</span><span class="o">.</span><span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;mail&quot;</span><span class="p">:</span> <span class="s2">&quot;grumble grumble&quot;</span><span class="p">})</span>
-<span class="gt">Traceback (most recent call last):</span>
-<span class="c">...</span>
-<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;mail&#39;: [&#39;Not a valid email address.&#39;]}</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -449,7 +395,7 @@ to the marshmallow field constructor.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -466,7 +412,7 @@ to the marshmallow field constructor.</p>
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
