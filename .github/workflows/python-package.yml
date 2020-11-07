@@ -18,14 +18,14 @@ jobs:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: set PY
-      run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+        python-version: ${{ matrix.python_version }}
     - name: set pre-commit cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
-        path: ~/.cache/pre-commit
-        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+        path: |
+          ~/.cache/pre-commit
+          ~/.cache/pip
+        key: ${{ matrix.python_version }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ hashFiles('setup.py') }}
     - name: Install dependencies
       run: python -m pip install --pre -e '.[dev]'
     - name: Pre-commit hooks
