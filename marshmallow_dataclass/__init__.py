@@ -451,6 +451,17 @@ def field_for_schema(
         metadata.setdefault("allow_none", True)
         return marshmallow.fields.Raw(**metadata)
 
+    if typing_inspect.is_literal_type(typ):
+        arguments = typing_inspect.get_args(typ)
+        return marshmallow.fields.Raw(
+            validate=(
+                marshmallow.validate.Equal(arguments[0])
+                if len(arguments) == 1
+                else marshmallow.validate.OneOf(arguments)
+            ),
+            **metadata,
+        )
+
     # Generic types
     origin = typing_inspect.get_origin(typ)
     if origin:

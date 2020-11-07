@@ -3,6 +3,11 @@ import unittest
 from typing import Any
 from uuid import UUID
 
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore
+
 import dataclasses
 from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
@@ -131,6 +136,31 @@ class TestClassSchema(unittest.TestCase):
 
         schema = class_schema(A)()
         self.assertRaises(ValidationError, lambda: schema.load({"data": None}))
+
+    def test_literal(self):
+        @dataclasses.dataclass
+        class A:
+            data: Literal["a"]
+
+        schema = class_schema(A)()
+        self.assertEqual(A(data="a"), schema.load({"data": "a"}))
+        self.assertEqual(schema.dump(A(data="a")), {"data": "a"})
+        for data in ["b", 2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
+
+    def test_literal_multiple_types(self):
+        @dataclasses.dataclass
+        class A:
+            data: Literal["a", 1, 1.23, True]
+
+        schema = class_schema(A)()
+        for data in ["a", 1, 1.23, True]:
+            self.assertEqual(A(data=data), schema.load({"data": data}))
+            self.assertEqual(schema.dump(A(data=data)), {"data": data})
+        for data in ["b", 2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
 
     def test_validator_stacking(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91

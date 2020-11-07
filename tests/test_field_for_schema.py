@@ -4,7 +4,12 @@ import unittest
 from enum import Enum
 from typing import Dict, Optional, Union, Any, List, Tuple
 
-from marshmallow import fields, Schema
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore
+
+from marshmallow import fields, Schema, validate
 
 from marshmallow_dataclass import field_for_schema, dataclass, union_field
 
@@ -86,6 +91,18 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(Color),
             marshmallow_enum.EnumField(enum=Color, required=True),
+        )
+
+    def test_literal(self):
+        self.assertFieldsEqual(
+            field_for_schema(Literal["a"]),
+            fields.Raw(required=True, validate=validate.Equal("a")),
+        )
+
+    def test_literal_multiple_types(self):
+        self.assertFieldsEqual(
+            field_for_schema(Literal["a", 1, 1.23, True]),
+            fields.Raw(required=True, validate=validate.OneOf(("a", 1, 1.23, True))),
         )
 
     def test_union(self):
