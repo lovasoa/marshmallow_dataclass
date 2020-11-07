@@ -482,9 +482,9 @@ def field_for_schema(
             )
             tuple_type = cast(
                 Type[marshmallow.fields.Tuple],
-                type_mapping.get(
+                type_mapping.get(  # type:ignore[call-overload]
                     Tuple, marshmallow.fields.Tuple
-                ),  # type:ignore[call-overload]
+                ),
             )
             return tuple_type(children, **metadata)
         elif origin in (dict, Dict):
