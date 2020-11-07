@@ -224,7 +224,7 @@ def class_schema(
     >>> @dataclasses.dataclass()
     ... class City:
     ...   name: str = dataclasses.field(metadata={'required':True})
-    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.
+    ...   best_building: Building # Reference to another dataclass. A schema will be created for it too.
     ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])
     ...
     >>> citySchema = class_schema(City)()
@@ -482,9 +482,9 @@ def field_for_schema(
             )
             tuple_type = cast(
                 Type[marshmallow.fields.Tuple],
-                type_mapping.get(
+                type_mapping.get(  # type:ignore[call-overload]
                     Tuple, marshmallow.fields.Tuple
-                ),  # type:ignore[call-overload]
+                ),
             )
             return tuple_type(children, **metadata)
         elif origin in (dict, Dict):

@@ -1,0 +1,25 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Push Documentation to github pages
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with: { python-version: 3.x }
+    - name: Install dependencies
+      run: pip install --pre -e '.[docs]'
+    - name: Generate docs
+      run: cd docs && make html && cd ..
+    - name: Deploy documentation to github pages
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
