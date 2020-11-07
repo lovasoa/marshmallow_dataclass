@@ -258,7 +258,7 @@
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class City:</span>
 <span class="sd">    ...   name: str = dataclasses.field(metadata={&#39;required&#39;:True})</span>
-<span class="sd">    ...   best_building: Building # Reference to another dataclasses. A schema will be created for it too.</span>
+<span class="sd">    ...   best_building: Building # Reference to another dataclass. A schema will be created for it too.</span>
 <span class="sd">    ...   other_buildings: List[Building] = dataclasses.field(default_factory=lambda: [])</span>
 <span class="sd">    ...</span>
 <span class="sd">    &gt;&gt;&gt; citySchema = class_schema(City)()</span>
