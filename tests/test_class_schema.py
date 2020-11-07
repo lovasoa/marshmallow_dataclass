@@ -4,9 +4,9 @@ from typing import Any
 from uuid import UUID
 
 try:
-    from typing import Literal
+    from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Literal  # type: ignore
+    from typing_extensions import Literal  # type: ignore[misc]
 
 import dataclasses
 from marshmallow import Schema, ValidationError

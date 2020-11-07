@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional
 
 import typeguard
 from marshmallow import fields, Schema, ValidationError
@@ -48,12 +48,12 @@ class Union(fields.Field):
             f"Unable to serialize value with any of the fields in the union: {errors}"
         )
 
-    def _deserialize(self, value: Any, attr: str, data, **kwargs) -> Any:
+    def _deserialize(self, value: Any, attr: Optional[str], data, **kwargs) -> Any:
         errors = []
         for typ, field in self.union_fields:
             try:
                 result = field.deserialize(value, **kwargs)
-                typeguard.check_type(attr, result, typ)
+                typeguard.check_type(attr or "anonymous", result, typ)
                 return result
             except (TypeError, ValidationError) as e:
                 errors.append(e)

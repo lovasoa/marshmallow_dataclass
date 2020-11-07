@@ -359,7 +359,7 @@ def _field_by_type(
 
 def _field_by_supertype(
     typ: Type,
-    default: marshmallow.missing,
+    default: Any,
     newtype_supertype: Type,
     metadata: dict,
     base_schema: Optional[Type[marshmallow.Schema]],
@@ -471,13 +471,21 @@ def field_for_schema(
 
         if origin in (list, List):
             child_type = field_for_schema(arguments[0], base_schema=base_schema)
-            list_type = type_mapping.get(List, marshmallow.fields.List)
+            list_type = cast(
+                Type[marshmallow.fields.List],
+                type_mapping.get(List, marshmallow.fields.List),
+            )
             return list_type(child_type, **metadata)
         if origin in (tuple, Tuple):
             children = tuple(
                 field_for_schema(arg, base_schema=base_schema) for arg in arguments
             )
-            tuple_type = type_mapping.get(Tuple, marshmallow.fields.Tuple)
+            tuple_type = cast(
+                Type[marshmallow.fields.Tuple],
+                type_mapping.get(
+                    Tuple, marshmallow.fields.Tuple
+                ),  # type:ignore[call-overload]
+            )
             return tuple_type(children, **metadata)
         elif origin in (dict, Dict):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
