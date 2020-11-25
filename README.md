@@ -283,15 +283,4 @@ This library depends on python's standard [typing](https://docs.python.org/3/lib
 
 ## Contributing
 
-```py
-python3 -m venv venv
-. venv/bin/activate
-pip install '.[dev]'
-# Make your changes
-git commit # Pre-commit hooks should be run, checking your code
-```
-
-Every commit is checked with pre-commit hooks for :
- - style consistency with [flake8](https://flake8.pycqa.org/en/latest/manpage.html)
- - type safety with [mypy](http://mypy-lang.org/)
- - test conformance by running [tests](./tests) with [pytest](https://docs.pytest.org/en/latest/)
+To install this project and make changes to it locally, follow the instructions in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
