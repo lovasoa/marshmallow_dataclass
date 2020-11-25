@@ -1,4 +1,16 @@
-# marshmallow_dataclass change log
+# marshmallow\_dataclass change log
+
+## v8.3.0
+
+ - Export pre-built Email and Url types. See [#115](https://github.com/lovasoa/marshmallow_dataclass/pull/115)
+
+## v8.2.0
+
+ - Add support for the Literal type. See [#110](https://github.com/lovasoa/marshmallow_dataclass/pull/110)
+
+## v8.1.0
+
+ - Improved support for Optional types
 
 ## v8.0.0
  - Better support for unions (See [#93](https://github.com/lovasoa/marshmallow_dataclass/pull/93)).
