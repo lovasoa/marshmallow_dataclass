@@ -240,8 +240,14 @@ from marshmallow_dataclass import NewType
 Email = NewType("Email", str, field=marshmallow.fields.Email)
 ```
 
+For convenience, some custom types are provided:
+
+```python
+from marshmallow_dataclass.typing import Email, Url
+```
+
 Note: if you are using `mypy`, you will notice that `mypy` throws an error if a variable defined with
-`NewType` is used in a type annotation. To resolve this, add the `marshmallow_dataclass.mypy` plugin 
+`NewType` is used in a type annotation. To resolve this, add the `marshmallow_dataclass.mypy` plugin
 to your `mypy` configuration, e.g.:
 
 ```ini
