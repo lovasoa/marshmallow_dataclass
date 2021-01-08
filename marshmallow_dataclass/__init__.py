@@ -297,6 +297,19 @@ def class_schema(
     Traceback (most recent call last):
     ...
     marshmallow.exceptions.ValidationError: {'name': ['Name too long']}
+
+    You can use the ``metadata`` argument to override default field behaviour, e.g. the fact that
+    ``Optional`` fields allow ``None`` values:
+
+    >>> @dataclasses.dataclass
+    ... class Custom:
+    ...     name: Optional[str] = dataclasses.field(metadata={"allow_none": False})
+    >>> class_schema(Custom)().load({"name": None})
+    Traceback (most recent call last):
+        ...
+    marshmallow.exceptions.ValidationError: {'name': ['Field may not be null.']}
+    >>> class_schema(Custom)().load({})
+    Custom(name=None)
     """
     if not dataclasses.is_dataclass(clazz):
         clazz = dataclasses.dataclass(clazz)
@@ -496,6 +509,7 @@ def field_for_schema(
             )
         elif typing_inspect.is_union_type(typ):
             if typing_inspect.is_optional_type(typ):
+                metadata["allow_none"] = metadata.get("allow_none", True)
                 metadata["default"] = metadata.get("default", None)
                 metadata["missing"] = metadata.get("missing", None)
                 metadata["required"] = False
