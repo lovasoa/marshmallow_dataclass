@@ -107,9 +107,7 @@ import marshmallow.validate
 
 @dataclass
 class Person:
-    name: str = field(
-        metadata=dict(description="The person's first name", load_only=True)
-    )
+    name: str = field(metadata=dict(load_only=True))
     height: float = field(metadata=dict(validate=marshmallow.validate.Range(min=0)))
 
 
