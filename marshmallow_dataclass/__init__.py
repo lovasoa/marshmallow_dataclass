@@ -395,7 +395,8 @@ def _field_by_supertype(
                 new_validators.append(meta_dict["validate"])
     metadata["validate"] = new_validators if new_validators else None
 
-    metadata = {"description": typ.__name__, **typ_args, **metadata}
+    metadata = {**typ_args, **metadata}
+    metadata.setdefault("metadata", {}).setdefault("description", typ.__name__)
     field = getattr(typ, "_marshmallow_field", None)
     if field:
         return field(**metadata)

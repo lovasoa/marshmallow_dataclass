@@ -168,7 +168,9 @@ class TestFieldForSchema(unittest.TestCase):
     def test_newtype(self):
         self.assertFieldsEqual(
             field_for_schema(typing.NewType("UserId", int), default=0),
-            fields.Integer(required=False, description="UserId", default=0, missing=0),
+            fields.Integer(
+                required=False, default=0, missing=0, metadata={"description": "UserId"}
+            ),
         )
 
     def test_marshmallow_dataclass(self):
