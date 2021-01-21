@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.3.1
+
+ - Allow `None` in Optional fields. See [#108](https://github.com/lovasoa/marshmallow_dataclass/issues/108) 
+
 ## v8.3.0
 
  - Export pre-built Email and Url types. See [#115](https://github.com/lovasoa/marshmallow_dataclass/pull/115)

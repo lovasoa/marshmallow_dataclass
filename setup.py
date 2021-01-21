@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.3.0"
+VERSION = "8.3.1"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -41,7 +41,7 @@ setup(
     name="marshmallow_dataclass",
     version=VERSION,
     description="Python library to convert dataclasses into marshmallow schemas.",
-    long_description=open("README.md", "r").read(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(
         include=["marshmallow_dataclass", "marshmallow_dataclass.*"]
