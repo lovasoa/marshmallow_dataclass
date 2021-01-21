@@ -12,7 +12,6 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
    
@@ -331,6 +330,19 @@
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">    ...</span>
 <span class="sd">    marshmallow.exceptions.ValidationError: {&#39;name&#39;: [&#39;Name too long&#39;]}</span>
+
+<span class="sd">    You can use the ``metadata`` argument to override default field behaviour, e.g. the fact that</span>
+<span class="sd">    ``Optional`` fields allow ``None`` values:</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
+<span class="sd">    ... class Custom:</span>
+<span class="sd">    ...     name: Optional[str] = dataclasses.field(metadata={&quot;allow_none&quot;: False})</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(Custom)().load({&quot;name&quot;: None})</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    marshmallow.exceptions.ValidationError: {&#39;name&#39;: [&#39;Field may not be null.&#39;]}</span>
+<span class="sd">    &gt;&gt;&gt; class_schema(Custom)().load({})</span>
+<span class="sd">    Custom(name=None)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">):</span>
         <span class="n">clazz</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
@@ -530,6 +542,7 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_union_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;allow_none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;allow_none&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
                 <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;missing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;missing&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
@@ -729,7 +742,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

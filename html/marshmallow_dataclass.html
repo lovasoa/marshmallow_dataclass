@@ -12,7 +12,6 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="marshmallow_dataclass.dataclass" href="stubs/marshmallow_dataclass.dataclass.html" />
@@ -275,6 +274,19 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;name&#39;: [&#39;Name too long&#39;]}</span>
 </pre></div>
 </div>
+<p>You can use the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> argument to override default field behaviour, e.g. the fact that
+<code class="docutils literal notranslate"><span class="pre">Optional</span></code> fields allow <code class="docutils literal notranslate"><span class="pre">None</span></code> values:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Custom</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allow_none&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Custom</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;name&#39;: [&#39;Field may not be null.&#39;]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Custom</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
+<span class="go">Custom(name=None)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -312,7 +324,7 @@ It adds a <cite>.Schema</cite> attribute to the class object</p>
 
 <dl class="py function">
 <dt id="marshmallow_dataclass.field_for_schema">
-<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">field_for_schema</code><span class="sig-paren">(</span><em class="sig-param">typ: type</em>, <em class="sig-param">default=&lt;marshmallow.missing&gt;</em>, <em class="sig-param">metadata: Mapping[str</em>, <em class="sig-param">Any] = None</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">marshmallow_dataclass.</code><code class="sig-name descname">field_for_schema</code><span class="sig-paren">(</span><em class="sig-param">typ: type</em>, <em class="sig-param">default=&lt;marshmallow.missing&gt;</em>, <em class="sig-param">metadata: Optional[Mapping[str</em>, <em class="sig-param">Any]] = None</em>, <em class="sig-param">base_schema: Optional[Type[marshmallow.schema.Schema]] = None</em><span class="sig-paren">)</span> &#x2192; marshmallow.fields.Field<a class="reference internal" href="_modules/marshmallow_dataclass.html#field_for_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#marshmallow_dataclass.field_for_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a marshmallow Field corresponding to the given python type.
 The metadata of the dataclass field is used as arguments to the marshmallow Field.</p>
 <dl class="field-list simple">
@@ -412,7 +424,7 @@ The metadata of the dataclass field is used as arguments to the marshmallow Fiel
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
