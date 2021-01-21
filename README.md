@@ -99,6 +99,9 @@ To pass arguments to the generated marshmallow fields (e.g., `validate`, `load_o
 pass them to the `metadata` argument of the
 [`field`](https://docs.python.org/3/library/dataclasses.html#dataclasses.field) function.
 
+Note that starting with version 4, marshmallow will disallow passing arbitrary arguments, so any
+additional metadata should itself be put in its own `metadata` dict:
+
 ```python
 from dataclasses import dataclass, field
 import marshmallow_dataclass
@@ -107,7 +110,11 @@ import marshmallow.validate
 
 @dataclass
 class Person:
-    name: str = field(metadata=dict(load_only=True))
+    name: str = field(
+        metadata=dict(
+            load_only=True, metadata=dict(description="The person's first name")
+        )
+    )
     height: float = field(metadata=dict(validate=marshmallow.validate.Range(min=0)))
 
 
