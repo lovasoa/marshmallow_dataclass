@@ -282,10 +282,6 @@ class Point:
 
 The project documentation is hosted on GitHub Pages: https://lovasoa.github.io/marshmallow_dataclass/
 
-## Usage warning
-
-This library depends on python's standard [typing](https://docs.python.org/3/library/typing.html) library, which is [provisional](https://docs.python.org/3/glossary.html#term-provisional-api).
-
 ## Contributing
 
 To install this project and make changes to it locally, follow the instructions in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
