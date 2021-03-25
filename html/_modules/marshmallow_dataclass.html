@@ -428,7 +428,8 @@
                 <span class="n">new_validators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta_dict</span><span class="p">[</span><span class="s2">&quot;validate&quot;</span><span class="p">])</span>
     <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;validate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_validators</span> <span class="k">if</span> <span class="n">new_validators</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">typ</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">typ_args</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">}</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">typ_args</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">}</span>
+    <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">typ</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="n">field</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;_marshmallow_field&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
@@ -742,7 +743,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
