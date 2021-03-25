@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.3.2
+
+ - Fix package license field
+
 ## v8.3.1
 
  - Allow `None` in Optional fields. See [#108](https://github.com/lovasoa/marshmallow_dataclass/issues/108) 
