@@ -326,12 +326,14 @@ def _internal_class_schema(
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
+                f"****** WARNING ****** "
                 f"marshmallow_dataclass was called on the class {clazz}, which is not a dataclass. "
                 f"It is going to try and convert the class into a dataclass, which may have "
                 f"undesirable side effects. To avoid this message, make sure all your classes and "
                 f"all the classes of their fields are either explicitly supported by "
-                f"marshmallow_datcalass, or are already dataclasses. For more information, see "
-                f"https://github.com/lovasoa/marshmallow_dataclass/issues/51"
+                f"marshmallow_dataclass, or define the schema explicitly using field(metadata=dict(marshmallow_field=...)). For more information, see "
+                f"https://github.com/lovasoa/marshmallow_dataclass/issues/51 "
+                f"****** WARNING ******"
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema)
