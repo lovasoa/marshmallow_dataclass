@@ -1,3 +1,4 @@
+import itertools
 import unittest
 from typing import Optional, Sequence, Set, FrozenSet, Mapping
 
@@ -122,6 +123,9 @@ class TestSequenceField(unittest.TestCase):
 
 
 class TestSetField(unittest.TestCase):
+    def assertEqualAsSet(self, a, b):
+        self.assertEqual(set(a), set(b))
+
     def test_simple(self):
         @dataclass
         class IntSet:
@@ -131,7 +135,7 @@ class TestSetField(unittest.TestCase):
         data_in = {"value": list(range(5))}
         loaded = schema.load(data_in)
         self.assertEqual(loaded, IntSet(value=set(range(5))))
-        self.assertCountEqual(schema.dump(loaded)["value"], data_in["value"])
+        self.assertEqualAsSet(schema.dump(loaded)["value"], data_in["value"])
 
     def test_set_no_arg(self):
         @dataclass
@@ -144,7 +148,7 @@ class TestSetField(unittest.TestCase):
         data_in = {"value": [1, "2", 3.0, (1, 2, 3)]}
         loaded = schema.load(data_in)
         self.assertEqual(loaded, AnySet(value={1, "2", 3.0, (1, 2, 3)}))
-        self.assertCountEqual(schema.dump(loaded)["value"], data_in["value"])
+        self.assertEqualAsSet(schema.dump(loaded)["value"], data_in["value"])
 
     def test_optional_set(self):
         @dataclass
@@ -161,7 +165,7 @@ class TestSetField(unittest.TestCase):
         data_in = {"value": list(range(5))}
         loaded = schema.load(data_in)
         self.assertEqual(loaded, IntOptionalSet(value=set(range(5))))
-        self.assertCountEqual(schema.dump(loaded)["value"], data_in["value"])
+        self.assertEqualAsSet(schema.dump(loaded)["value"], data_in["value"])
 
     def test_set_of_optional(self):
         @dataclass
@@ -213,8 +217,10 @@ class TestSetField(unittest.TestCase):
             {"value": []},
             {"value": [{"value": "john"}, {"value": "doe"}, {"value": "alex"}]},
         ):
-            self.assertCountEqual(
-                schema.dump(schema.load(data_in))["value"], data_in["value"]
+            # All the items have to be the same, but the order is not guaranteed
+            self.assertIn(
+                schema.dump(schema.load(data_in))["value"],
+                map(list, itertools.permutations(data_in["value"])),
             )
 
     def test_set_of_optional_dataclass(self):
@@ -269,7 +275,7 @@ class TestSetField(unittest.TestCase):
             loaded,
             SetIntSet(value=frozenset([frozenset([1, 2, 3]), frozenset([123])])),
         )
-        self.assertCountEqual(schema.dump(loaded), data_in)
+        self.assertEqualAsSet(schema.dump(loaded), data_in)
 
 
 class TestMappingField(unittest.TestCase):
