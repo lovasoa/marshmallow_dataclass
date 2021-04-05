@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/lovasoa/marshmallow_dataclass.svg?branch=master)](https://travis-ci.org/lovasoa/marshmallow_dataclass)
 [![PyPI version](https://badge.fury.io/py/marshmallow-dataclass.svg)](https://badge.fury.io/py/marshmallow-dataclass)
 [![marshmallow 3 compatible](https://badgen.net/badge/marshmallow/3)](https://marshmallow.readthedocs.io/en/latest/upgrading.html)
+[![download stats](https://img.shields.io/pypi/dm/marshmallow-dataclass.svg)](https://pypistats.org/packages/marshmallow-dataclass)
 
 Automatic generation of [marshmallow](https://marshmallow.readthedocs.io/) schemas from dataclasses.
 
