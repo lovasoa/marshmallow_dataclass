@@ -450,7 +450,7 @@ def _field_for_generic_type(
                 type_mapping.get(List, marshmallow.fields.List),
             )
             return list_type(child_type, **metadata)
-        if origin == collections.abc.Sequence:
+        if origin in (collections.abc.Sequence, Sequence):
             from . import collection_field
 
             child_type = field_for_schema(arguments[0], base_schema=base_schema)
@@ -480,7 +480,7 @@ def _field_for_generic_type(
                 ),
             )
             return tuple_type(children, **metadata)
-        elif origin in (dict, Dict, collections.abc.Mapping):
+        elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
                 keys=field_for_schema(arguments[0], base_schema=base_schema),

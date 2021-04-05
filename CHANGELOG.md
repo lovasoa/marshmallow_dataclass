@@ -1,5 +1,10 @@
 # marshmallow\_dataclass change log
 
+## v8.4.1
+
+ - Fix compatibility with older python versions.
+   
+
 ## v8.4.0
 
 - Add support for multiple [`collections.abc`](https://docs.python.org/3/library/collections.abc.html) containers :
