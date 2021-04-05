@@ -11,7 +11,12 @@ except ImportError:
 
 from marshmallow import fields, Schema, validate
 
-from marshmallow_dataclass import field_for_schema, dataclass, union_field
+from marshmallow_dataclass import (
+    field_for_schema,
+    dataclass,
+    union_field,
+    collection_field,
+)
 
 
 class TestFieldForSchema(unittest.TestCase):
@@ -205,6 +210,45 @@ class TestFieldForSchema(unittest.TestCase):
             self.assertIsInstance(
                 field_for_schema(schema, base_schema=BaseSchema), MyType
             )
+
+    def test_mapping(self):
+        self.assertFieldsEqual(
+            field_for_schema(typing.Mapping),
+            fields.Dict(
+                keys=fields.Raw(required=True, allow_none=True),
+                values=fields.Raw(required=True, allow_none=True),
+                required=True,
+            ),
+        )
+
+    def test_sequence(self):
+        self.assertFieldsEqual(
+            field_for_schema(typing.Sequence),
+            collection_field.Sequence(
+                cls_or_instance=fields.Raw(required=True, allow_none=True),
+                required=True,
+            ),
+        )
+
+    def test_set(self):
+        self.assertFieldsEqual(
+            field_for_schema(typing.Set),
+            collection_field.Set(
+                cls_or_instance=fields.Raw(required=True, allow_none=True),
+                frozen=False,
+                required=True,
+            ),
+        )
+
+    def test_frozenset(self):
+        self.assertFieldsEqual(
+            field_for_schema(typing.FrozenSet),
+            collection_field.Set(
+                cls_or_instance=fields.Raw(required=True, allow_none=True),
+                frozen=True,
+                required=True,
+            ),
+        )
 
 
 if __name__ == "__main__":

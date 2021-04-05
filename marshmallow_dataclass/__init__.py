@@ -34,6 +34,7 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+import collections.abc
 import dataclasses
 import inspect
 import warnings
@@ -53,6 +54,8 @@ from typing import (
     Union,
     cast,
     overload,
+    Sequence,
+    FrozenSet,
 )
 
 import marshmallow
@@ -193,7 +196,6 @@ def add_schema(_cls=None, base_schema=None):
 def class_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
-
     """
     Convert a class to a marshmallow schema
 
@@ -326,14 +328,15 @@ def _internal_class_schema(
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
-                f"****** WARNING ****** "
+                "****** WARNING ****** "
                 f"marshmallow_dataclass was called on the class {clazz}, which is not a dataclass. "
-                f"It is going to try and convert the class into a dataclass, which may have "
-                f"undesirable side effects. To avoid this message, make sure all your classes and "
-                f"all the classes of their fields are either explicitly supported by "
-                f"marshmallow_dataclass, or define the schema explicitly using field(metadata=dict(marshmallow_field=...)). For more information, see "
-                f"https://github.com/lovasoa/marshmallow_dataclass/issues/51 "
-                f"****** WARNING ******"
+                "It is going to try and convert the class into a dataclass, which may have "
+                "undesirable side effects. To avoid this message, make sure all your classes and "
+                "all the classes of their fields are either explicitly supported by "
+                "marshmallow_dataclass, or define the schema explicitly using "
+                "field(metadata=dict(marshmallow_field=...)). For more information, see "
+                "https://github.com/lovasoa/marshmallow_dataclass/issues/51 "
+                "****** WARNING ******"
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema)
@@ -411,6 +414,107 @@ def _field_by_supertype(
         )
 
 
+def _generic_type_add_any(typ: type) -> type:
+    """if typ is generic type without arguments, replace them by Any."""
+    if typ is list:
+        typ = List[Any]
+    elif typ is dict:
+        typ = Dict[Any, Any]
+    elif typ is Mapping:
+        typ = Mapping[Any, Any]
+    elif typ is Sequence:
+        typ = Sequence[Any]
+    elif typ is Set:
+        typ = Set[Any]
+    elif typ is FrozenSet:
+        typ = FrozenSet[Any]
+    return typ
+
+
+def _field_for_generic_type(
+    typ: type, base_schema: Optional[Type[marshmallow.Schema]], **metadata: Any
+) -> Optional[marshmallow.fields.Field]:
+    """
+    If the type is a generic interface, resolve the arguments and construct the appropriate Field.
+    """
+    origin = typing_inspect.get_origin(typ)
+    if origin:
+        arguments = typing_inspect.get_args(typ, True)
+        # Override base_schema.TYPE_MAPPING to change the class used for generic types below
+        type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
+
+        if origin in (list, List):
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            list_type = cast(
+                Type[marshmallow.fields.List],
+                type_mapping.get(List, marshmallow.fields.List),
+            )
+            return list_type(child_type, **metadata)
+        if origin == collections.abc.Sequence:
+            from . import collection_field
+
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            return collection_field.Sequence(cls_or_instance=child_type, **metadata)
+        if origin in (set, Set):
+            from . import collection_field
+
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            return collection_field.Set(
+                cls_or_instance=child_type, frozen=False, **metadata
+            )
+        if origin in (frozenset, FrozenSet):
+            from . import collection_field
+
+            child_type = field_for_schema(arguments[0], base_schema=base_schema)
+            return collection_field.Set(
+                cls_or_instance=child_type, frozen=True, **metadata
+            )
+        if origin in (tuple, Tuple):
+            children = tuple(
+                field_for_schema(arg, base_schema=base_schema) for arg in arguments
+            )
+            tuple_type = cast(
+                Type[marshmallow.fields.Tuple],
+                type_mapping.get(  # type:ignore[call-overload]
+                    Tuple, marshmallow.fields.Tuple
+                ),
+            )
+            return tuple_type(children, **metadata)
+        elif origin in (dict, Dict, collections.abc.Mapping):
+            dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
+            return dict_type(
+                keys=field_for_schema(arguments[0], base_schema=base_schema),
+                values=field_for_schema(arguments[1], base_schema=base_schema),
+                **metadata,
+            )
+        elif typing_inspect.is_union_type(typ):
+            if typing_inspect.is_optional_type(typ):
+                metadata["allow_none"] = metadata.get("allow_none", True)
+                metadata["default"] = metadata.get("default", None)
+                metadata["missing"] = metadata.get("missing", None)
+                metadata["required"] = False
+            subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
+            if len(subtypes) == 1:
+                return field_for_schema(
+                    subtypes[0], metadata=metadata, base_schema=base_schema
+                )
+            from . import union_field
+
+            return union_field.Union(
+                [
+                    (
+                        subtyp,
+                        field_for_schema(
+                            subtyp, metadata=metadata, base_schema=base_schema
+                        ),
+                    )
+                    for subtyp in subtypes
+                ],
+                **metadata,
+            )
+    return None
+
+
 def field_for_schema(
     typ: type,
     default=marshmallow.missing,
@@ -453,10 +557,7 @@ def field_for_schema(
         return predefined_field
 
     # Generic types specified without type arguments
-    if typ is list:
-        typ = List[Any]
-    elif typ is dict:
-        typ = Dict[Any, Any]
+    typ = _generic_type_add_any(typ)
 
     # Base types
     field = _field_by_type(typ, base_schema)
@@ -479,62 +580,9 @@ def field_for_schema(
         )
 
     # Generic types
-    origin = typing_inspect.get_origin(typ)
-    if origin:
-        arguments = typing_inspect.get_args(typ, True)
-        # Override base_schema.TYPE_MAPPING to change the class used for generic types below
-        type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
-
-        if origin in (list, List):
-            child_type = field_for_schema(arguments[0], base_schema=base_schema)
-            list_type = cast(
-                Type[marshmallow.fields.List],
-                type_mapping.get(List, marshmallow.fields.List),
-            )
-            return list_type(child_type, **metadata)
-        if origin in (tuple, Tuple):
-            children = tuple(
-                field_for_schema(arg, base_schema=base_schema) for arg in arguments
-            )
-            tuple_type = cast(
-                Type[marshmallow.fields.Tuple],
-                type_mapping.get(  # type:ignore[call-overload]
-                    Tuple, marshmallow.fields.Tuple
-                ),
-            )
-            return tuple_type(children, **metadata)
-        elif origin in (dict, Dict):
-            dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
-            return dict_type(
-                keys=field_for_schema(arguments[0], base_schema=base_schema),
-                values=field_for_schema(arguments[1], base_schema=base_schema),
-                **metadata,
-            )
-        elif typing_inspect.is_union_type(typ):
-            if typing_inspect.is_optional_type(typ):
-                metadata["allow_none"] = metadata.get("allow_none", True)
-                metadata["default"] = metadata.get("default", None)
-                metadata["missing"] = metadata.get("missing", None)
-                metadata["required"] = False
-            subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
-            if len(subtypes) == 1:
-                return field_for_schema(
-                    subtypes[0], metadata=metadata, base_schema=base_schema
-                )
-            from . import union_field
-
-            return union_field.Union(
-                [
-                    (
-                        subtyp,
-                        field_for_schema(
-                            subtyp, metadata=metadata, base_schema=base_schema
-                        ),
-                    )
-                    for subtyp in subtypes
-                ],
-                **metadata,
-            )
+    generic_field = _field_for_generic_type(typ, base_schema, **metadata)
+    if generic_field:
+        return generic_field
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
