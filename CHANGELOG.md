@@ -1,5 +1,32 @@
 # marshmallow\_dataclass change log
 
+## v8.4.0
+
+- Add support for multiple [`collections.abc`](https://docs.python.org/3/library/collections.abc.html) containers :
+   - Mapping
+   - Sequence
+   - Set 
+   - FrozenSet
+  - (see [#131](https://github.com/lovasoa/marshmallow_dataclass/issues/131))
+
+You can now write :
+
+```python3
+from marshmallow_dataclass import dataclass
+from collections.abc import Sequence, Mapping, Set
+
+@dataclass
+class FrozenData:
+   seq: Sequence[int] # like List[int], but immutable 
+   map: Mapping[str, int] # like Dict[str, int], but immutable 
+   set: Set[int] # like List[int], but unordered
+
+f: FrozenData = FrozenData.Schema().load({"seq":[1], "map":{"x":2}, "set":[2]})
+print(f.seq[0]) # -> 1
+print(f.map["x"]) # -> 2
+print(2 in f.set) # -> True
+```
+
 ## v8.3.2
 
  - Fix package license field
