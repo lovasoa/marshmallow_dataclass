@@ -67,6 +67,7 @@
 <span class="sd">      })</span>
 <span class="sd">      Schema: ClassVar[Type[Schema]] = Schema # For the type checker</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">collections.abc</span>
 <span class="kn">import</span> <span class="nn">dataclasses</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -86,6 +87,8 @@
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">cast</span><span class="p">,</span>
     <span class="n">overload</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">FrozenSet</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">marshmallow</span>
@@ -226,7 +229,6 @@
 <div class="viewcode-block" id="class_schema"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema">[docs]</a><span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
-
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a class to a marshmallow schema</span>
 
@@ -359,12 +361,15 @@
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># Not a dataclass</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;****** WARNING ****** &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;marshmallow_dataclass was called on the class </span><span class="si">{</span><span class="n">clazz</span><span class="si">}</span><span class="s2">, which is not a dataclass. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;It is going to try and convert the class into a dataclass, which may have &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;undesirable side effects. To avoid this message, make sure all your classes and &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;all the classes of their fields are either explicitly supported by &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;marshmallow_datcalass, or are already dataclasses. For more information, see &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;https://github.com/lovasoa/marshmallow_dataclass/issues/51&quot;</span>
+                <span class="s2">&quot;It is going to try and convert the class into a dataclass, which may have &quot;</span>
+                <span class="s2">&quot;undesirable side effects. To avoid this message, make sure all your classes and &quot;</span>
+                <span class="s2">&quot;all the classes of their fields are either explicitly supported by &quot;</span>
+                <span class="s2">&quot;marshmallow_dataclass, or define the schema explicitly using &quot;</span>
+                <span class="s2">&quot;field(metadata=dict(marshmallow_field=...)). For more information, see &quot;</span>
+                <span class="s2">&quot;https://github.com/lovasoa/marshmallow_dataclass/issues/51 &quot;</span>
+                <span class="s2">&quot;****** WARNING ******&quot;</span>
             <span class="p">)</span>
             <span class="n">created_dataclass</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">created_dataclass</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span>
@@ -442,6 +447,107 @@
         <span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">_generic_type_add_any</span><span class="p">(</span><span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;if typ is generic type without arguments, replace them by Any.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">Mapping</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">Sequence</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">Set</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">Set</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">FrozenSet</span><span class="p">:</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">typ</span>
+
+
+<span class="k">def</span> <span class="nf">_field_for_generic_type</span><span class="p">(</span>
+    <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]],</span> <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the type is a generic interface, resolve the arguments and construct the appropriate Field.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span><span class="p">:</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Override base_schema.TYPE_MAPPING to change the class used for generic types below</span>
+        <span class="n">type_mapping</span> <span class="o">=</span> <span class="n">base_schema</span><span class="o">.</span><span class="n">TYPE_MAPPING</span> <span class="k">if</span> <span class="n">base_schema</span> <span class="k">else</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
+            <span class="n">list_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+                <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">],</span>
+                <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">list_type</span><span class="p">(</span><span class="n">child_type</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="o">==</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
+
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Sequence</span><span class="p">(</span><span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="n">Set</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
+
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span>
+                <span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">frozenset</span><span class="p">,</span> <span class="n">FrozenSet</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
+
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span>
+                <span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">):</span>
+            <span class="n">children</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span>
+            <span class="p">)</span>
+            <span class="n">tuple_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+                <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span><span class="p">],</span>
+                <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>  <span class="c1"># type:ignore[call-overload]</span>
+                    <span class="n">Tuple</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">tuple_type</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">dict_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dict_type</span><span class="p">(</span>
+                <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
+                <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_union_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;allow_none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;allow_none&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;missing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;missing&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">subtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subtypes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span>
+                    <span class="n">subtypes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span>
+                <span class="p">)</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">union_field</span>
+
+            <span class="k">return</span> <span class="n">union_field</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="n">subtyp</span><span class="p">,</span>
+                        <span class="n">field_for_schema</span><span class="p">(</span>
+                            <span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">subtyp</span> <span class="ow">in</span> <span class="n">subtypes</span>
+                <span class="p">],</span>
+                <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="field_for_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.field_for_schema">[docs]</a><span class="k">def</span> <span class="nf">field_for_schema</span><span class="p">(</span>
     <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
@@ -484,10 +590,7 @@
         <span class="k">return</span> <span class="n">predefined_field</span>
 
     <span class="c1"># Generic types specified without type arguments</span>
-    <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="n">typ</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">typ</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">typ</span> <span class="o">=</span> <span class="n">_generic_type_add_any</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
 
     <span class="c1"># Base types</span>
     <span class="n">field</span> <span class="o">=</span> <span class="n">_field_by_type</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span>
@@ -510,62 +613,9 @@
         <span class="p">)</span>
 
     <span class="c1"># Generic types</span>
-    <span class="n">origin</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">origin</span><span class="p">:</span>
-        <span class="n">arguments</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="c1"># Override base_schema.TYPE_MAPPING to change the class used for generic types below</span>
-        <span class="n">type_mapping</span> <span class="o">=</span> <span class="n">base_schema</span><span class="o">.</span><span class="n">TYPE_MAPPING</span> <span class="k">if</span> <span class="n">base_schema</span> <span class="k">else</span> <span class="p">{}</span>
-
-        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
-            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
-            <span class="n">list_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">],</span>
-                <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">list_type</span><span class="p">(</span><span class="n">child_type</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">):</span>
-            <span class="n">children</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span>
-            <span class="p">)</span>
-            <span class="n">tuple_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span><span class="p">],</span>
-                <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>  <span class="c1"># type:ignore[call-overload]</span>
-                    <span class="n">Tuple</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">tuple_type</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
-            <span class="n">dict_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">dict_type</span><span class="p">(</span>
-                <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
-                <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
-                <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_union_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;allow_none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;allow_none&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;missing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;missing&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="n">subtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subtypes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span>
-                    <span class="n">subtypes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span>
-                <span class="p">)</span>
-            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">union_field</span>
-
-            <span class="k">return</span> <span class="n">union_field</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="p">(</span>
-                        <span class="n">subtyp</span><span class="p">,</span>
-                        <span class="n">field_for_schema</span><span class="p">(</span>
-                            <span class="n">subtyp</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span>
-                        <span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">subtyp</span> <span class="ow">in</span> <span class="n">subtypes</span>
-                <span class="p">],</span>
-                <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
-            <span class="p">)</span>
+    <span class="n">generic_field</span> <span class="o">=</span> <span class="n">_field_for_generic_type</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">generic_field</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">generic_field</span>
 
     <span class="c1"># typing.NewType returns a function with a __supertype__ attribute</span>
     <span class="n">newtype_supertype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;__supertype__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
