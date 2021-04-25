@@ -1,4 +1,4 @@
-from marshmallow_dataclass.union_field import FallbackSerializationStrategy, NamedTypeSerializationStrategy, SERIALIZATION_STRATEGY_KEY
+from marshmallow_dataclass.union_field import NamedTypeSerializationStrategy, SERIALIZATION_STRATEGY_KEY
 import unittest
 from typing import List, Optional, Union, Dict
 
@@ -113,7 +113,7 @@ class TestClassSchema(unittest.TestCase):
                     type_key="I_am_the_type"
                 )
             })
-            
+
         schema = ListOfClasses.Schema()
         data_in = {"list": [
             {

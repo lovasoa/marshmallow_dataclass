@@ -37,6 +37,7 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+from marshmallow_dataclass.union_field import SERIALIZATION_STRATEGY_KEY
 import warnings
 from enum import EnumMeta
 from functools import lru_cache
@@ -71,6 +72,8 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
 # Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
+
+PASSTHROUGH_METADATA_KEYS = {SERIALIZATION_STRATEGY_KEY}
 
 
 @overload
@@ -431,6 +434,9 @@ def _generic_type_add_any(typ: type) -> type:
     return typ
 
 
+def extract_passthrough_metadata(metadata):
+    return {k: v for k, v in metadata.items() if k in PASSTHROUGH_METADATA_KEYS}
+
 def _field_for_generic_type(
     typ: type, base_schema: Optional[Type[marshmallow.Schema]], **metadata: Any
 ) -> Optional[marshmallow.fields.Field]:
@@ -440,11 +446,12 @@ def _field_for_generic_type(
     origin = typing_inspect.get_origin(typ)
     if origin:
         arguments = typing_inspect.get_args(typ, True)
+        inner_metadata = extract_passthrough_metadata(metadata)
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
         if origin in (list, List):
-            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata)
+            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=inner_metadata)
             list_type = cast(
                 Type[marshmallow.fields.List],
                 type_mapping.get(List, marshmallow.fields.List),
@@ -453,19 +460,19 @@ def _field_for_generic_type(
         if origin in (collections.abc.Sequence, Sequence):
             from . import collection_field
 
-            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata)
+            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=inner_metadata)
             return collection_field.Sequence(cls_or_instance=child_type, **metadata)
         if origin in (set, Set):
             from . import collection_field
 
-            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata)
+            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=inner_metadata)
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=False, **metadata
             )
         if origin in (frozenset, FrozenSet):
             from . import collection_field
 
-            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata)
+            child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=inner_metadata)
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=True, **metadata
             )
@@ -483,8 +490,8 @@ def _field_for_generic_type(
         elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
-                keys=field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata),
-                values=field_for_schema(arguments[1], base_schema=base_schema, metadata=metadata),
+                keys=field_for_schema(arguments[0], base_schema=base_schema, metadata=inner_metadata),
+                values=field_for_schema(arguments[1], base_schema=base_schema, metadata=inner_metadata),
                 **metadata,
             )
         elif typing_inspect.is_union_type(typ):

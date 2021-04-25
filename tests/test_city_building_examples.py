@@ -6,7 +6,6 @@ import marshmallow.validate
 
 import marshmallow_dataclass
 
-
 @dataclass
 class Building:
     # field metadata is used to instantiate the marshmallow field

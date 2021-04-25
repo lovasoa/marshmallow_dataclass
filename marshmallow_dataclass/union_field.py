@@ -1,12 +1,11 @@
 import copy
-from typing import Callable, Dict, List, Tuple, Any, Optional, Type
+from typing import Dict, List, Tuple, Any, Optional, Type
 
 import typeguard
 from marshmallow import fields, Schema, ValidationError
 from abc import ABC, abstractmethod
 
 SERIALIZATION_STRATEGY_KEY = "serialization_strategy"
-
 
 class SerializationStrategy(ABC):
 
@@ -165,7 +164,6 @@ class Union(fields.Field):
         serialization_strategy: SerializationStrategy = FallbackSerializationStrategy()
         if SERIALIZATION_STRATEGY_KEY in metadata:
             serialization_strategy = metadata[SERIALIZATION_STRATEGY_KEY]
-            # del metadata[SERIALIZATION_STRATEGY_KEY]
         return serialization_strategy
 
     def _bind_to_schema(self, field_name: str, schema: Schema) -> None:
