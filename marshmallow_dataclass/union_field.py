@@ -106,7 +106,7 @@ class NamedTypeSerializationStrategy(SerializationStrategy):
             raise TypeError("Expected value to be a dict")
         if self._type_key not in value:
             raise RuntimeError(f"Can't get object type, {self._type_key} not found")
-        
+
         typ_name = value[self._type_key]
 
         if typ_name not in self._name_to_type_map:

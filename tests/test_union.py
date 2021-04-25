@@ -61,8 +61,6 @@ class TestClassSchema(unittest.TestCase):
             list: List[Union[Class1, Class2, Class3]] = field(metadata={
                 SERIALIZATION_STRATEGY_KEY: NamedTypeSerializationStrategy()
             })
-
-        ic()
         schema = ListOfClasses.Schema()
         data_in = {"list": [
             {
@@ -115,8 +113,7 @@ class TestClassSchema(unittest.TestCase):
                     type_key="I_am_the_type"
                 )
             })
-
-        ic()
+            
         schema = ListOfClasses.Schema()
         data_in = {"list": [
             {

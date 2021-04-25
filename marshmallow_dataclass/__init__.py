@@ -61,11 +61,6 @@ from typing import (
 import marshmallow
 import typing_inspect
 
-# TODO: remove
-from icecream import install
-install()
-ic.configureOutput(includeContext=True)
-
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
 
 NoneType = type(None)
@@ -442,7 +437,6 @@ def _field_for_generic_type(
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
-    ic(metadata)
     origin = typing_inspect.get_origin(typ)
     if origin:
         arguments = typing_inspect.get_args(typ, True)
@@ -450,7 +444,6 @@ def _field_for_generic_type(
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
         if origin in (list, List):
-            ic()
             child_type = field_for_schema(arguments[0], base_schema=base_schema, metadata=metadata)
             list_type = cast(
                 Type[marshmallow.fields.List],
@@ -495,7 +488,6 @@ def _field_for_generic_type(
                 **metadata,
             )
         elif typing_inspect.is_union_type(typ):
-            ic()
             if typing_inspect.is_optional_type(typ):
                 metadata["allow_none"] = metadata.get("allow_none", True)
                 metadata["default"] = metadata.get("default", None)
@@ -562,10 +554,7 @@ def field_for_schema(
     # If the field was already defined by the user
     predefined_field = metadata.get("marshmallow_field")
     if predefined_field:
-        ic("PREDEF")
         return predefined_field
-
-    ic(metadata, typ)
 
     # Generic types specified without type arguments
     typ = _generic_type_add_any(typ)
