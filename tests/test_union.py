@@ -1,9 +1,11 @@
+from marshmallow_dataclass.union_field import FallbackSerializationStrategy, NamedTypeSerializationStrategy, SERIALIZATION_STRATEGY_KEY
 import unittest
 from typing import List, Optional, Union, Dict
 
 import marshmallow
 
 from marshmallow_dataclass import dataclass
+from dataclasses import field
 
 
 class TestClassSchema(unittest.TestCase):
@@ -20,6 +22,123 @@ class TestClassSchema(unittest.TestCase):
 
         data_in = {"value": 42}
         self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+    def test_simple_union_named_serialization_strategy(self):
+        @dataclass
+        class IntOrStr:
+            value: Union[int, str] = field(metadata={
+                SERIALIZATION_STRATEGY_KEY: NamedTypeSerializationStrategy()
+            })
+
+        schema = IntOrStr.Schema()
+        data_in = {'value': {'__value__': 'hello', '__type__': 'str'}}
+        loaded = schema.load(data_in)
+        self.assertEqual(loaded, IntOrStr(value="hello"))
+        self.assertEqual(schema.dump(loaded), data_in)
+
+        data_in = {'value': {'__value__': 42, '__type__': 'int'}}
+        self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+    def test_structured_union_named_serialization_strategy(self):
+
+        @dataclass
+        class Class1:
+            value: str
+            name: str
+
+        @dataclass
+        class Class2:
+            value: float
+            name: str
+
+        @dataclass
+        class Class3:
+            value: int
+            name: str
+
+        @dataclass
+        class ListOfClasses:
+            list: List[Union[Class1, Class2, Class3]] = field(metadata={
+                SERIALIZATION_STRATEGY_KEY: NamedTypeSerializationStrategy()
+            })
+
+        ic()
+        schema = ListOfClasses.Schema()
+        data_in = {"list": [
+            {
+                "value": "hello",
+                "name": "world",
+                "__type__": "Class1"
+            },
+            {
+                "value": 42,
+                "name": "float!",
+                "__type__": "Class2"
+            },
+            {
+                "value": 42,
+                "name": "int!",
+                "__type__": "Class3"
+            }
+        ]}
+        loaded = schema.load(data_in)
+        self.assertEqual(loaded, ListOfClasses(
+            list=[Class1("hello", "world"), Class2(42, "float!"), Class3(42, "int!")]))
+        self.assertEqual(schema.dump(loaded), data_in)
+
+    def test_structured_union_named_serialization_strategy_different_names(self):
+
+        @dataclass
+        class Class1:
+            value: str
+            name: str
+
+        @dataclass
+        class Class2:
+            value: float
+            name: str
+
+        @dataclass
+        class Class3:
+            value: int
+            name: str
+
+        @dataclass
+        class ListOfClasses:
+            list: List[Union[Class1, Class2, Class3]] = field(metadata={
+                SERIALIZATION_STRATEGY_KEY: NamedTypeSerializationStrategy(
+                    type_to_name_map={
+                        Class1: "c1",
+                        Class2: "c2",
+                        Class3: "c3"
+                    },
+                    type_key="I_am_the_type"
+                )
+            })
+
+        ic()
+        schema = ListOfClasses.Schema()
+        data_in = {"list": [
+            {
+                "value": "hello",
+                "name": "world",
+                "I_am_the_type": "c1"
+            },
+            {
+                "value": 42,
+                "name": "float!",
+                "I_am_the_type": "c2"
+            },
+            {
+                "value": 42,
+                "name": "int!",
+                "I_am_the_type": "c3"
+            }
+        ]}
+        loaded = schema.load(data_in)
+        self.assertEqual(loaded, ListOfClasses(
+            list=[Class1("hello", "world"), Class2(42, "float!"), Class3(42, "int!")]))
+        self.assertEqual(schema.dump(loaded), data_in)
 
     def test_list_union_builtin(self):
         @dataclass
