@@ -9,7 +9,7 @@ try:
 except ImportError:
     from typing_extensions import Literal  # type: ignore[misc]
 
-from marshmallow import fields, Schema, validate
+from marshmallow import fields, Schema, validate, missing
 
 from marshmallow_dataclass import (
     field_for_schema,
@@ -82,7 +82,9 @@ class TestFieldForSchema(unittest.TestCase):
     def test_optional_str(self):
         self.assertFieldsEqual(
             field_for_schema(Optional[str]),
-            fields.String(allow_none=True, required=False, default=None, missing=None),
+            fields.String(
+                allow_none=True, required=False, default=missing, missing=None
+            ),
         )
 
     def test_enum(self):
@@ -130,18 +132,24 @@ class TestFieldForSchema(unittest.TestCase):
                     (
                         int,
                         fields.Integer(
-                            allow_none=True, required=False, default=None, missing=None
+                            allow_none=True,
+                            required=False,
+                            default=missing,
+                            missing=None,
                         ),
                     ),
                     (
                         str,
                         fields.String(
-                            allow_none=True, required=False, default=None, missing=None
+                            allow_none=True,
+                            required=False,
+                            default=missing,
+                            missing=None,
                         ),
                     ),
                 ],
                 required=False,
-                default=None,
+                default=missing,
                 missing=None,
             ),
         )
@@ -154,18 +162,24 @@ class TestFieldForSchema(unittest.TestCase):
                     (
                         int,
                         fields.Integer(
-                            allow_none=True, required=False, default=None, missing=None
+                            allow_none=True,
+                            required=False,
+                            default=missing,
+                            missing=None,
                         ),
                     ),
                     (
                         str,
                         fields.String(
-                            allow_none=True, required=False, default=None, missing=None
+                            allow_none=True,
+                            required=False,
+                            default=missing,
+                            missing=None,
                         ),
                     ),
                 ],
                 required=False,
-                default=None,
+                default=missing,
                 missing=None,
             ),
         )

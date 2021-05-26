@@ -490,7 +490,7 @@ def _field_for_generic_type(
         elif typing_inspect.is_union_type(typ):
             if typing_inspect.is_optional_type(typ):
                 metadata["allow_none"] = metadata.get("allow_none", True)
-                metadata["default"] = metadata.get("default", None)
+                metadata["default"] = metadata.get("default", marshmallow.missing)
                 metadata["missing"] = metadata.get("missing", None)
                 metadata["required"] = False
             subtypes = [t for t in arguments if t is not NoneType]  # type: ignore

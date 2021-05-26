@@ -37,3 +37,12 @@ class TestOptionalField(unittest.TestCase):
         self.assertEqual(
             exc_cm.exception.messages, {"value": ["Field may not be null."]}
         )
+
+    def test_that_key_is_missing_from_output_when_dumping_a_missing_value(self):
+        @dataclass
+        class OptionalValue:
+            value: Optional[str]
+
+        schema = OptionalValue.Schema()
+
+        self.assertEqual(schema.dump(OptionalValue(value=marshmallow.missing)), {})
