@@ -19,8 +19,8 @@
         email: Email
 
     user = User(id="a"*32, email="user@email.com")
-    reveal_type(user.id)  # N: Revealed type is 'builtins.str'
-    reveal_type(user.email)  # N: Revealed type is 'builtins.str'
+    reveal_type(user.id)  # N: Revealed type is "builtins.str"
+    reveal_type(user.email)  # N: Revealed type is "builtins.str"
 
     User(id=42, email="user@email.com")  # E: Argument "id" to "User" has incompatible type "int"; expected "str"
     User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "List[str]"; expected "str"
@@ -53,7 +53,7 @@
         email: Email
 
     website = Website(url="http://www.example.org", email="admin@example.org")
-    reveal_type(website.url)  # N: Revealed type is 'builtins.str'
-    reveal_type(website.email)  # N: Revealed type is 'builtins.str'
+    reveal_type(website.url)  # N: Revealed type is "builtins.str"
+    reveal_type(website.email)  # N: Revealed type is "builtins.str"
 
     Website(url=42, email="user@email.com")  # E: Argument "url" to "Website" has incompatible type "int"; expected "str"
