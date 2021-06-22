@@ -5,9 +5,9 @@ from enum import Enum
 from typing import Dict, Optional, Union, Any, List, Tuple
 
 try:
-    from typing import Literal  # type: ignore[attr-defined]
+    from typing import Final, Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Literal  # type: ignore[misc]
+    from typing_extensions import Final, Literal  # type: ignore[misc]
 
 from marshmallow import fields, Schema, validate
 
@@ -108,6 +108,16 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(Literal["a", 1, 1.23, True]),
             fields.Raw(required=True, validate=validate.OneOf(("a", 1, 1.23, True))),
+        )
+
+    def test_final(self):
+        self.assertFieldsEqual(
+            field_for_schema(Final[str]), fields.String(required=True)
+        )
+
+    def test_final_without_type(self):
+        self.assertFieldsEqual(
+            field_for_schema(Final), fields.Raw(required=True, allow_none=True)
         )
 
     def test_union(self):
