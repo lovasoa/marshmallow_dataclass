@@ -1,5 +1,7 @@
 # marshmallow\_dataclass change log
 
+- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150)
+
 ## v8.4.1
 
  - Fix compatibility with older python versions.
