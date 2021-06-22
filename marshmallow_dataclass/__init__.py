@@ -579,6 +579,16 @@ def field_for_schema(
             **metadata,
         )
 
+    if typing_inspect.is_final_type(typ):
+        arguments = typing_inspect.get_args(typ)
+        if arguments:
+            subtyp = arguments[0]
+        elif default is not marshmallow.missing:
+            subtyp = type(default)
+        else:
+            subtyp = Any
+        return field_for_schema(subtyp, default, metadata, base_schema)
+
     # Generic types
     generic_field = _field_for_generic_type(typ, base_schema, **metadata)
     if generic_field:

@@ -1,12 +1,12 @@
 import typing
 import unittest
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
 
 try:
-    from typing import Literal  # type: ignore[attr-defined]
+    from typing import Final, Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Literal  # type: ignore[misc]
+    from typing_extensions import Final, Literal  # type: ignore[misc]
 
 import dataclasses
 from marshmallow import Schema, ValidationError
@@ -161,6 +161,60 @@ class TestClassSchema(unittest.TestCase):
         for data in ["b", 2, 2.34, False]:
             with self.assertRaises(ValidationError):
                 schema.load({"data": data})
+
+    def test_final(self):
+        @dataclasses.dataclass
+        class A:
+            # Mypy currently considers read-only dataclass attributes without a
+            # default value an error.
+            # See: https://github.com/python/mypy/issues/10688.
+            data: Final[str]  # type: ignore[misc]
+
+        schema = class_schema(A)()
+        self.assertEqual(A(data="a"), schema.load({"data": "a"}))
+        self.assertEqual(schema.dump(A(data="a")), {"data": "a"})
+        for data in [2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
+
+    def test_final_infers_type_from_default(self):
+        # @dataclasses.dataclass
+        class A:
+            data: Final = "a"
+
+        # @dataclasses.dataclass
+        class B:
+            data: Final = A()
+
+        # NOTE: This workaround is needed to avoid a Mypy crash.
+        # See: https://github.com/python/mypy/issues/10090#issuecomment-865971891
+        if not TYPE_CHECKING:
+            A = dataclasses.dataclass(A)
+            B = dataclasses.dataclass(B)
+
+        schema_a = class_schema(A)()
+        self.assertEqual(A(data="a"), schema_a.load({}))
+        self.assertEqual(A(data="a"), schema_a.load({"data": "a"}))
+        self.assertEqual(A(data="b"), schema_a.load({"data": "b"}))
+        self.assertEqual(schema_a.dump(A()), {"data": "a"})
+        self.assertEqual(schema_a.dump(A(data="a")), {"data": "a"})
+        self.assertEqual(schema_a.dump(A(data="b")), {"data": "b"})
+        for data in [2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema_a.load({"data": data})
+
+        schema_b = class_schema(B)()
+        self.assertEqual(B(data=A()), schema_b.load({}))
+        self.assertEqual(B(data=A()), schema_b.load({"data": {}}))
+        self.assertEqual(B(data=A()), schema_b.load({"data": {"data": "a"}}))
+        self.assertEqual(B(data=A(data="b")), schema_b.load({"data": {"data": "b"}}))
+        self.assertEqual(schema_b.dump(B()), {"data": {"data": "a"}})
+        self.assertEqual(schema_b.dump(B(data=A())), {"data": {"data": "a"}})
+        self.assertEqual(schema_b.dump(B(data=A(data="a"))), {"data": {"data": "a"}})
+        self.assertEqual(schema_b.dump(B(data=A(data="b"))), {"data": {"data": "b"}})
+        for data in [2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema_b.load({"data": data})
 
     def test_validator_stacking(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91
