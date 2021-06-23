@@ -584,7 +584,10 @@ def field_for_schema(
         if arguments:
             subtyp = arguments[0]
         elif default is not marshmallow.missing:
-            subtyp = type(default)
+            # We can safely assume that if `default` is a callable then it is a
+            # factory for a default value because callable dataclass attributes
+            # don't make sense to be (de)serialized using Marshmallow.
+            subtyp = type(default() if callable(default) else default)
         else:
             subtyp = Any
         return field_for_schema(subtyp, default, metadata, base_schema)

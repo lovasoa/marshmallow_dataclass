@@ -216,6 +216,39 @@ class TestClassSchema(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 schema_b.load({"data": data})
 
+    def test_final_infers_type_from_field_default_factory(self):
+        # @dataclasses.dataclass
+        class A:
+            data: Final = dataclasses.field(default_factory=lambda: ["a", 1])
+
+        # NOTE: This workaround is needed to avoid a Mypy crash.
+        # See: https://github.com/python/mypy/issues/10090#issuecomment-866686096
+        if not TYPE_CHECKING:
+            A = dataclasses.dataclass(A)
+
+        schema = class_schema(A)()
+        self.assertEqual(A(data=["a", 1]), schema.load({}))
+        self.assertEqual(A(data=["a", 1]), schema.load({"data": ["a", 1]}))
+        self.assertEqual(A(data=["b", 2]), schema.load({"data": ["b", 2]}))
+        self.assertEqual(A(data=[]), schema.load({"data": []}))
+        self.assertEqual(schema.dump(A()), {"data": ["a", 1]})
+        self.assertEqual(schema.dump(A(data=["a", 1])), {"data": ["a", 1]})
+        self.assertEqual(schema.dump(A(data=["b", 2])), {"data": ["b", 2]})
+        self.assertEqual(schema.dump(A(data=[])), {"data": []})
+        for data in [2, 2.34, False]:
+            with self.assertRaises(ValidationError):
+                schema.load({"data": data})
+
+        # The following test cases pass although the type of `A.data` is
+        # inferred by Mypy as `List[Union[str, int]]` because our primitive
+        # "type inference" from a default value only infers `list`.
+        self.assertEqual(A(data=[True]), schema.load({"data": [True]}))
+        self.assertEqual(A(data=[{}]), schema.load({"data": [{}]}))
+        self.assertEqual(A(data=[[]]), schema.load({"data": [[]]}))
+        self.assertEqual(schema.dump(A(data=[True])), {"data": [True]})
+        self.assertEqual(schema.dump(A(data=[{}])), {"data": [{}]})
+        self.assertEqual(schema.dump(A(data=[[]])), {"data": [[]]})
+
     def test_validator_stacking(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91
         class SimpleValidator(Validator):
