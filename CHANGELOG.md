@@ -1,6 +1,6 @@
 # marshmallow\_dataclass change log
 
-- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150)
+- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150) and [#152](https://github.com/lovasoa/marshmallow_dataclass/pull/152)
 
 ## v8.4.1
 
