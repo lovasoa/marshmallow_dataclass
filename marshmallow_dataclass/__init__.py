@@ -586,9 +586,14 @@ def field_for_schema(
         elif default is not marshmallow.missing:
             subtyp = type(default)
             warnings.warn(
-                "Support for type inference from a default value is limited and may "
-                "result in inaccurate validation. Provide a type to Final[...] to "
-                "ensure accurate validation."
+                "****** WARNING ****** "
+                "marshmallow_dataclass was called on a dataclass with an attribute "
+                'that is type-annotated with "Final" with a default value from which '
+                "the Marshmallow field type is inferred. Support for type inference "
+                "from a default value is limited and may result in inaccurate "
+                "validation. Provide a type to Final[...] to ensure accurate "
+                "validation. "
+                "****** WARNING ******"
             )
         else:
             subtyp = Any
