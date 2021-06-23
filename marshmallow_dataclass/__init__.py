@@ -585,6 +585,11 @@ def field_for_schema(
             subtyp = arguments[0]
         elif default is not marshmallow.missing:
             subtyp = type(default)
+            warnings.warn(
+                "Support for type inference from a default value is limited and may "
+                "result in inaccurate validation. Provide a type to Final[...] to "
+                "ensure accurate validation."
+            )
         else:
             subtyp = Any
         return field_for_schema(subtyp, default, metadata, base_schema)
