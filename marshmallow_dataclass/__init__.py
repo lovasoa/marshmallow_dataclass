@@ -584,7 +584,9 @@ def field_for_schema(
         if arguments:
             subtyp = arguments[0]
         elif default is not marshmallow.missing:
-            subtyp = type(default)
+            raise NotImplementedError(
+                "Type inference from default value is not supported"
+            )
         else:
             subtyp = Any
         return field_for_schema(subtyp, default, metadata, base_schema)
