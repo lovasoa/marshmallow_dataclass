@@ -192,7 +192,8 @@ class TestClassSchema(unittest.TestCase):
             A = dataclasses.dataclass(A)
             B = dataclasses.dataclass(B)
 
-        schema_a = class_schema(A)()
+        with self.assertWarns(Warning):
+            schema_a = class_schema(A)()
         self.assertEqual(A(data="a"), schema_a.load({}))
         self.assertEqual(A(data="a"), schema_a.load({"data": "a"}))
         self.assertEqual(A(data="b"), schema_a.load({"data": "b"}))
@@ -203,7 +204,8 @@ class TestClassSchema(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 schema_a.load({"data": data})
 
-        schema_b = class_schema(B)()
+        with self.assertWarns(Warning):
+            schema_b = class_schema(B)()
         self.assertEqual(B(data=A()), schema_b.load({}))
         self.assertEqual(B(data=A()), schema_b.load({"data": {}}))
         self.assertEqual(B(data=A()), schema_b.load({"data": {"data": "a"}}))
