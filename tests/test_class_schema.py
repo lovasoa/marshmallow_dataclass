@@ -1,6 +1,6 @@
 import typing
 import unittest
-from typing import Any, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 from uuid import UUID
 
 try:
@@ -217,6 +217,31 @@ class TestClassSchema(unittest.TestCase):
         for data in [2, 2.34, False]:
             with self.assertRaises(ValidationError):
                 schema_b.load({"data": data})
+
+    def test_final_infers_type_any_from_field_default_factory(self):
+        # @dataclasses.dataclass
+        class A:
+            data: Final = dataclasses.field(default_factory=lambda: [])
+
+        # NOTE: This workaround is needed to avoid a Mypy crash.
+        # See: https://github.com/python/mypy/issues/10090#issuecomment-866686096
+        if not TYPE_CHECKING:
+            A = dataclasses.dataclass(A)
+
+        with self.assertWarns(Warning):
+            schema = class_schema(A)()
+
+        self.assertEqual(A(data=[]), schema.load({}))
+        self.assertEqual(A(data=[]), schema.load({"data": []}))
+        self.assertEqual(A(data=["a"]), schema.load({"data": ["a"]}))
+        self.assertEqual(schema.dump(A()), {"data": []})
+        self.assertEqual(schema.dump(A(data=[])), {"data": []})
+        self.assertEqual(schema.dump(A(data=["a"])), {"data": ["a"]})
+
+        # The following test cases pass because the field type cannot be
+        # inferred from a factory.
+        self.assertEqual(A(data=cast(Any, True)), schema.load({"data": True}))
+        self.assertEqual(A(data=cast(Any, "a")), schema.load({"data": "a"}))
 
     def test_validator_stacking(self):
         # See: https://github.com/lovasoa/marshmallow_dataclass/issues/91
