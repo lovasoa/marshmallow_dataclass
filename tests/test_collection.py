@@ -1,4 +1,5 @@
 import itertools
+import sys
 import unittest
 from typing import Optional, Sequence, Set, FrozenSet, Mapping
 
@@ -336,3 +337,26 @@ class TestMappingField(unittest.TestCase):
             {"value": {1: {"name": "Doe"}}},
         ):
             self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+
+class TestBuiltinGenerics(unittest.TestCase):
+    @unittest.skipIf(
+        sys.version_info < (3, 9),
+        "builtin generics are only available in python 3.9 upwards",
+    )
+    def test_builtin(self):
+        annotations = [list[int], dict[str, int], set[str]]
+        samples = [[1, 2, 3], {"foo": 1, "bar": 2}, {"f", "o", "b", "a", "r"}]
+
+        for annotation, sample in zip(annotations, samples):
+            with self.subTest(f"Testing {annotation}"):
+
+                @dataclass
+                class Dummy:
+                    value: annotation
+
+                schema = Dummy.Schema()
+
+                # check if a round trip keeps the data untouched
+                loaded = schema.load(schema.dump(Dummy(value=sample)))
+                self.assertEqual(loaded, Dummy(value=sample))
