@@ -2,6 +2,10 @@
 
 - Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150)
 
+## v8.4.2
+
+- Compatibility with python3.9 lowercase type annotations. [See #136](https://github.com/lovasoa/marshmallow_dataclass/issues/136)
+
 ## v8.4.1
 
  - Fix compatibility with older python versions.
