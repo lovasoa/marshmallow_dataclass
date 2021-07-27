@@ -490,8 +490,8 @@ def _field_for_generic_type(
         elif typing_inspect.is_union_type(typ):
             if typing_inspect.is_optional_type(typ):
                 metadata["allow_none"] = metadata.get("allow_none", True)
-                metadata["default"] = metadata.get("default", None)
-                metadata["missing"] = metadata.get("missing", None)
+                metadata["dump_default"] = metadata.get("dump_default", None)
+                metadata["load_default"] = metadata.get("load_default", None)
                 metadata["required"] = False
             subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
             if len(subtypes) == 1:
@@ -534,7 +534,7 @@ def field_for_schema(
     >>> int_field.__class__
     <class 'marshmallow.fields.Integer'>
 
-    >>> int_field.default
+    >>> int_field.dump_default
     9
 
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
@@ -544,10 +544,10 @@ def field_for_schema(
     metadata = {} if metadata is None else dict(metadata)
 
     if default is not marshmallow.missing:
-        metadata.setdefault("default", default)
+        metadata.setdefault("dump_default", default)
         # 'missing' must not be set for required fields.
         if not metadata.get("required"):
-            metadata.setdefault("missing", default)
+            metadata.setdefault("load_default", default)
     else:
         metadata.setdefault("required", True)
 
