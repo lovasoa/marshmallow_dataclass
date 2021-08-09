@@ -37,3 +37,20 @@ class TestOptionalField(unittest.TestCase):
         self.assertEqual(
             exc_cm.exception.messages, {"value": ["Field may not be null."]}
         )
+
+    def test_required_optional_field(self):
+        @dataclass
+        class RequiredOptionalValue:
+            value: Optional[int] = field(default=42, metadata={"required": True})
+
+        schema = RequiredOptionalValue.Schema()
+
+        self.assertEqual(schema.load({"value": None}), RequiredOptionalValue(None))
+        self.assertEqual(
+            schema.load({"value": "hello"}), RequiredOptionalValue(value="hello")
+        )
+        with self.assertRaises(marshmallow.exceptions.ValidationError) as exc_cm:
+            schema.load({})
+        self.assertEqual(
+            exc_cm.exception.messages, {"value": ["Missing data for required field."]}
+        )
