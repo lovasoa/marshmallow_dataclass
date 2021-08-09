@@ -491,8 +491,9 @@ def _field_for_generic_type(
             if typing_inspect.is_optional_type(typ):
                 metadata["allow_none"] = metadata.get("allow_none", True)
                 metadata["dump_default"] = metadata.get("dump_default", None)
-                metadata["load_default"] = metadata.get("load_default", None)
-                metadata["required"] = False
+                if not metadata.get("required"):
+                    metadata["load_default"] = metadata.get("load_default", None)
+                metadata.setdefault("required", False)
             subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
             if len(subtypes) == 1:
                 return field_for_schema(
@@ -549,7 +550,7 @@ def field_for_schema(
         if not metadata.get("required"):
             metadata.setdefault("load_default", default)
     else:
-        metadata.setdefault("required", True)
+        metadata.setdefault("required", not typing_inspect.is_optional_type(typ))
 
     # If the field was already defined by the user
     predefined_field = metadata.get("marshmallow_field")
