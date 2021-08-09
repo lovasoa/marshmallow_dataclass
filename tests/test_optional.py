@@ -41,7 +41,7 @@ class TestOptionalField(unittest.TestCase):
     def test_required_optional_field(self):
         @dataclass
         class RequiredOptionalValue:
-            value: Optional[int] = field(default=42, metadata={"required": True})
+            value: Optional[str] = field(default="default", metadata={"required": True})
 
         schema = RequiredOptionalValue.Schema()
 
