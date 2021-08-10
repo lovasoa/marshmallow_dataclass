@@ -1,8 +1,14 @@
 # marshmallow\_dataclass change log
 
+## v8.5.2
+
+- Fix spurious `TypeError` when serializing `Optional` union types with `required=True`
+  ([#160](https://github.com/lovasoa/marshmallow_dataclass/pull/160))
+
 ## v8.5.1
 
- - Allow setting required=True on fields of type Optional (#159)
+- Allow setting required=True on fields of type Optional
+  ([#159](https://github.com/lovasoa/marshmallow_dataclass/pull/159))
 
 ## v8.5.0
 - Fix `default` warning coming from marshmallow. Bump minimal marshmallow version requirement to 3.13. [See #157](https://github.com/lovasoa/marshmallow_dataclass/issues/157).
