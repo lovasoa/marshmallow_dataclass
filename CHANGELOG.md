@@ -1,5 +1,10 @@
 # marshmallow\_dataclass change log
 
+## v8.5.3
+
+- Fix spurious `ValueError` when defining a Union field with explicit default value
+  ([#161](https://github.com/lovasoa/marshmallow_dataclass/pull/161))
+
 ## v8.5.2
 
 - Fix spurious `TypeError` when serializing `Optional` union types with `required=True`
