@@ -506,7 +506,7 @@ def _field_for_generic_type(
                     (
                         subtyp,
                         field_for_schema(
-                            subtyp, metadata=metadata, base_schema=base_schema
+                            subtyp, metadata={"required": True}, base_schema=base_schema
                         ),
                     )
                     for subtyp in subtypes

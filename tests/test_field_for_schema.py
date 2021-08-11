@@ -139,24 +139,8 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Union[int, str, None]),
             union_field.Union(
                 [
-                    (
-                        int,
-                        fields.Integer(
-                            allow_none=True,
-                            required=False,
-                            dump_default=None,
-                            load_default=None,
-                        ),
-                    ),
-                    (
-                        str,
-                        fields.String(
-                            allow_none=True,
-                            required=False,
-                            dump_default=None,
-                            load_default=None,
-                        ),
-                    ),
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
                 ],
                 required=False,
                 dump_default=None,
@@ -169,24 +153,8 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Optional[Union[int, str]]),
             union_field.Union(
                 [
-                    (
-                        int,
-                        fields.Integer(
-                            allow_none=True,
-                            required=False,
-                            dump_default=None,
-                            load_default=None,
-                        ),
-                    ),
-                    (
-                        str,
-                        fields.String(
-                            allow_none=True,
-                            required=False,
-                            dump_default=None,
-                            load_default=None,
-                        ),
-                    ),
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
                 ],
                 required=False,
                 dump_default=None,
