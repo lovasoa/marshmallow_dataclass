@@ -38,7 +38,6 @@ import collections.abc
 import dataclasses
 import inspect
 import warnings
-from contextlib import suppress
 from enum import EnumMeta
 from functools import lru_cache
 from typing import (
@@ -62,7 +61,6 @@ from typing import (
 
 import marshmallow
 import typing_inspect
-from marshmallow import class_registry
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 

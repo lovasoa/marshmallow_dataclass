@@ -18,7 +18,7 @@ class GlobalB:
 
 @dataclass
 class GlobalSelfRecursion:
-    related: 'List["self"]'  # type: ignore
+    related: 'List["GlobalSelfRecursion"]'  # type: ignore # noqa: F821
 
 
 @dataclass
@@ -76,10 +76,9 @@ class TestForwardReferences(unittest.TestCase):
         )
 
     def test_local_self_recursive_type(self):
-        # todo: locals() should be passed to the get_type_hints in some way to avoid "self"
         @dataclass
         class LocalSelfRecursion:
-            related: 'List["self"]'
+            related: 'List["LocalSelfRecursion"]'
 
         self.assertEqual(
             LocalSelfRecursion([LocalSelfRecursion([])]),
