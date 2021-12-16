@@ -37,6 +37,7 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import types
 import warnings
 from enum import EnumMeta
 from functools import lru_cache
@@ -87,6 +88,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
+    cls_frame: types.FrameType = None,
 ) -> Type[_U]:
     ...
 
@@ -100,6 +102,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
+    cls_frame: types.FrameType = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
@@ -116,12 +119,14 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
+    cls_frame: types.FrameType = None,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
 
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+    :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions
 
     >>> @dataclass
     ... class Artist:
@@ -144,9 +149,10 @@ def dataclass(
     dc = dataclasses.dataclass(  # type: ignore
         _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
     )
+    cls_frame = cls_frame or inspect.stack()[1][0]
     if _cls is None:
-        return lambda cls: add_schema(dc(cls), base_schema)
-    return add_schema(dc, base_schema)
+        return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
+    return add_schema(dc, base_schema, cls_frame=cls_frame)
 
 
 @overload
@@ -163,18 +169,21 @@ def add_schema(
 
 @overload
 def add_schema(
-    _cls: Type[_U], base_schema: Type[marshmallow.Schema] = None
+    _cls: Type[_U],
+    base_schema: Type[marshmallow.Schema] = None,
+    cls_frame: types.FrameType = None,
 ) -> Type[_U]:
     ...
 
 
-def add_schema(_cls=None, base_schema=None):
+def add_schema(_cls=None, base_schema=None, cls_frame=None):
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
 
     :param type _cls: The dataclass to which a Schema should be added
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+    :param cls_frame: frame of cls definition
 
     >>> class BaseSchema(marshmallow.Schema):
     ...   def on_bind_field(self, field_name, field_obj):
@@ -192,7 +201,9 @@ def add_schema(_cls=None, base_schema=None):
     def decorator(clazz: Type[_U]) -> Type[_U]:
         # noinspection PyTypeHints
         clazz.Schema = lazy_class_attribute(  # type: ignore
-            lambda _: class_schema(clazz, base_schema), "Schema", clazz.__name__
+            lambda _: class_schema(clazz, base_schema, cls_frame),
+            "Schema",
+            clazz.__name__,
         )
         return clazz
 
@@ -200,13 +211,16 @@ def add_schema(_cls=None, base_schema=None):
 
 
 def class_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    clazz_frame: types.FrameType = None,
 ) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
 
     :param clazz: A python class (may be a dataclass)
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+    :param clazz_frame: frame of cls definition
     :return: A marshmallow Schema corresponding to the dataclass
 
     .. note::
@@ -321,12 +335,14 @@ def class_schema(
     """
     if not dataclasses.is_dataclass(clazz):
         clazz = dataclasses.dataclass(clazz)
-    return _internal_class_schema(clazz, base_schema)
+    return _internal_class_schema(clazz, base_schema, clazz_frame)
 
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _internal_class_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    clazz_frame: types.FrameType = None,
 ) -> Type[marshmallow.Schema]:
     try:
         # noinspection PyDataclass
@@ -345,7 +361,7 @@ def _internal_class_schema(
                 "****** WARNING ******"
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
-            return _internal_class_schema(created_dataclass, base_schema)
+            return _internal_class_schema(created_dataclass, base_schema, clazz_frame)
         except Exception:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -359,7 +375,9 @@ def _internal_class_schema(
     }
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = get_type_hints(clazz)
+    type_hints = get_type_hints(
+        clazz, localns=clazz_frame.f_locals if clazz_frame else None
+    )
     attributes.update(
         (
             field.name,
@@ -630,7 +648,9 @@ def field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
     nested = (
-        nested_schema or forward_reference or _internal_class_schema(typ, base_schema)
+        nested_schema
+        or forward_reference
+        or _internal_class_schema(typ, base_schema, None)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)

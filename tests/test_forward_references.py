@@ -1,8 +1,6 @@
 import unittest
 from typing import List, Optional
 
-import marshmallow
-
 from marshmallow_dataclass import dataclass
 
 
@@ -18,7 +16,7 @@ class GlobalB:
 
 @dataclass
 class GlobalSelfRecursion:
-    related: 'List["GlobalSelfRecursion"]'  # type: ignore # noqa: F821
+    related: "List[GlobalSelfRecursion]"
 
 
 @dataclass
@@ -78,7 +76,7 @@ class TestForwardReferences(unittest.TestCase):
     def test_local_self_recursive_type(self):
         @dataclass
         class LocalSelfRecursion:
-            related: 'List["LocalSelfRecursion"]'
+            related: "List[LocalSelfRecursion]"
 
         self.assertEqual(
             LocalSelfRecursion([LocalSelfRecursion([])]),
@@ -86,10 +84,9 @@ class TestForwardReferences(unittest.TestCase):
         )
 
     def test_local_recursive_type(self):
-        # todo: locals() should be passed to the get_type_hints in some way to avoid extra quotes
         @dataclass
         class LocalRecursion:
-            related: 'List["LocalRecursion"]'
+            related: "List[LocalRecursion]"
 
         self.assertEqual(
             LocalRecursion([LocalRecursion([])]),
@@ -97,17 +94,14 @@ class TestForwardReferences(unittest.TestCase):
         )
 
     def test_local_forward_references(self):
-        # todo: locals() should be passed to the get_type_hints in some way to avoid those trucks
-
         @dataclass
         class LocalA:
-            b: "'LocalB'"
+            b: "LocalB"
 
         @dataclass
         class LocalB:
             pass
 
-        LocalB.Schema()  # fixme: the line is required to force schema evaluation
         self.assertEqual(LocalA(LocalB()), LocalA.Schema().load(dict(b=dict())))
 
     def test_name_collisions(self):
@@ -133,9 +127,9 @@ class TestForwardReferences(unittest.TestCase):
 
         @dataclass
         class B:
-            a: '"A"'
+            a: "A"
 
-        with self.assertRaises(marshmallow.exceptions.ValidationError):
-            B.Schema().load(dict(a=dict(c=1)))
-            # marshmallow.exceptions.ValidationError:
-            # {'a': {'d': ['Missing data for required field.'], 'c': ['Unknown field.']}}
+        # with self.assertRaises(marshmallow.exceptions.ValidationError):
+        B.Schema().load(dict(a=dict(c=1)))
+        # marshmallow.exceptions.ValidationError:
+        # {'a': {'d': ['Missing data for required field.'], 'c': ['Unknown field.']}}
