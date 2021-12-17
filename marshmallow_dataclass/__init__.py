@@ -88,7 +88,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: types.FrameType = None,
+    cls_frame: Optional[types.FrameType] = None,
 ) -> Type[_U]:
     ...
 
@@ -102,7 +102,7 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: types.FrameType = None,
+    cls_frame: Optional[types.FrameType] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
@@ -119,14 +119,15 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: types.FrameType = None,
+    cls_frame: Optional[types.FrameType] = None,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
     It adds a `.Schema` attribute to the class object
 
     :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions
+    :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions.
+        If None is passed the caller frame will be treated as cls_frame
 
     >>> @dataclass
     ... class Artist:
