@@ -39,12 +39,16 @@ class TestClassSchema(unittest.TestCase):
         complex_set = {
             class_schema(ComplexNested),
             class_schema(ComplexNested, base_schema=None),
+            class_schema(ComplexNested, clazz_frame=None),
             class_schema(ComplexNested, None),
+            class_schema(ComplexNested, None, None),
         }
         simple_set = {
             class_schema(Simple),
             class_schema(Simple, base_schema=None),
+            class_schema(Simple, clazz_frame=None),
             class_schema(Simple, None),
+            class_schema(Simple, None, None),
         }
         self.assertEqual(len(complex_set), 1)
         self.assertEqual(len(simple_set), 1)
