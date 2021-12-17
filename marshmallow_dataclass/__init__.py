@@ -40,7 +40,7 @@ import inspect
 import types
 import warnings
 from enum import EnumMeta
-from functools import lru_cache
+from functools import lru_cache, partial
 from typing import (
     Any,
     Callable,
@@ -201,7 +201,7 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
     def decorator(clazz: Type[_U]) -> Type[_U]:
         # noinspection PyTypeHints
         clazz.Schema = lazy_class_attribute(  # type: ignore
-            lambda _: class_schema(clazz, base_schema, cls_frame),
+            partial(class_schema, clazz, base_schema, cls_frame),
             "Schema",
             clazz.__name__,
         )
@@ -266,7 +266,7 @@ def class_schema(
     >>> @dataclasses.dataclass()
     ... class Person:
     ...   name: str = dataclasses.field(default="Anonymous")
-    ...   friends: 'List["self"]' = dataclasses.field(default_factory=lambda:[]) # Recursive field
+    ...   friends: List['Person'] = dataclasses.field(default_factory=lambda:[]) # Recursive field
     ...
     >>> person = class_schema(Person)().load({
     ...     "friends": [{"name": "Roger Boucher"}]
