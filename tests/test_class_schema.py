@@ -457,6 +457,33 @@ class TestClassSchema(unittest.TestCase):
         self.assertNotIn("no_init", class_schema(NoInit)().fields)
         self.assertIn("no_init", class_schema(Init)().fields)
 
+    def test_generic_dataclass(self):
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class SimpleGeneric(typing.Generic[T]):
+            data: T
+
+        @dataclasses.dataclass
+        class Nested:
+            data: SimpleGeneric[int]
+
+        schema_s = class_schema(SimpleGeneric[str])()
+        self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
+        self.assertEqual(schema_s.dump(SimpleGeneric(data="a")), {"data": "a"})
+        with self.assertRaises(ValidationError):
+            schema_s.load({"data": 2})
+
+        schema_n = class_schema(Nested)()
+        self.assertEqual(
+            Nested(data=SimpleGeneric(1)), schema_n.load({"data": {"data": 1}})
+        )
+        self.assertEqual(
+            schema_n.dump(Nested(data=SimpleGeneric(data=1))), {"data": {"data": 1}}
+        )
+        with self.assertRaises(ValidationError):
+            schema_n.load({"data": {"data": "str"}})
+
 
 if __name__ == "__main__":
     unittest.main()
