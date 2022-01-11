@@ -313,7 +313,9 @@ def class_schema(
     >>> class_schema(Custom)().load({})
     Custom(name=None)
     """
-    if not dataclasses.is_dataclass(clazz):
+    if not dataclasses.is_dataclass(clazz) and not _is_generic_alias_of_dataclass(
+        clazz
+    ):
         clazz = dataclasses.dataclass(clazz)
     return _internal_class_schema(clazz, base_schema)
 
@@ -323,8 +325,7 @@ def _internal_class_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
     try:
-        # noinspection PyDataclass
-        fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
+        class_name, fields = _dataclass_name_and_fields(clazz)
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
@@ -363,7 +364,7 @@ def _internal_class_schema(
         if field.init
     )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(class_name, (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -660,6 +661,47 @@ def _get_field_default(field: dataclasses.Field):
     elif field.default is dataclasses.MISSING:
         return marshmallow.missing
     return field.default
+
+
+def _is_generic_alias_of_dataclass(clazz: type) -> bool:
+    """
+    Check if given class is a generic alias of a dataclass, if the dataclass is
+    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    """
+    return typing_inspect.is_generic_type(clazz) and dataclasses.is_dataclass(
+        typing_inspect.get_origin(clazz)
+    )
+
+
+# noinspection PyDataclass
+def _dataclass_name_and_fields(
+    clazz: type,
+) -> Tuple[str, Tuple[dataclasses.Field, ...]]:
+    if not _is_generic_alias_of_dataclass(clazz):
+        return clazz.__name__, dataclasses.fields(clazz)
+
+    base_dataclass = typing_inspect.get_origin(clazz)
+    base_parameters = typing_inspect.get_parameters(base_dataclass)
+    type_arguments = typing_inspect.get_args(clazz)
+    params_to_args = dict(zip(base_parameters, type_arguments))
+    non_generic_fields = [  # swap generic typed fields with types in given type arguments
+        (
+            f.name,
+            params_to_args.get(f.type, f.type),
+            dataclasses.field(
+                default=f.default,
+                # ignoring mypy: https://github.com/python/mypy/issues/6910
+                default_factory=f.default_factory,  # type: ignore
+                init=f.init,
+                metadata=f.metadata,
+            ),
+        )
+        for f in dataclasses.fields(base_dataclass)
+    ]
+    non_generic_dataclass = dataclasses.make_dataclass(
+        cls_name=f"{base_dataclass.__name__}{type_arguments}", fields=non_generic_fields
+    )
+    return base_dataclass.__name__, dataclasses.fields(non_generic_dataclass)
 
 
 def NewType(
