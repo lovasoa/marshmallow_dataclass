@@ -39,7 +39,9 @@ class Union(fields.Field):
         if value is None:
             return value
         for typ, field in self.union_fields:
-            if typ.__dict__.get('__supertype__') and typ.__dict__.get('_marshmallow_field'):
+            if typ.__dict__.get("__supertype__") and typ.__dict__.get(
+                "_marshmallow_field"
+            ):
                 typ = typ.__supertype__
             try:
                 typeguard.check_type(attr, value, typ)

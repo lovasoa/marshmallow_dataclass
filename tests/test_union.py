@@ -182,46 +182,38 @@ class TestClassSchema(unittest.TestCase):
             schema.load({"value": None})
 
     def test_union_with_custom_types(self):
-
         @dataclass
         class ClassA:
             elm_a_1: int
             elm_a_2: int
-
 
         class ClassAField(fields.Field):
             def _serialize(self, value, attr, obj, **kwargs) -> dict:
                 serialized_list = [value.elm_a_1, value.elm_a_2]
                 return serialized_list
 
-
         class_a_type = marshmallow_dataclass.NewType(
             "ClassA", ClassA, field=ClassAField
         )
 
-
         @dataclass
         class ClassB:
             elm_b_1: int
-            elm_b_2: str        
-
+            elm_b_2: str
 
         class ClassBField(fields.Field):
             def _serialize(self, value, attr, obj, **kwargs) -> dict:
                 serialized_list = [value.elm_b_1, value.elm_b_2]
                 return serialized_list
 
-
         class_b_type = marshmallow_dataclass.NewType(
             "ClassB", ClassB, field=ClassBField
         )
-
 
         @dataclass
         class Schema(Schema):
             class_name: str
             output: marshmallow_dataclass.Union[class_b_type, class_a_type]
-
 
         MarshmallowSchema = marshmallow_dataclass.class_schema(Schema)
 
