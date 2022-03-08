@@ -55,10 +55,9 @@ class Union(fields.Field):
         )
 
     def node_output_serialize(self, value: Any, attr: str, obj, **kwargs) -> Any:
-        errors = []
         serialized_outputs = {}
         num_successfully_serialized_outputs = 0
-        num_expected_serialized_outputs = len(value.__annotations__.keys())
+        expected_serialized_output_keys = value.__annotations__.keys()
         if value is None:
             return value
 
@@ -77,15 +76,17 @@ class Union(fields.Field):
                     )
                     serialized_outputs[param_key] = serialized_output
                     num_successfully_serialized_outputs += 1
-                except TypeError as e:
-                    errors.append(e)
-        if num_successfully_serialized_outputs != num_expected_serialized_outputs:
+                except:
+                    pass
+        if num_successfully_serialized_outputs != len(expected_serialized_output_keys):
+            unserializable_outputs = expected_serialized_output_keys - serialized_outputs.keys()
+            bad_input_types = [getattr(value, bad_output_key).__class__.__name__ for bad_output_key in list(unserializable_outputs)]
             raise TypeError(
-                f"Unable to serialize value with any of the fields in the union: {errors}"
+                f"Unable to serialize: {bad_input_types} with any of the fields in the union: {[(field.__class__.__name__) for typ, field in self.union_fields]}"
             )
         else:
             return serialized_outputs
-
+ 
     def _deserialize(self, value: Any, attr: Optional[str], data, **kwargs) -> Any:
         errors = []
         for typ, field in self.union_fields:
