@@ -4,7 +4,7 @@ from typing import List, Optional, Union, Dict
 
 import marshmallow
 
-from marshmallow_dataclass import dataclass
+from marshmallow_dataclass import dataclass, NewType, Union, class_schema
 
 
 class TestClassSchema(unittest.TestCase):
@@ -187,12 +187,12 @@ class TestClassSchema(unittest.TestCase):
             elm_a_1: int
             elm_a_2: int
 
-        class ClassAField(fields.Field):
+        class ClassAField(marshmallow.fields.Field):
             def _serialize(self, value, attr, obj, **kwargs) -> dict:
                 serialized_list = [value.elm_a_1, value.elm_a_2]
                 return serialized_list
 
-        class_a_type = marshmallow_dataclass.NewType(
+        class_a_type = NewType(
             "ClassA", ClassA, field=ClassAField
         )
 
@@ -201,21 +201,21 @@ class TestClassSchema(unittest.TestCase):
             elm_b_1: int
             elm_b_2: str
 
-        class ClassBField(fields.Field):
+        class ClassBField(marshmallow.fields.Field):
             def _serialize(self, value, attr, obj, **kwargs) -> dict:
                 serialized_list = [value.elm_b_1, value.elm_b_2]
                 return serialized_list
 
-        class_b_type = marshmallow_dataclass.NewType(
+        class_b_type = NewType(
             "ClassB", ClassB, field=ClassBField
         )
 
         @dataclass
-        class Schema(Schema):
+        class Schema(marshmallow.Schema):
             class_name: str
-            output: marshmallow_dataclass.Union[class_b_type, class_a_type]
+            output: Union[class_b_type, class_a_type]
 
-        MarshmallowSchema = marshmallow_dataclass.class_schema(Schema)
+        MarshmallowSchema = class_schema(Schema)
 
         outputs_to_serialize = Schema("A", ClassA(100, 100))
         assert MarshmallowSchema().dump(outputs_to_serialize) == {
