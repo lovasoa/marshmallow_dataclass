@@ -37,6 +37,8 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import sys
+import typing
 import warnings
 from enum import EnumMeta
 from functools import lru_cache
@@ -597,7 +599,7 @@ def field_for_schema(
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
-    if newtype_supertype and inspect.isfunction(typ):
+    if newtype_supertype and (inspect.isfunction(typ) or (sys.version_info >= (3, 10) and isinstance(typ, typing.NewType))):
         return _field_by_supertype(
             typ=typ,
             default=default,
