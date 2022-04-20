@@ -117,7 +117,7 @@ PersonSchema().load({"name": "jane". "age": 50.0})
 # => Person(name="jane", age=50)
 ```
 
-will first (sucessfully) try to coerce `50.0` to an `int`. If coercion is not desired the `Any` type can be used with the caveat that values will not be type checked. 
+will first (sucessfully) try to coerce `50.0` to an `int`. If coercion is not desired the `Any` type can be used with the caveat that values will not be type checked without additional [validation](https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html).
 
 ### Customizing generated fields
 
