@@ -92,7 +92,32 @@ PersonSchema = marshmallow_dataclass.class_schema(Person)
 
 The type of your fields must be either basic 
 [types supported by marshmallow](https://marshmallow.readthedocs.io/en/stable/api_reference.html#marshmallow.Schema.TYPE_MAPPING)
-(such as `float`, `str`, `bytes`, `datetime`, ...), or other dataclasses.
+(such as `float`, `str`, `bytes`, `datetime`, ...), `Union`, or other dataclasses.
+
+### Union (de)serialization coercion 
+
+Typically the Union type; `Union[X, Y]` means—from a set theory perspective—either `X` or `Y`, i.e., an unordered set, howevever the order of the sub-types defines the precedence when attempting to ether deserialize or serialize the value per [here](https://github.com/lovasoa/marshmallow_dataclass/blob/master/marshmallow_dataclass/union_field.py). 
+
+For example, 
+
+```python
+from typing import Union
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Person:
+    name: str
+    age: Union[int, float]
+
+
+PersonSchema = marshmallow_dataclass.class_schema(Person)
+PersonSchema().load({"name": "jane". "age": 50.0})
+# => Person(name="jane", age=50)
+```
+
+will first (sucessfully) try to coerce `50.0` to an `int`. If coercion is not desired the `Any` type can be used with the caveat that values will not be type checked. 
 
 ### Customizing generated fields
 
