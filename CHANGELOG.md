@@ -1,5 +1,10 @@
 # marshmallow\_dataclass change log
 
+## v8.5.4
+
+- update dependencies
+- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150) and [#151](https://github.com/lovasoa/marshmallow_dataclass/pull/151)
+
 ## v8.5.3
 
 - Fix spurious `ValueError` when defining a Union field with explicit default value

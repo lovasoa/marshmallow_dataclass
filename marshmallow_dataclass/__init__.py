@@ -642,7 +642,31 @@ def field_for_schema(
         if arguments:
             subtyp = arguments[0]
         elif default is not marshmallow.missing:
-            subtyp = type(default)
+            if callable(default):
+                subtyp = Any
+                warnings.warn(
+                    "****** WARNING ****** "
+                    "marshmallow_dataclass was called on a dataclass with an "
+                    'attribute that is type-annotated with "Final" and uses '
+                    "dataclasses.field for specifying a default value using a "
+                    "factory. The Marshmallow field type cannot be inferred from the "
+                    "factory and will fall back to a raw field which is equivalent to "
+                    'the type annotation "Any" and will result in no validation. '
+                    "Provide a type to Final[...] to ensure accurate validation. "
+                    "****** WARNING ******"
+                )
+            else:
+                subtyp = type(default)
+                warnings.warn(
+                    "****** WARNING ****** "
+                    "marshmallow_dataclass was called on a dataclass with an "
+                    'attribute that is type-annotated with "Final" with a default '
+                    "value from which the Marshmallow field type is inferred. "
+                    "Support for type inference from a default value is limited and "
+                    "may result in inaccurate validation. Provide a type to "
+                    "Final[...] to ensure accurate validation. "
+                    "****** WARNING ******"
+                )
         else:
             subtyp = Any
         return field_for_schema(subtyp, default, metadata, base_schema, typ_frame)
