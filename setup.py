@@ -29,7 +29,7 @@ EXTRAS_REQUIRE = {
         # `Literal` was introduced in:
         # - Python 3.8 (https://www.python.org/dev/peps/pep-0586)
         # - typing-extensions 3.7.2 (https://github.com/python/typing/pull/591)
-        "typing-extensions~=3.7.2; python_version < '3.8'",
+        "typing-extensions>=3.7.2; python_version < '3.8'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
