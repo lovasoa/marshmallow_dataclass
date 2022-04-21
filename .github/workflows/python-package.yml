@@ -30,7 +30,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --pre -e '.[dev]'
-        mypy --install-types
+        mypy --install-types marshmallow_dataclass
     - name: Pre-commit hooks
       if: ${{ matrix.python_version != 'pypy3' }}
       run: pre-commit run --all-files
