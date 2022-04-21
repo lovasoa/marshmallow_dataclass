@@ -597,7 +597,8 @@ def field_for_schema(
 
     # typing.NewType returns a function with a __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
-    if newtype_supertype and inspect.isfunction(typ):
+    typ_check = typ  # Prevents casting typ to FunctionType in the if
+    if newtype_supertype and inspect.isfunction(typ_check):
         return _field_by_supertype(
             typ=typ,
             default=default,
