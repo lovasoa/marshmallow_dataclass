@@ -19,7 +19,7 @@ EXTRAS_REQUIRE = {
     "enum": ["marshmallow-enum"],
     "union": ["typeguard"],
     ':python_version == "3.6"': ["dataclasses", "types-dataclasses"],
-    "lint": ["pre-commit~=1.18"],
+    "lint": ["pre-commit~=.18"],
     "docs": ["sphinx"],
     "tests": [
         "pytest>=5.4",
