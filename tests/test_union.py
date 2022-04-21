@@ -1,3 +1,4 @@
+from dataclasses import field
 import unittest
 from typing import List, Optional, Union, Dict
 
@@ -154,3 +155,28 @@ class TestClassSchema(unittest.TestCase):
 
         for data_in in [{"value": None}, {}]:
             self.assertEqual(schema.dump(schema.load(data_in)), {"value": None})
+
+    def test_required_optional_simple_union(self):
+        @dataclass
+        class Dclass:
+            value: Optional[Union[int, str]] = field(metadata={"required": True})
+
+        schema = Dclass.Schema()
+
+        for value in None, 42, "strvar":
+            self.assertEqual(schema.dump(Dclass(value=value)), {"value": value})
+            self.assertEqual(schema.load({"value": value}), Dclass(value=value))
+
+    def test_union_with_default(self):
+        @dataclass
+        class IntOrStrWithDefault:
+            value: Union[int, str] = 42
+
+        schema = IntOrStrWithDefault.Schema()
+        self.assertEqual(schema.load({}), IntOrStrWithDefault(value=42))
+        for value in 13, "strval":
+            self.assertEqual(
+                schema.load({"value": value}), IntOrStrWithDefault(value=value)
+            )
+        with self.assertRaises(marshmallow.exceptions.ValidationError):
+            schema.load({"value": None})

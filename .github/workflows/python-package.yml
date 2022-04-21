@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: [3.6, 3.7, 3.8, pypy3]
+        python_version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3"]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --pre -e '.[dev]'
     - name: Pre-commit hooks
-      if: ${{ matrix.python_version != 'pypy3' }}
+      if: ${{ matrix.python_version != 'pypy3' && matrix.python_version != '3.6' }}
       run: pre-commit run --all-files
     - name: Test with pytest
       run: pytest

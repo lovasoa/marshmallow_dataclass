@@ -35,7 +35,7 @@ class TestFieldForSchema(unittest.TestCase):
     def test_int(self):
         self.assertFieldsEqual(
             field_for_schema(int, default=9, metadata=dict(required=False)),
-            fields.Integer(default=9, missing=9, required=False),
+            fields.Integer(dump_default=9, load_default=9, required=False),
         )
 
     def test_any(self):
@@ -82,7 +82,9 @@ class TestFieldForSchema(unittest.TestCase):
     def test_optional_str(self):
         self.assertFieldsEqual(
             field_for_schema(Optional[str]),
-            fields.String(allow_none=True, required=False, default=None, missing=None),
+            fields.String(
+                allow_none=True, required=False, dump_default=None, load_default=None
+            ),
         )
 
     def test_enum(self):
@@ -137,22 +139,12 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Union[int, str, None]),
             union_field.Union(
                 [
-                    (
-                        int,
-                        fields.Integer(
-                            allow_none=True, required=False, default=None, missing=None
-                        ),
-                    ),
-                    (
-                        str,
-                        fields.String(
-                            allow_none=True, required=False, default=None, missing=None
-                        ),
-                    ),
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
                 ],
                 required=False,
-                default=None,
-                missing=None,
+                dump_default=None,
+                load_default=None,
             ),
         )
 
@@ -161,22 +153,12 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Optional[Union[int, str]]),
             union_field.Union(
                 [
-                    (
-                        int,
-                        fields.Integer(
-                            allow_none=True, required=False, default=None, missing=None
-                        ),
-                    ),
-                    (
-                        str,
-                        fields.String(
-                            allow_none=True, required=False, default=None, missing=None
-                        ),
-                    ),
+                    (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
                 ],
                 required=False,
-                default=None,
-                missing=None,
+                dump_default=None,
+                load_default=None,
             ),
         )
 
@@ -184,7 +166,10 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(typing.NewType("UserId", int), default=0),
             fields.Integer(
-                required=False, default=0, missing=0, metadata={"description": "UserId"}
+                required=False,
+                dump_default=0,
+                load_default=0,
+                metadata={"description": "UserId"},
             ),
         )
 

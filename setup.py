@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.4.1"
+VERSION = "8.5.3"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -18,8 +18,8 @@ CLASSIFIERS = [
 EXTRAS_REQUIRE = {
     "enum": ["marshmallow-enum"],
     "union": ["typeguard"],
-    ':python_version == "3.6"': ["dataclasses", "types-dataclasses"],
-    "lint": ["pre-commit~=1.18"],
+    "lint": ["pre-commit~=2.17"],
+    ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
     "docs": ["sphinx"],
     "tests": [
         "pytest>=5.4",
@@ -29,7 +29,7 @@ EXTRAS_REQUIRE = {
         # `Literal` was introduced in:
         # - Python 3.8 (https://www.python.org/dev/peps/pep-0586)
         # - typing-extensions 3.7.2 (https://github.com/python/typing/pull/591)
-        "typing-extensions~=3.7.2; python_version < '3.8'",
+        "typing-extensions>=3.7.2; python_version < '3.8'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
@@ -56,7 +56,7 @@ setup(
     classifiers=CLASSIFIERS,
     license="MIT",
     python_requires=">=3.6",
-    install_requires=["marshmallow>=3.0.0,<4.0", "typing-inspect>=0.7.0"],
+    install_requires=["marshmallow>=3.13.0,<4.0", "typing-inspect>=0.7.1"],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )

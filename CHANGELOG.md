@@ -1,6 +1,32 @@
 # marshmallow\_dataclass change log
 
+## v8.5.4
+
+- update dependencies
 - Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150) and [#151](https://github.com/lovasoa/marshmallow_dataclass/pull/151)
+
+## v8.5.3
+
+- Fix spurious `ValueError` when defining a Union field with explicit default value
+  ([#161](https://github.com/lovasoa/marshmallow_dataclass/pull/161))
+
+## v8.5.2
+
+- Fix spurious `TypeError` when serializing `Optional` union types with `required=True`
+  ([#160](https://github.com/lovasoa/marshmallow_dataclass/pull/160))
+
+## v8.5.1
+
+- Allow setting required=True on fields of type Optional
+  ([#159](https://github.com/lovasoa/marshmallow_dataclass/pull/159))
+
+## v8.5.0
+- Fix `default` warning coming from marshmallow. Bump minimal marshmallow version requirement to 3.13. [See #157](https://github.com/lovasoa/marshmallow_dataclass/issues/157).
+- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150)
+
+## v8.4.2
+
+- Compatibility with python3.9 lowercase type annotations. [See #136](https://github.com/lovasoa/marshmallow_dataclass/issues/136)
 
 ## v8.4.1
 
