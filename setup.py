@@ -18,8 +18,8 @@ CLASSIFIERS = [
 EXTRAS_REQUIRE = {
     "enum": ["marshmallow-enum"],
     "union": ["typeguard"],
-    ':python_version == "3.6"': ["dataclasses", "types-dataclasses"],
-    "lint": ["pre-commit~=1.18"],
+    "lint": ["pre-commit~=2.17"],
+    ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
     "docs": ["sphinx"],
     "tests": [
         "pytest>=5.4",
