@@ -113,7 +113,7 @@ class Person:
 
 
 PersonSchema = marshmallow_dataclass.class_schema(Person)
-PersonSchema().load({"name": "jane". "age": 50.0})
+PersonSchema().load({"name": "jane", "age": 50.0})
 # => Person(name="jane", age=50)
 ```
 
