@@ -654,8 +654,8 @@ def field_for_schema(
 
     # typing.NewType returns a function (in python <= 3.9) or a class (python >= 3.10) with a
     # __supertype__ attribute
-    if typing_inspect.is_new_type(typ):
-        newtype_supertype = getattr(typ, "__supertype__", None)
+    newtype_supertype = getattr(typ, "__supertype__", None)
+    if typing_inspect.is_new_type(typ) and newtype_supertype is not None:
         return _field_by_supertype(
             typ=typ,
             default=default,
