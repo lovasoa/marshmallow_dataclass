@@ -595,10 +595,10 @@ def field_for_schema(
     if generic_field:
         return generic_field
 
-    # typing.NewType returns a function with a __supertype__ attribute
+    # typing.NewType returns a function (in python <= 3.9) or a class (python >= 3.10) with a
+    # __supertype__ attribute
     newtype_supertype = getattr(typ, "__supertype__", None)
-    typ_check = typ  # Prevents casting typ to FunctionType in the if
-    if newtype_supertype and inspect.isfunction(typ_check):
+    if typing_inspect.is_new_type(typ) and newtype_supertype is not None:
         return _field_by_supertype(
             typ=typ,
             default=default,
