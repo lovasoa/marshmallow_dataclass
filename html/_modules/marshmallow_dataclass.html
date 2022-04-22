@@ -183,7 +183,12 @@
     <span class="n">dc</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="n">_cls</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span>
     <span class="p">)</span>
-    <span class="n">cls_frame</span> <span class="o">=</span> <span class="n">cls_frame</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cls_frame</span><span class="p">:</span>
+        <span class="n">current_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">current_frame</span><span class="p">:</span>
+            <span class="n">cls_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
+        <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
+        <span class="k">del</span> <span class="n">current_frame</span>
     <span class="k">if</span> <span class="n">_cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="bp">cls</span><span class="p">:</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dc</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">)</span></div>
@@ -369,6 +374,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">):</span>
         <span class="n">clazz</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">clazz_frame</span><span class="p">:</span>
+        <span class="n">current_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">current_frame</span><span class="p">:</span>
+            <span class="n">clazz_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
+        <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
+        <span class="k">del</span> <span class="n">current_frame</span>
     <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span></div>
 
 
