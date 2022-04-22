@@ -1,9 +1,14 @@
 # marshmallow\_dataclass change log
 
+## v8.5.5
+
+- Fix slowdown introduced in v8.5.4. See https://github.com/lovasoa/marshmallow_dataclass/pull/187
+
 ## v8.5.4
 
-- update dependencies
 - Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150) and [#151](https://github.com/lovasoa/marshmallow_dataclass/pull/151)
+- Add support for [forward references](https://peps.python.org/pep-0484/#forward-references) and [ Postponed Evaluation of Annotations](https://peps.python.org/pep-0563/). (See [#13](https://github.com/lovasoa/marshmallow_dataclass/issues/13))
+- update dependencies
 
 ## v8.5.3
 
