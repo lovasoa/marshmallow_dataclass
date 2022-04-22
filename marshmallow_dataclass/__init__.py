@@ -150,7 +150,12 @@ def dataclass(
     dc = dataclasses.dataclass(  # type: ignore
         _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
     )
-    cls_frame = cls_frame or inspect.stack()[1][0]
+    if not cls_frame:
+        current_frame = inspect.currentframe()
+        if current_frame:
+            cls_frame = current_frame.f_back
+        # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+        del current_frame
     if _cls is None:
         return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
     return add_schema(dc, base_schema, cls_frame=cls_frame)
@@ -336,6 +341,12 @@ def class_schema(
     """
     if not dataclasses.is_dataclass(clazz):
         clazz = dataclasses.dataclass(clazz)
+    if not clazz_frame:
+        current_frame = inspect.currentframe()
+        if current_frame:
+            clazz_frame = current_frame.f_back
+        # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+        del current_frame
     return _internal_class_schema(clazz, base_schema, clazz_frame)
 
 
