@@ -37,6 +37,7 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import threading
 import types
 import warnings
 from enum import EnumMeta
@@ -76,6 +77,10 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
 # Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
+
+# Recursion guard for class_schema()
+_RECURSION_GUARD = threading.local()
+_RECURSION_GUARD.seen_classes = {}
 
 
 @overload
@@ -347,7 +352,10 @@ def class_schema(
             clazz_frame = current_frame.f_back
         # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
         del current_frame
-    return _internal_class_schema(clazz, base_schema, clazz_frame)
+    try:
+        return _internal_class_schema(clazz, base_schema, clazz_frame)
+    finally:
+        _RECURSION_GUARD.seen_classes.clear()
 
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
@@ -356,6 +364,7 @@ def _internal_class_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     clazz_frame: types.FrameType = None,
 ) -> Type[marshmallow.Schema]:
+    _RECURSION_GUARD.seen_classes[clazz] = clazz.__name__
     try:
         # noinspection PyDataclass
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
@@ -712,9 +721,11 @@ def field_for_schema(
 
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
+
     nested = (
         nested_schema
         or forward_reference
+        or _RECURSION_GUARD.seen_classes.get(typ)
         or _internal_class_schema(typ, base_schema, typ_frame)
     )
 
