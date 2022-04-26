@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.5.6
+
+ - Fix bug introduced in previous release. See https://github.com/lovasoa/marshmallow_dataclass/pull/189
+
 ## v8.5.5
 
 - Fix slowdown introduced in v8.5.4. See https://github.com/lovasoa/marshmallow_dataclass/pull/187
