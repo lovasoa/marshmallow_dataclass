@@ -70,6 +70,7 @@
 <span class="kn">import</span> <span class="nn">collections.abc</span>
 <span class="kn">import</span> <span class="nn">dataclasses</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">EnumMeta</span>
@@ -109,6 +110,10 @@
 
 <span class="c1"># Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.</span>
 <span class="n">MAX_CLASS_SCHEMA_CACHE_SIZE</span> <span class="o">=</span> <span class="mi">1024</span>
+
+<span class="c1"># Recursion guard for class_schema()</span>
+<span class="n">_RECURSION_GUARD</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+<span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <span class="nd">@overload</span>
@@ -380,7 +385,10 @@
             <span class="n">clazz_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
         <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
         <span class="k">del</span> <span class="n">current_frame</span>
-    <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">MAX_CLASS_SCHEMA_CACHE_SIZE</span><span class="p">)</span>
@@ -389,6 +397,7 @@
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">FrameType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
+    <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="p">[</span><span class="n">clazz</span><span class="p">]</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># noinspection PyDataclass</span>
         <span class="n">fields</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
@@ -745,9 +754,11 @@
 
     <span class="c1"># Nested dataclasses</span>
     <span class="n">forward_reference</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;__forward_arg__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
     <span class="n">nested</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">nested_schema</span>
         <span class="ow">or</span> <span class="n">forward_reference</span>
+        <span class="ow">or</span> <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
         <span class="ow">or</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">)</span>
     <span class="p">)</span>
 
