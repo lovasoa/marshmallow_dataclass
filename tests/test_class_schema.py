@@ -400,6 +400,39 @@ class TestClassSchema(unittest.TestCase):
             [validator_a, validator_b, validator_c, validator_d],
         )
 
+    def test_recursive_reference(self):
+        @dataclasses.dataclass
+        class Tree:
+            children: typing.List["Tree"]  # noqa: F821
+
+        schema = class_schema(Tree)()
+
+        self.assertEqual(
+            schema.load({"children": [{"children": []}]}),
+            Tree(children=[Tree(children=[])]),
+        )
+
+    def test_cyclic_reference(self):
+        @dataclasses.dataclass
+        class First:
+            second: typing.Optional["Second"]  # noqa: F821
+
+        @dataclasses.dataclass
+        class Second:
+            first: typing.Optional["First"]
+
+        first_schema = class_schema(First)()
+        second_schema = class_schema(Second)()
+
+        self.assertEqual(
+            first_schema.load({"second": {"first": None}}),
+            First(second=Second(first=None)),
+        )
+        self.assertEqual(
+            second_schema.dump(Second(first=First(second=Second(first=None)))),
+            {"first": {"second": {"first": None}}},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
