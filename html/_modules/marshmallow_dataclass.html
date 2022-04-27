@@ -113,7 +113,6 @@
 
 <span class="c1"># Recursion guard for class_schema()</span>
 <span class="n">_RECURSION_GUARD</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
-<span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <span class="nd">@overload</span>
@@ -385,6 +384,7 @@
             <span class="n">clazz_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
         <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
         <span class="k">del</span> <span class="n">current_frame</span>
+    <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
