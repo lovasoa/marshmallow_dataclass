@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.5.7
+
+ - Fix https://github.com/lovasoa/marshmallow_dataclass/issues/190
+
 ## v8.5.6
 
  - Fix bug introduced in previous release. See https://github.com/lovasoa/marshmallow_dataclass/pull/189
