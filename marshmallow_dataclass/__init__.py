@@ -80,7 +80,6 @@ MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 # Recursion guard for class_schema()
 _RECURSION_GUARD = threading.local()
-_RECURSION_GUARD.seen_classes = {}
 
 
 @overload
@@ -352,6 +351,7 @@ def class_schema(
             clazz_frame = current_frame.f_back
         # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
         del current_frame
+    _RECURSION_GUARD.seen_classes = {}
     try:
         return _internal_class_schema(clazz, base_schema, clazz_frame)
     finally:
