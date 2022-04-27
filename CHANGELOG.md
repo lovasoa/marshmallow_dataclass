@@ -1,6 +1,6 @@
 # marshmallow\_dataclass change log
 
-## v8.5.7
+## v8.5.7, v8.5.8
 
  - Fix https://github.com/lovasoa/marshmallow_dataclass/issues/190
 
