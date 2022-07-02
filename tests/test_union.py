@@ -1,3 +1,4 @@
+import sys
 from dataclasses import field
 import unittest
 from typing import List, Optional, Union, Dict
@@ -180,3 +181,18 @@ class TestClassSchema(unittest.TestCase):
             )
         with self.assertRaises(marshmallow.exceptions.ValidationError):
             schema.load({"value": None})
+
+    @unittest.skipIf(
+        sys.version_info < (3, 10),
+        "simplified union syntax is only available in python 3.10 upwards",
+    )
+    def test_simplified_union(self):
+        @dataclass
+        class IntOrStr:
+            value: int | str | None
+
+        schema = IntOrStr.Schema()
+
+        for value in None, 42, "strvar":
+            self.assertEqual(schema.dump(IntOrStr(value=value)), {"value": value})
+            self.assertEqual(schema.load({"value": value}), IntOrStr(value=value))

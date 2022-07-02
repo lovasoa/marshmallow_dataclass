@@ -72,6 +72,11 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 NoneType = type(None)
 _U = TypeVar("_U")
 
+try:
+    UnionType = types.UnionType
+except AttributeError:
+    UnionType = None  # type: ignore
+
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
 
@@ -493,6 +498,10 @@ def _field_for_generic_type(
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
+    # Workaround for new Python 3.10 UnionType (int | str)
+    if UnionType and isinstance(typ, UnionType):
+        typ = cast(type, Union[typ.__args__])
+
     origin = typing_inspect.get_origin(typ)
     if origin:
         arguments = typing_inspect.get_args(typ, True)
