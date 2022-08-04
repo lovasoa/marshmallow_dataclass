@@ -66,7 +66,6 @@ import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
-
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
 
 NoneType = type(None)
@@ -84,29 +83,35 @@ _RECURSION_GUARD = threading.local()
 
 @overload
 def dataclass(
-    _cls: Type[_U],
-    *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
+        _cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args=True,
+        kw_only=False,
+        slots=False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
 ) -> Type[_U]:
     ...
 
 
 @overload
 def dataclass(
-    *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args=True,
+        kw_only=False,
+        slots=False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
@@ -115,15 +120,18 @@ def dataclass(
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
 def dataclass(
-    _cls: Type[_U] = None,
-    *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
+        _cls: Type[_U] = None,
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args=True,
+        kw_only=False,
+        slots=False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -152,7 +160,8 @@ def dataclass(
     """
     # dataclass's typing doesn't expect it to be called as a function, so ignore type check
     dc = dataclasses.dataclass(  # type: ignore
-        _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
+        _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, match_args=match_args,
+        kw_only=kw_only, slots=slots
     )
     if not cls_frame:
         current_frame = inspect.currentframe()
@@ -172,16 +181,16 @@ def add_schema(_cls: Type[_U]) -> Type[_U]:
 
 @overload
 def add_schema(
-    base_schema: Type[marshmallow.Schema] = None,
+        base_schema: Type[marshmallow.Schema] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
 
 @overload
 def add_schema(
-    _cls: Type[_U],
-    base_schema: Type[marshmallow.Schema] = None,
-    cls_frame: types.FrameType = None,
+        _cls: Type[_U],
+        base_schema: Type[marshmallow.Schema] = None,
+        cls_frame: types.FrameType = None,
 ) -> Type[_U]:
     ...
 
@@ -221,9 +230,9 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
 
 
 def class_schema(
-    clazz: type,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    clazz_frame: types.FrameType = None,
+        clazz: type,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        clazz_frame: types.FrameType = None,
 ) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
@@ -360,9 +369,9 @@ def class_schema(
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _internal_class_schema(
-    clazz: type,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    clazz_frame: types.FrameType = None,
+        clazz: type,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        clazz_frame: types.FrameType = None,
 ) -> Type[marshmallow.Schema]:
     _RECURSION_GUARD.seen_classes[clazz] = clazz.__name__
     try:
@@ -419,20 +428,20 @@ def _internal_class_schema(
 
 
 def _field_by_type(
-    typ: Union[type, Any], base_schema: Optional[Type[marshmallow.Schema]]
+        typ: Union[type, Any], base_schema: Optional[Type[marshmallow.Schema]]
 ) -> Optional[Type[marshmallow.fields.Field]]:
     return (
-        base_schema and base_schema.TYPE_MAPPING.get(typ)
-    ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
+                   base_schema and base_schema.TYPE_MAPPING.get(typ)
+           ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
 
 
 def _field_by_supertype(
-    typ: Type,
-    default: Any,
-    newtype_supertype: Type,
-    metadata: dict,
-    base_schema: Optional[Type[marshmallow.Schema]],
-    typ_frame: Optional[types.FrameType],
+        typ: Type,
+        default: Any,
+        newtype_supertype: Type,
+        metadata: dict,
+        base_schema: Optional[Type[marshmallow.Schema]],
+        typ_frame: Optional[types.FrameType],
 ) -> marshmallow.fields.Field:
     """
     Return a new field for fields based on a super field. (Usually spawned from NewType)
@@ -485,10 +494,10 @@ def _generic_type_add_any(typ: type) -> type:
 
 
 def _field_for_generic_type(
-    typ: type,
-    base_schema: Optional[Type[marshmallow.Schema]],
-    typ_frame: Optional[types.FrameType],
-    **metadata: Any,
+        typ: type,
+        base_schema: Optional[Type[marshmallow.Schema]],
+        typ_frame: Optional[types.FrameType],
+        **metadata: Any,
 ) -> Optional[marshmallow.fields.Field]:
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
@@ -592,11 +601,11 @@ def _field_for_generic_type(
 
 
 def field_for_schema(
-    typ: type,
-    default=marshmallow.missing,
-    metadata: Mapping[str, Any] = None,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    typ_frame: Optional[types.FrameType] = None,
+        typ: type,
+        default=marshmallow.missing,
+        metadata: Mapping[str, Any] = None,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        typ_frame: Optional[types.FrameType] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -723,17 +732,17 @@ def field_for_schema(
     forward_reference = getattr(typ, "__forward_arg__", None)
 
     nested = (
-        nested_schema
-        or forward_reference
-        or _RECURSION_GUARD.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema, typ_frame)
+            nested_schema
+            or forward_reference
+            or _RECURSION_GUARD.seen_classes.get(typ)
+            or _internal_class_schema(typ, base_schema, typ_frame)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
 
 
 def _base_schema(
-    clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
+        clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
     """
     Base schema factory that creates a schema for `clazz` derived either from `base_schema`
@@ -771,10 +780,10 @@ def _get_field_default(field: dataclasses.Field):
 
 
 def NewType(
-    name: str,
-    typ: Type[_U],
-    field: Optional[Type[marshmallow.fields.Field]] = None,
-    **kwargs,
+        name: str,
+        typ: Type[_U],
+        field: Optional[Type[marshmallow.fields.Field]] = None,
+        **kwargs,
 ) -> Callable[[_U], _U]:
     """NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
