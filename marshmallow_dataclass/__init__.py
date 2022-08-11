@@ -135,11 +135,34 @@ if sys.version_info >= (3, 10):
         base_schema: Optional[Type[marshmallow.Schema]] = None,
         cls_frame: Optional[types.FrameType] = None,
     ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
-        return _dataclass(
-            _cls=_cls,
-            base_schema=base_schema,
-            cls_frame=cls_frame,
-            # dataclass passthrough
+        """
+        This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
+        It adds a `.Schema` attribute to the class object
+
+        :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+        :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions.
+            If None is passed the caller frame will be treated as cls_frame
+
+        >>> @dataclass
+        ... class Artist:
+        ...    name: str
+        >>> Artist.Schema
+        <class 'marshmallow.schema.Artist'>
+
+        >>> from typing import ClassVar
+        >>> from marshmallow import Schema
+        >>> @dataclass(order=True) # preserve field order
+        ... class Point:
+        ...   x:float
+        ...   y:float
+        ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
+        ...
+        >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
+        Point(x=0.0, y=0.0)
+        """
+        # dataclass's typing doesn't expect it to be called as a function, so ignore type check
+        dc = dataclasses.dataclass(  # type: ignore
+            _cls,
             repr=repr,
             eq=eq,
             order=order,
@@ -149,8 +172,18 @@ if sys.version_info >= (3, 10):
             kw_only=kw_only,
             slots=slots,
         )
+        if not cls_frame:
+            current_frame = inspect.currentframe()
+            if current_frame:
+                cls_frame = current_frame.f_back
+            # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+            del current_frame
+        if _cls is None:
+            return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
+        return add_schema(dc, base_schema, cls_frame=cls_frame)
 
 else:
+
     @overload
     def dataclass(
         _cls: Type[_U],
@@ -192,86 +225,49 @@ else:
         base_schema: Optional[Type[marshmallow.Schema]] = None,
         cls_frame: Optional[types.FrameType] = None,
     ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
-        return _dataclass(
-            _cls=_cls,
-            base_schema=base_schema,
-            cls_frame=cls_frame,
-            # dataclass passthrough
+        """
+        This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
+        It adds a `.Schema` attribute to the class object
+
+        :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
+        :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions.
+            If None is passed the caller frame will be treated as cls_frame
+
+        >>> @dataclass
+        ... class Artist:
+        ...    name: str
+        >>> Artist.Schema
+        <class 'marshmallow.schema.Artist'>
+
+        >>> from typing import ClassVar
+        >>> from marshmallow import Schema
+        >>> @dataclass(order=True) # preserve field order
+        ... class Point:
+        ...   x:float
+        ...   y:float
+        ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
+        ...
+        >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
+        Point(x=0.0, y=0.0)
+        """
+        # dataclass's typing doesn't expect it to be called as a function, so ignore type check
+        dc = dataclasses.dataclass(  # type: ignore
+            _cls,
             repr=repr,
             eq=eq,
             order=order,
             unsafe_hash=unsafe_hash,
             frozen=frozen,
         )
-
-@overload
-def _dataclass(
-    _cls: Type[_U],
-    *,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
-    **kwargs,
-) -> Type[_U]:
-    ...
-
-@overload
-def _dataclass(
-    *,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
-    **kwargs,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
-
-# _cls should never be specified by keyword, so start it with an
-# underscore.  The presence of _cls is used to detect if this
-# decorator is being called with parameters or not.
-def _dataclass(
-    _cls: Type[_U] = None,
-    *,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
-    **kwargs,
-) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
-    """
-    This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
-    It adds a `.Schema` attribute to the class object
-
-    :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
-    :param cls_frame: frame of cls definition, used to obtain locals with other classes definitions.
-        If None is passed the caller frame will be treated as cls_frame
-
-    >>> @dataclass
-    ... class Artist:
-    ...    name: str
-    >>> Artist.Schema
-    <class 'marshmallow.schema.Artist'>
-
-    >>> from typing import ClassVar
-    >>> from marshmallow import Schema
-    >>> @dataclass(order=True) # preserve field order
-    ... class Point:
-    ...   x:float
-    ...   y:float
-    ...   Schema: ClassVar[Type[Schema]] = Schema # For the type checker
-    ...
-    >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
-    Point(x=0.0, y=0.0)
-    """
-    # dataclass's typing doesn't expect it to be called as a function, so ignore type check
-    dc = dataclasses.dataclass(  # type: ignore
-        _cls,
-        **kwargs,
-    )
-    if not cls_frame:
-        current_frame = inspect.currentframe()
-        if current_frame:
-            cls_frame = current_frame.f_back
-        # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-        del current_frame
-    if _cls is None:
-        return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
-    return add_schema(dc, base_schema, cls_frame=cls_frame)
+        if not cls_frame:
+            current_frame = inspect.currentframe()
+            if current_frame:
+                cls_frame = current_frame.f_back
+            # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+            del current_frame
+        if _cls is None:
+            return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
+        return add_schema(dc, base_schema, cls_frame=cls_frame)
 
 
 @overload
