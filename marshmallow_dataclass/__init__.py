@@ -34,6 +34,7 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+import sys
 import collections.abc
 import dataclasses
 import inspect
@@ -81,49 +82,156 @@ MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 # Recursion guard for class_schema()
 _RECURSION_GUARD = threading.local()
 
+if sys.version_info >= (3, 10):
+    # match_args, kw_only, slots
+
+    @overload
+    def dataclass(
+        _cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Type[_U]:
+        ...
+
+    @overload
+    def dataclass(
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Callable[[Type[_U]], Type[_U]]:
+        ...
+
+    # _cls should never be specified by keyword, so start it with an
+    # underscore.  The presence of _cls is used to detect if this
+    # decorator is being called with parameters or not.
+    def dataclass(
+        _cls: Type[_U] = None,
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
+        return _dataclass(
+            _cls=_cls,
+            base_schema=base_schema,
+            cls_frame=cls_frame,
+            # dataclass passthrough
+            repr=repr,
+            eq=eq,
+            order=order,
+            unsafe_hash=unsafe_hash,
+            frozen=frozen,
+            match_args=match_args,
+            kw_only=kw_only,
+            slots=slots,
+        )
+
+else:
+    @overload
+    def dataclass(
+        _cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Type[_U]:
+        ...
+
+    @overload
+    def dataclass(
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Callable[[Type[_U]], Type[_U]]:
+        ...
+
+    # _cls should never be specified by keyword, so start it with an
+    # underscore.  The presence of _cls is used to detect if this
+    # decorator is being called with parameters or not.
+    def dataclass(
+        _cls: Type[_U] = None,
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
+        return _dataclass(
+            _cls=_cls,
+            base_schema=base_schema,
+            cls_frame=cls_frame,
+            # dataclass passthrough
+            repr=repr,
+            eq=eq,
+            order=order,
+            unsafe_hash=unsafe_hash,
+            frozen=frozen,
+        )
 
 @overload
-def dataclass(
+def _dataclass(
     _cls: Type[_U],
     *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
+    **kwargs,
 ) -> Type[_U]:
     ...
 
-
 @overload
-def dataclass(
+def _dataclass(
     *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
+    **kwargs,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
-
 
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
-def dataclass(
+def _dataclass(
     _cls: Type[_U] = None,
     *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
+    **kwargs,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -152,7 +260,8 @@ def dataclass(
     """
     # dataclass's typing doesn't expect it to be called as a function, so ignore type check
     dc = dataclasses.dataclass(  # type: ignore
-        _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
+        _cls,
+        **kwargs,
     )
     if not cls_frame:
         current_frame = inspect.currentframe()
