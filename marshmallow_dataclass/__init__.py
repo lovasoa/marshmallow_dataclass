@@ -806,7 +806,8 @@ def NewType(
     marshmallow.exceptions.ValidationError: {'mail': ['Not a valid email address.']}
     """
 
-    new_type = _NewType(name, typ)
+    # noinspection PyTypeHints
+    new_type = _NewType(name, typ)  # type: ignore
     # noinspection PyTypeHints
     new_type._marshmallow_field = field  # type: ignore
     # noinspection PyTypeHints
