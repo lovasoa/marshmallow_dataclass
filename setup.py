@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.5.9"
+VERSION = "8.5.8"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -33,11 +33,11 @@ EXTRAS_REQUIRE = {
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
-        EXTRAS_REQUIRE["enum"]
-        + EXTRAS_REQUIRE["union"]
-        + EXTRAS_REQUIRE["lint"]
-        + EXTRAS_REQUIRE["docs"]
-        + EXTRAS_REQUIRE["tests"]
+    EXTRAS_REQUIRE["enum"]
+    + EXTRAS_REQUIRE["union"]
+    + EXTRAS_REQUIRE["lint"]
+    + EXTRAS_REQUIRE["docs"]
+    + EXTRAS_REQUIRE["tests"]
 )
 
 setup(
