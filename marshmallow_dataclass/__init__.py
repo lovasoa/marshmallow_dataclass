@@ -48,6 +48,7 @@ from typing import (
     Dict,
     List,
     Mapping,
+    NewType as typing_NewType,
     Optional,
     Set,
     Tuple,
@@ -805,12 +806,8 @@ def NewType(
     marshmallow.exceptions.ValidationError: {'mail': ['Not a valid email address.']}
     """
 
-    def new_type(x: _U):
-        return x
-
-    new_type.__name__ = name
     # noinspection PyTypeHints
-    new_type.__supertype__ = typ  # type: ignore
+    new_type = typing_NewType(name, typ)  # type: ignore
     # noinspection PyTypeHints
     new_type._marshmallow_field = field  # type: ignore
     # noinspection PyTypeHints

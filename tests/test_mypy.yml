@@ -5,6 +5,8 @@
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+  env:
+    - PYTHONPATH=.
   main: |
     from dataclasses import dataclass
     import marshmallow as ma
@@ -28,6 +30,8 @@
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+  env:
+    - PYTHONPATH=.
   main: |
     from marshmallow_dataclass import dataclass
 
@@ -41,6 +45,8 @@
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+  env:
+    - PYTHONPATH=.
   main: |
     from dataclasses import dataclass
     import marshmallow
