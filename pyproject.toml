@@ -4,5 +4,5 @@ target-version = ['py36', 'py37', 'py38']
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    "error",
+    "error:::marshmallow_dataclass|test",
 ]
