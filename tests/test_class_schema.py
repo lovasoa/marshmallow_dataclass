@@ -227,7 +227,7 @@ class TestClassSchema(unittest.TestCase):
                 schema.load({"data": data})
 
     def test_final_infers_type_from_default(self):
-        # @dataclasses.dataclass
+        # @dataclasses.dataclass(frozen=True)
         class A:
             data: Final = "a"
 
@@ -238,7 +238,8 @@ class TestClassSchema(unittest.TestCase):
         # NOTE: This workaround is needed to avoid a Mypy crash.
         # See: https://github.com/python/mypy/issues/10090#issuecomment-865971891
         if not TYPE_CHECKING:
-            A = dataclasses.dataclass(A)
+            frozen_dataclass = dataclasses.dataclass(frozen=True)
+            A = frozen_dataclass(A)
             B = dataclasses.dataclass(B)
 
         with self.assertWarns(Warning):
