@@ -304,6 +304,36 @@ class Point:
         ordered = True
 ```
 
+### Partial Loading
+
+The `.load` method of a `marshmallow_dataclass` schema can not be used to load partial data.
+This is because `load` always wraps the deserialized data in the target dataclass type,
+and it is not possible to partially construct a dataclass.
+
+However `marshmallow_dataclass` schema now provide a `load_to_dict` method that can be
+used to deserialize data with `partial=True`.  `Load_to_dict` works just like
+the plain `marshmallow.Schema.load` method. It returns the deserialized data as a `dict`
+(or a list of `dict`s if `many=True`) — no construction of dataclasses is done.
+
+```pycon
+from marshmallow_dataclass import dataclass
+
+
+@dataclass
+class Person:
+    first_name: str
+    last_name: str
+
+
+>>> Person.Schema().load_to_dict({"first_name": "Joe"}, partial=True)
+# => {"first_name": "Joe"}
+
+>>> Person.Schema().load({"first_name": "Joe"}, partial=True)
+# => Traceback (most recent call last):
+#        ...
+#    TypeError: Person.__init__() missing 1 required positional argument: 'last_name'
+```
+
 ## Documentation
 
 The project documentation is hosted on GitHub Pages: https://lovasoa.github.io/marshmallow_dataclass/
