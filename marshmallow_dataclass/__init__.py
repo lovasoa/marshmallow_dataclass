@@ -777,7 +777,9 @@ def _base_schema(
             else:
                 return clazz(**all_loaded)
 
-        def load_to_mapping(self, data: Mapping, **kwargs) -> Mapping[str, Any]:
+        def load_to_dict(
+            self, data: Mapping, **kwargs
+        ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
             with _disable_magic.temporarily(True):
                 return self.load(data, **kwargs)
 
