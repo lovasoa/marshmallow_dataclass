@@ -284,10 +284,36 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
     return decorator(_cls, stacklevel=stacklevel + 1)
 
 
+@overload
+def class_schema(
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    *,
+    globalns: Optional[Dict[str, Any]] = None,
+    localns: Optional[Dict[str, Any]] = None,
+) -> Type[marshmallow.Schema]:
+    ...
+
+
+@overload
 def class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     clazz_frame: Optional[types.FrameType] = None,
+    *,
+    globalns: Optional[Dict[str, Any]] = None,
+) -> Type[marshmallow.Schema]:
+    ...
+
+
+def class_schema(
+    clazz: type,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    # FIXME: delete clazz_frame from API?
+    clazz_frame: Optional[types.FrameType] = None,
+    *,
+    globalns: Optional[Dict[str, Any]] = None,
+    localns: Optional[Dict[str, Any]] = None,
 ) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
@@ -427,24 +453,26 @@ def class_schema(
     """
     if not dataclasses.is_dataclass(clazz):
         clazz = dataclasses.dataclass(clazz)
-    if not clazz_frame:
-        clazz_frame = _maybe_get_callers_frame(clazz)
-
-    with _SchemaContext(clazz_frame):
+    if localns is None:
+        if clazz_frame is None:
+            clazz_frame = _maybe_get_callers_frame(clazz)
+        if clazz_frame is not None:
+            localns = clazz_frame.f_locals
+    with _SchemaContext(globalns, localns):
         return _internal_class_schema(clazz, base_schema)
 
 
 class _SchemaContext:
     """Global context for an invocation of class_schema."""
 
-    def __init__(self, frame: Optional[types.FrameType]):
+    def __init__(
+        self,
+        globalns: Optional[Dict[str, Any]] = None,
+        localns: Optional[Dict[str, Any]] = None,
+    ):
         self.seen_classes: Dict[type, str] = {}
-        self.frame = frame
-
-    def get_type_hints(self, cls: Type) -> Dict[str, Any]:
-        frame = self.frame
-        localns = frame.f_locals if frame is not None else None
-        return get_type_hints(cls, localns=localns)
+        self.globalns = globalns
+        self.localns = localns
 
     def __enter__(self) -> "_SchemaContext":
         _schema_ctx_stack.push(self)
@@ -518,7 +546,9 @@ def _internal_class_schema(
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = schema_ctx.get_type_hints(clazz)
+    type_hints = get_type_hints(
+        clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
+    )
     attributes.update(
         (
             field.name,
@@ -702,6 +732,7 @@ def field_for_schema(
     default: Any = marshmallow.missing,
     metadata: Optional[Mapping[str, Any]] = None,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
+    # FIXME: delete typ_frame from API?
     typ_frame: Optional[types.FrameType] = None,
 ) -> marshmallow.fields.Field:
     """
@@ -724,7 +755,7 @@ def field_for_schema(
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
     """
-    with _SchemaContext(typ_frame):
+    with _SchemaContext(localns=typ_frame.f_locals if typ_frame is not None else None):
         return _field_for_schema(typ, default, metadata, base_schema)
 
 
