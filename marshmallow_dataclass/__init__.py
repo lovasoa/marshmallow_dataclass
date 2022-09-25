@@ -37,6 +37,7 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import sys
 import threading
 import types
 import warnings
@@ -208,9 +209,24 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
+        cls_frame_ = cls_frame
+        if cls_frame is not None:
+            cls_globals = getattr(sys.modules.get(clazz.__module__), "__dict__", None)
+            if cls_frame.f_locals is cls_globals:
+                # Memory optimization:
+                # If the caller's locals are the same as the class
+                # module globals, we don't need the locals. (This is
+                # typically the case for dataclasses defined at the
+                # module top-level.)  (Typing.get_type_hints() knows
+                # how to check the class module globals on its own.)
+                # Not holding a reference to the frame in our our lazy
+                # class attribute which is a significant win,
+                # memory-wise.
+                cls_frame_ = None
+
         # noinspection PyTypeHints
         clazz.Schema = lazy_class_attribute(  # type: ignore
-            partial(class_schema, clazz, base_schema, cls_frame),
+            partial(class_schema, clazz, base_schema, cls_frame_),
             "Schema",
             clazz.__name__,
         )
