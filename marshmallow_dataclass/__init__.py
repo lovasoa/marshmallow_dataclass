@@ -92,6 +92,51 @@ MEMBERS_WHITELIST: Set[str] = {"Meta"}
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 
+def _maybe_get_callers_frame(
+    cls: type, stacklevel: int = 1
+) -> Optional[types.FrameType]:
+    """Return the caller's frame, but only if it will help resolve forward type references.
+
+    We sometimes need the caller's frame to get access to the caller's
+    local namespace in order to be able to resolve forward type
+    references in dataclasses.
+
+    Notes
+    -----
+
+    If the caller's locals are the same as the dataclass' module
+    globals — this is the case for the common case of dataclasses
+    defined at the module top-level — we don't need the locals.
+    (Typing.get_type_hints() knows how to check the class module
+    globals on its own.)
+
+    In that case, we don't need the caller's frame.  Not holding a
+    reference to the frame in our our lazy ``.Scheme`` class attribute
+    is a significant win, memory-wise.
+
+    """
+    try:
+        frame = inspect.currentframe()
+        for _ in range(stacklevel + 1):
+            if frame is None:
+                return None
+            frame = frame.f_back
+
+        if frame is None:
+            return None
+
+        globalns = getattr(sys.modules.get(cls.__module__), "__dict__", None)
+        if frame.f_locals is globalns:
+            # Locals are the globals
+            return None
+
+        return frame
+
+    finally:
+        # Paranoia, per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
+        del frame
+
+
 @overload
 def dataclass(
     _cls: Type[_U],
@@ -135,6 +180,7 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
+    stacklevel: int = 1,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -161,19 +207,18 @@ def dataclass(
     >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
-    # dataclass's typing doesn't expect it to be called as a function, so ignore type check
-    dc = dataclasses.dataclass(  # type: ignore
-        _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
+    dc = dataclasses.dataclass(
+        repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
     )
-    if not cls_frame:
-        current_frame = inspect.currentframe()
-        if current_frame:
-            cls_frame = current_frame.f_back
-        # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-        del current_frame
+
+    def decorator(cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
+        return add_schema(
+            dc(cls), base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
+        )
+
     if _cls is None:
-        return lambda cls: add_schema(dc(cls), base_schema, cls_frame=cls_frame)
-    return add_schema(dc, base_schema, cls_frame=cls_frame)
+        return decorator
+    return decorator(_cls, stacklevel=stacklevel + 1)
 
 
 @overload
@@ -193,11 +238,12 @@ def add_schema(
     _cls: Type[_U],
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
+    stacklevel: int = 1,
 ) -> Type[_U]:
     ...
 
 
-def add_schema(_cls=None, base_schema=None, cls_frame=None):
+def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
@@ -219,31 +265,23 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
     Artist(names=('Martin', 'Ramirez'))
     """
 
-    def decorator(clazz: Type[_U]) -> Type[_U]:
-        cls_frame_ = cls_frame
+    def decorator(clazz: Type[_U], stacklevel: int = stacklevel) -> Type[_U]:
         if cls_frame is not None:
-            cls_globals = getattr(sys.modules.get(clazz.__module__), "__dict__", None)
-            if cls_frame.f_locals is cls_globals:
-                # Memory optimization:
-                # If the caller's locals are the same as the class
-                # module globals, we don't need the locals. (This is
-                # typically the case for dataclasses defined at the
-                # module top-level.)  (Typing.get_type_hints() knows
-                # how to check the class module globals on its own.)
-                # Not holding a reference to the frame in our our lazy
-                # class attribute which is a significant win,
-                # memory-wise.
-                cls_frame_ = None
+            frame = cls_frame
+        else:
+            frame = _maybe_get_callers_frame(clazz, stacklevel=stacklevel)
 
         # noinspection PyTypeHints
         clazz.Schema = lazy_class_attribute(  # type: ignore
-            partial(class_schema, clazz, base_schema, cls_frame_),
+            partial(class_schema, clazz, base_schema, frame),
             "Schema",
             clazz.__name__,
         )
         return clazz
 
-    return decorator(_cls) if _cls else decorator
+    if _cls is None:
+        return decorator
+    return decorator(_cls, stacklevel=stacklevel + 1)
 
 
 def class_schema(
@@ -390,11 +428,7 @@ def class_schema(
     if not dataclasses.is_dataclass(clazz):
         clazz = dataclasses.dataclass(clazz)
     if not clazz_frame:
-        current_frame = inspect.currentframe()
-        if current_frame:
-            clazz_frame = current_frame.f_back
-        # Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack
-        del current_frame
+        clazz_frame = _maybe_get_callers_frame(clazz)
 
     with _SchemaContext(clazz_frame):
         return _internal_class_schema(clazz, base_schema)
