@@ -1,5 +1,16 @@
 # marshmallow\_dataclass change log
 
+## v8.5.9 (2022-10-04)
+
+ - Fix [#206][]: NewType breakage with `typing-inspect>=0.8.0`
+   ([#207][], [#211][])
+ - Fix tests for python 3.11 ([#212][])
+ 
+[#206]: https://github.com/lovasoa/marshmallow_dataclass/issues/206
+[#207]: https://github.com/lovasoa/marshmallow_dataclass/pull/207
+[#211]: https://github.com/lovasoa/marshmallow_dataclass/pull/211
+[#212]: https://github.com/lovasoa/marshmallow_dataclass/pull/212
+
 ## v8.5.7, v8.5.8
 
  - Fix https://github.com/lovasoa/marshmallow_dataclass/issues/190
