@@ -384,10 +384,10 @@ def _internal_class_schema(
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema, clazz_frame)
-        except Exception:
+        except Exception as exc:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
-            )
+            ) from exc
 
     # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
     attributes = {
