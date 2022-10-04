@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>marshmallow_dataclass.class_schema &#8212; marshmallow_dataclass 0.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
@@ -12,7 +12,9 @@
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="marshmallow_dataclass.dataclass" href="marshmallow_dataclass.dataclass.html" />
@@ -33,20 +35,20 @@
           <div class="body" role="main">
             
   <section id="marshmallow-dataclass-class-schema">
-<h1>marshmallow_dataclass.class_schema<a class="headerlink" href="#marshmallow-dataclass-class-schema" title="Permalink to this headline">¶</a></h1>
+<h1>marshmallow_dataclass.class_schema<a class="headerlink" href="#marshmallow-dataclass-class-schema" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="marshmallow_dataclass.class_schema">
-<span class="sig-prename descclassname"><span class="pre">marshmallow_dataclass.</span></span><span class="sig-name descname"><span class="pre">class_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clazz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">marshmallow.schema.Schema</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clazz_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">frame</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">marshmallow.schema.Schema</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">marshmallow_dataclass.</span></span><span class="sig-name descname"><span class="pre">class_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clazz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clazz_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">frame</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clazz</strong> – A python class (may be a dataclass)</p></li>
 <li><p><strong>base_schema</strong> – marshmallow schema used as a base class when deriving dataclass schema</p></li>
 <li><p><strong>clazz_frame</strong> – frame of cls definition</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A marshmallow Schema corresponding to the dataclass</p>
 </dd>
 </dl>
@@ -193,7 +195,10 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <li class="toctree-l2 current"><a class="reference internal" href="../marshmallow_dataclass.html">marshmallow_dataclass package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="../marshmallow_dataclass.html#table-of-contents">Table of contents</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="marshmallow_dataclass.dataclass.html">marshmallow_dataclass.dataclass</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">marshmallow_dataclass.class_schema</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">marshmallow_dataclass.class_schema</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#marshmallow_dataclass.class_schema"><code class="docutils literal notranslate"><span class="pre">class_schema()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../marshmallow_dataclass.html#module-marshmallow_dataclass">Module</a></li>
@@ -224,7 +229,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -241,7 +246,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
