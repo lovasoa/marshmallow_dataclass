@@ -495,8 +495,8 @@ def _field_for_generic_type(
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
     origin = typing_inspect.get_origin(typ)
+    arguments = typing_inspect.get_args(typ, True)
     if origin:
-        arguments = typing_inspect.get_args(typ, True)
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
@@ -557,38 +557,38 @@ def _field_for_generic_type(
                 ),
                 **metadata,
             )
-        elif typing_inspect.is_union_type(typ):
-            if typing_inspect.is_optional_type(typ):
-                metadata["allow_none"] = metadata.get("allow_none", True)
-                metadata["dump_default"] = metadata.get("dump_default", None)
-                if not metadata.get("required"):
-                    metadata["load_default"] = metadata.get("load_default", None)
-                metadata.setdefault("required", False)
-            subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
-            if len(subtypes) == 1:
-                return field_for_schema(
-                    subtypes[0],
-                    metadata=metadata,
-                    base_schema=base_schema,
-                    typ_frame=typ_frame,
-                )
-            from . import union_field
-
-            return union_field.Union(
-                [
-                    (
-                        subtyp,
-                        field_for_schema(
-                            subtyp,
-                            metadata={"required": True},
-                            base_schema=base_schema,
-                            typ_frame=typ_frame,
-                        ),
-                    )
-                    for subtyp in subtypes
-                ],
-                **metadata,
+    if typing_inspect.is_union_type(typ):
+        if typing_inspect.is_optional_type(typ):
+            metadata["allow_none"] = metadata.get("allow_none", True)
+            metadata["dump_default"] = metadata.get("dump_default", None)
+            if not metadata.get("required"):
+                metadata["load_default"] = metadata.get("load_default", None)
+            metadata.setdefault("required", False)
+        subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
+        if len(subtypes) == 1:
+            return field_for_schema(
+                subtypes[0],
+                metadata=metadata,
+                base_schema=base_schema,
+                typ_frame=typ_frame,
             )
+        from . import union_field
+
+        return union_field.Union(
+            [
+                (
+                    subtyp,
+                    field_for_schema(
+                        subtyp,
+                        metadata={"required": True},
+                        base_schema=base_schema,
+                        typ_frame=typ_frame,
+                    ),
+                )
+                for subtyp in subtypes
+            ],
+            **metadata,
+        )
     return None
 
 
