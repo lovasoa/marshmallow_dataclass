@@ -1,5 +1,22 @@
 # marshmallow\_dataclass change log
 
+## v8.5.10 (2022-11-09)
+
+ - We now test under python version 3.11 (as well as 3.6 through 3.10). ([#220][])
+
+ - Recognize the variable-length, homogeneous tuple types `Tuple[T,
+   ...]` (and `tuple[T, ...]` under python >= 3.8).  These are
+   equivalent to the previously recognized `Sequence[T]`. ([#221][])
+
+ - Recognize PEP 604, `T | U`, union notation (requires python >=
+   3.10). Fixes [#194][]. ([#219][])
+
+[#181]: https://github.com/lovasoa/marshmallow_dataclass/issues/181
+[#194]: https://github.com/lovasoa/marshmallow_dataclass/issues/194
+[#219]: https://github.com/lovasoa/marshmallow_dataclass/pull/219
+[#220]: https://github.com/lovasoa/marshmallow_dataclass/pull/220
+[#221]: https://github.com/lovasoa/marshmallow_dataclass/pull/221
+
 ## v8.5.9 (2022-10-04)
 
  - Fix [#206][]: NewType breakage with `typing-inspect>=0.8.0`
