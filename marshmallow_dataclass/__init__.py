@@ -509,7 +509,11 @@ def _field_for_generic_type(
                 type_mapping.get(List, marshmallow.fields.List),
             )
             return list_type(child_type, **metadata)
-        if origin in (collections.abc.Sequence, Sequence):
+        if origin in (collections.abc.Sequence, Sequence) or (
+            origin in (tuple, Tuple)
+            and len(arguments) == 2
+            and arguments[1] is Ellipsis
+        ):
             from . import collection_field
 
             child_type = field_for_schema(

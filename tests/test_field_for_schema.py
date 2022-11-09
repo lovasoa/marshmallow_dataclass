@@ -1,4 +1,5 @@
 import inspect
+import sys
 import typing
 import unittest
 from enum import Enum
@@ -242,12 +243,32 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_sequence(self):
+        self.maxDiff = 2000
+        self.assertFieldsEqual(
+            field_for_schema(typing.Sequence[int]),
+            collection_field.Sequence(fields.Integer(required=True), required=True),
+        )
+
+    def test_sequence_wo_args(self):
         self.assertFieldsEqual(
             field_for_schema(typing.Sequence),
             collection_field.Sequence(
                 cls_or_instance=fields.Raw(required=True, allow_none=True),
                 required=True,
             ),
+        )
+
+    def test_homogeneous_tuple_from_typing(self):
+        self.assertFieldsEqual(
+            field_for_schema(Tuple[str, ...]),
+            collection_field.Sequence(fields.String(required=True), required=True),
+        )
+
+    @unittest.skipIf(sys.version_info < (3, 9), "PEP 585 unsupported")
+    def test_homogeneous_tuple(self):
+        self.assertFieldsEqual(
+            field_for_schema(tuple[float, ...]),
+            collection_field.Sequence(fields.Float(required=True), required=True),
         )
 
     def test_set_from_typing(self):
