@@ -470,17 +470,17 @@ def _field_by_supertype(
 
 def _generic_type_add_any(typ: type) -> type:
     """if typ is generic type without arguments, replace them by Any."""
-    if typ is list:
+    if typ is list or typ is List:
         typ = List[Any]
-    elif typ is dict:
+    elif typ is dict or typ is Dict:
         typ = Dict[Any, Any]
     elif typ is Mapping:
         typ = Mapping[Any, Any]
     elif typ is Sequence:
         typ = Sequence[Any]
-    elif typ is Set:
+    elif typ is set or typ is Set:
         typ = Set[Any]
-    elif typ is FrozenSet:
+    elif typ is frozenset or typ is FrozenSet:
         typ = FrozenSet[Any]
     return typ
 
@@ -509,7 +509,11 @@ def _field_for_generic_type(
                 type_mapping.get(List, marshmallow.fields.List),
             )
             return list_type(child_type, **metadata)
-        if origin in (collections.abc.Sequence, Sequence):
+        if origin in (collections.abc.Sequence, Sequence) or (
+            origin in (tuple, Tuple)
+            and len(arguments) == 2
+            and arguments[1] is Ellipsis
+        ):
             from . import collection_field
 
             child_type = field_for_schema(
