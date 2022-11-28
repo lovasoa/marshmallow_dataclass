@@ -5,6 +5,9 @@
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+    show_error_codes = true
+  env:
+    - PYTHONPATH=.
   main: |
     from dataclasses import dataclass
     import marshmallow as ma
@@ -22,12 +25,14 @@
     reveal_type(user.id)  # N: Revealed type is "builtins.str"
     reveal_type(user.email)  # N: Revealed type is "builtins.str"
 
-    User(id=42, email="user@email.com")  # E: Argument "id" to "User" has incompatible type "int"; expected "str"
-    User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "List[str]"; expected "str"
+    User(id=42, email="user@email.com")  # E: Argument "id" to "User" has incompatible type "int"; expected "str"  [arg-type]
+    User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "List[str]"; expected "str"  [arg-type]
 - case: marshmallow_dataclass_keyword_arguments
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+  env:
+    - PYTHONPATH=.
   main: |
     from marshmallow_dataclass import dataclass
 
@@ -41,6 +46,9 @@
   mypy_config: |
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
+    show_error_codes = true
+  env:
+    - PYTHONPATH=.
   main: |
     from dataclasses import dataclass
     import marshmallow
@@ -56,4 +64,4 @@
     reveal_type(website.url)  # N: Revealed type is "builtins.str"
     reveal_type(website.email)  # N: Revealed type is "builtins.str"
 
-    Website(url=42, email="user@email.com")  # E: Argument "url" to "Website" has incompatible type "int"; expected "str"
+    Website(url=42, email="user@email.com")  # E: Argument "url" to "Website" has incompatible type "int"; expected "str"  [arg-type]

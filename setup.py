@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.5.3"
+VERSION = "8.5.10"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -12,6 +12,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries",
 ]
 
@@ -29,7 +31,7 @@ EXTRAS_REQUIRE = {
         # `Literal` was introduced in:
         # - Python 3.8 (https://www.python.org/dev/peps/pep-0586)
         # - typing-extensions 3.7.2 (https://github.com/python/typing/pull/591)
-        "typing-extensions~=3.7.2; python_version < '3.8'",
+        "typing-extensions>=3.7.2; python_version < '3.8'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (

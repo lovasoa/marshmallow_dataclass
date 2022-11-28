@@ -1,5 +1,51 @@
 # marshmallow\_dataclass change log
 
+## v8.5.10 (2022-11-09)
+
+ - We now test under python version 3.11 (as well as 3.6 through 3.10). ([#220][])
+
+ - Recognize the variable-length, homogeneous tuple types `Tuple[T,
+   ...]` (and `tuple[T, ...]` under python >= 3.8).  These are
+   equivalent to the previously recognized `Sequence[T]`. ([#221][])
+
+ - Recognize PEP 604, `T | U`, union notation (requires python >=
+   3.10). Fixes [#194][]. ([#219][])
+
+[#181]: https://github.com/lovasoa/marshmallow_dataclass/issues/181
+[#194]: https://github.com/lovasoa/marshmallow_dataclass/issues/194
+[#219]: https://github.com/lovasoa/marshmallow_dataclass/pull/219
+[#220]: https://github.com/lovasoa/marshmallow_dataclass/pull/220
+[#221]: https://github.com/lovasoa/marshmallow_dataclass/pull/221
+
+## v8.5.9 (2022-10-04)
+
+ - Fix [#206][]: NewType breakage with `typing-inspect>=0.8.0`
+   ([#207][], [#211][])
+ - Fix tests for python 3.11 ([#212][])
+ 
+[#206]: https://github.com/lovasoa/marshmallow_dataclass/issues/206
+[#207]: https://github.com/lovasoa/marshmallow_dataclass/pull/207
+[#211]: https://github.com/lovasoa/marshmallow_dataclass/pull/211
+[#212]: https://github.com/lovasoa/marshmallow_dataclass/pull/212
+
+## v8.5.7, v8.5.8
+
+ - Fix https://github.com/lovasoa/marshmallow_dataclass/issues/190
+
+## v8.5.6
+
+ - Fix bug introduced in previous release. See https://github.com/lovasoa/marshmallow_dataclass/pull/189
+
+## v8.5.5
+
+- Fix slowdown introduced in v8.5.4. See https://github.com/lovasoa/marshmallow_dataclass/pull/187
+
+## v8.5.4
+
+- Add support for the Final type. See [#150](https://github.com/lovasoa/marshmallow_dataclass/pull/150) and [#151](https://github.com/lovasoa/marshmallow_dataclass/pull/151)
+- Add support for [forward references](https://peps.python.org/pep-0484/#forward-references) and [ Postponed Evaluation of Annotations](https://peps.python.org/pep-0563/). (See [#13](https://github.com/lovasoa/marshmallow_dataclass/issues/13))
+- update dependencies
+
 ## v8.5.3
 
 - Fix spurious `ValueError` when defining a Union field with explicit default value

@@ -1,4 +1,5 @@
 from dataclasses import field
+import sys
 import unittest
 from typing import List, Optional, Union, Dict
 
@@ -180,3 +181,18 @@ class TestClassSchema(unittest.TestCase):
             )
         with self.assertRaises(marshmallow.exceptions.ValidationError):
             schema.load({"value": None})
+
+    @unittest.skipIf(sys.version_info < (3, 10), "No PEP604 support in py<310")
+    def test_pep604_union(self):
+        @dataclass
+        class PEP604IntOrStr:
+            value: int | str
+
+        schema = PEP604IntOrStr.Schema()
+        data_in = {"value": "hello"}
+        loaded = schema.load(data_in)
+        self.assertEqual(loaded, PEP604IntOrStr(value="hello"))
+        self.assertEqual(schema.dump(loaded), data_in)
+
+        data_in = {"value": 42}
+        self.assertEqual(schema.dump(schema.load(data_in)), data_in)

@@ -34,13 +34,15 @@ class Union(fields.Field):
 
         self.union_fields = new_union_fields
 
-    def _serialize(self, value: Any, attr: str, obj, **kwargs) -> Any:
+    def _serialize(self, value: Any, attr: Optional[str], obj, **kwargs) -> Any:
         errors = []
         if value is None:
             return value
         for typ, field in self.union_fields:
             try:
-                typeguard.check_type(attr, value, typ)
+                typeguard.check_type(
+                    value=value, expected_type=typ, argname=attr or "anonymous"
+                )
                 return field._serialize(value, attr, obj, **kwargs)
             except TypeError as e:
                 errors.append(e)
@@ -53,7 +55,9 @@ class Union(fields.Field):
         for typ, field in self.union_fields:
             try:
                 result = field.deserialize(value, **kwargs)
-                typeguard.check_type(attr or "anonymous", result, typ)
+                typeguard.check_type(
+                    value=result, expected_type=typ, argname=attr or "anonymous"
+                )
                 return result
             except (TypeError, ValidationError) as e:
                 errors.append(e)
