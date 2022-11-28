@@ -44,15 +44,9 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
+from typing import Any, Callable, Dict, FrozenSet, Generic, List, Mapping
+from typing import NewType as typing_NewType
 from typing import (
-    Any,
-    Callable,
-    Dict,
-    FrozenSet,
-    Generic,
-    List,
-    Mapping,
-    NewType as typing_NewType,
     Optional,
     Sequence,
     Set,
@@ -150,8 +144,7 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Type[_U]:
-    ...
+) -> Type[_U]: ...
 
 
 @overload
@@ -164,8 +157,7 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
+) -> Callable[[Type[_U]], Type[_U]]: ...
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -224,15 +216,13 @@ def dataclass(
 
 
 @overload
-def add_schema(_cls: Type[_U]) -> Type[_U]:
-    ...
+def add_schema(_cls: Type[_U]) -> Type[_U]: ...
 
 
 @overload
 def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
+) -> Callable[[Type[_U]], Type[_U]]: ...
 
 
 @overload
@@ -241,8 +231,7 @@ def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
-) -> Type[_U]:
-    ...
+) -> Type[_U]: ...
 
 
 def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
@@ -293,8 +282,7 @@ def class_schema(
     *,
     globalns: Optional[Dict[str, Any]] = None,
     localns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]:
-    ...
+) -> Type[marshmallow.Schema]: ...
 
 
 @overload
@@ -304,8 +292,7 @@ def class_schema(
     clazz_frame: Optional[types.FrameType] = None,
     *,
     globalns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]:
-    ...
+) -> Type[marshmallow.Schema]: ...
 
 
 def class_schema(
@@ -463,7 +450,7 @@ def class_schema(
         if clazz_frame is not None:
             localns = clazz_frame.f_locals
     with _SchemaContext(globalns, localns):
-        return _internal_class_schema(clazz, base_schema)
+        return _internal_class_schema(clazz, base_schema, None)
 
 
 class _SchemaContext:
@@ -509,10 +496,17 @@ class _LocalStack(threading.local, Generic[_U]):
 _schema_ctx_stack = _LocalStack[_SchemaContext]()
 
 
+def _dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
+    if _is_generic_alias_of_dataclass(clazz):
+        clazz = typing_inspect.get_origin(clazz)
+    return dataclasses.fields(clazz)
+
+
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _internal_class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
 ) -> Type[marshmallow.Schema]:
     schema_ctx = _schema_ctx_stack.top
 
@@ -525,7 +519,7 @@ def _internal_class_schema(
     schema_ctx.seen_classes[clazz] = class_name
 
     try:
-        class_name, fields = _dataclass_name_and_fields(clazz)
+        fields = _dataclass_fields(clazz)
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
@@ -540,7 +534,9 @@ def _internal_class_schema(
                 "****** WARNING ******"
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
-            return _internal_class_schema(created_dataclass, base_schema)
+            return _internal_class_schema(
+                created_dataclass, base_schema, generic_params_to_args
+            )
         except Exception as exc:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -556,6 +552,10 @@ def _internal_class_schema(
     # Determine whether we should include non-init fields
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
 
+    if _is_generic_alias_of_dataclass(clazz) and generic_params_to_args is None:
+        generic_params_to_args = _generic_params_to_args(clazz)
+
+    type_hints = _dataclass_type_hints(clazz, schema_ctx, generic_params_to_args)
     # Update the schema members to contain marshmallow fields instead of dataclass fields
 
     if sys.version_info >= (3, 9):
@@ -577,13 +577,14 @@ def _internal_class_schema(
                 _get_field_default(field),
                 field.metadata,
                 base_schema,
+                generic_params_to_args,
             ),
         )
         for field in fields
         if field.init or include_non_init
     )
 
-    schema_class = type(class_name, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -706,7 +707,7 @@ def _field_for_generic_type(
                 ),
             )
             return tuple_type(children, **metadata)
-        elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
+        if origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
                 keys=_field_for_schema(arguments[0], base_schema=base_schema),
@@ -794,6 +795,7 @@ def field_for_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     # FIXME: delete typ_frame from API?
     typ_frame: Optional[types.FrameType] = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -953,7 +955,7 @@ def _field_for_schema(
         nested_schema
         or forward_reference
         or _schema_ctx_stack.top.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema)  # type: ignore[arg-type] # FIXME
+        or _internal_class_schema(typ, base_schema, generic_params_to_args)  # type: ignore [arg-type]
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
@@ -1007,35 +1009,38 @@ def _is_generic_alias_of_dataclass(clazz: type) -> bool:
     )
 
 
-# noinspection PyDataclass
-def _dataclass_name_and_fields(
-    clazz: type,
-) -> Tuple[str, Tuple[dataclasses.Field, ...]]:
-    if not _is_generic_alias_of_dataclass(clazz):
-        return clazz.__name__, dataclasses.fields(clazz)
-
+def _generic_params_to_args(clazz: type) -> Tuple[Tuple[type, type], ...]:
     base_dataclass = typing_inspect.get_origin(clazz)
     base_parameters = typing_inspect.get_parameters(base_dataclass)
     type_arguments = typing_inspect.get_args(clazz)
-    params_to_args = dict(zip(base_parameters, type_arguments))
-    non_generic_fields = [  # swap generic typed fields with types in given type arguments
-        (
-            f.name,
-            params_to_args.get(f.type, f.type),
-            dataclasses.field(
-                default=f.default,
-                # ignoring mypy: https://github.com/python/mypy/issues/6910
-                default_factory=f.default_factory,  # type: ignore
-                init=f.init,
-                metadata=f.metadata,
-            ),
+    return tuple(zip(base_parameters, type_arguments))
+
+
+def _dataclass_type_hints(
+    clazz: type,
+    schema_ctx: _SchemaContext = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
+) -> Mapping[str, type]:
+    if not _is_generic_alias_of_dataclass(clazz):
+        return get_type_hints(
+            clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
         )
-        for f in dataclasses.fields(base_dataclass)
-    ]
-    non_generic_dataclass = dataclasses.make_dataclass(
-        cls_name=f"{base_dataclass.__name__}{type_arguments}", fields=non_generic_fields
+    # dataclass is generic
+    generic_type_hints = get_type_hints(
+        typing_inspect.get_origin(clazz),
+        globalns=schema_ctx.globalns,
+        localns=schema_ctx.localns,
     )
-    return base_dataclass.__name__, dataclasses.fields(non_generic_dataclass)
+    generic_params_map = dict(generic_params_to_args if generic_params_to_args else {})
+
+    def _get_hint(_t: type) -> type:
+        if isinstance(_t, TypeVar):
+            return generic_params_map[_t]
+        return _t
+
+    return {
+        field_name: _get_hint(typ) for field_name, typ in generic_type_hints.items()
+    }
 
 
 def NewType(

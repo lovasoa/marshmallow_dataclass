@@ -14,7 +14,7 @@ from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
 from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema, NewType
+from marshmallow_dataclass import class_schema, NewType, _is_generic_alias_of_dataclass
 
 
 class TestClassSchema(unittest.TestCase):
