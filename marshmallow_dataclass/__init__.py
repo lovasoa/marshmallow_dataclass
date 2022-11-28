@@ -356,9 +356,15 @@ def class_schema(
         del current_frame
     _RECURSION_GUARD.seen_classes = {}
     try:
-        return _internal_class_schema(clazz, base_schema, clazz_frame)
+        return _internal_class_schema(clazz, base_schema, clazz_frame, None)
     finally:
         _RECURSION_GUARD.seen_classes.clear()
+
+
+def _dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
+    if _is_generic_alias_of_dataclass(clazz):
+        clazz = typing_inspect.get_origin(clazz)
+    return dataclasses.fields(clazz)
 
 
 @lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
@@ -366,10 +372,11 @@ def _internal_class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     clazz_frame: types.FrameType = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
 ) -> Type[marshmallow.Schema]:
     _RECURSION_GUARD.seen_classes[clazz] = clazz.__name__
     try:
-        class_name, fields = _dataclass_name_and_fields(clazz)
+        fields = _dataclass_fields(clazz)
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
@@ -384,7 +391,9 @@ def _internal_class_schema(
                 "****** WARNING ******"
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
-            return _internal_class_schema(created_dataclass, base_schema, clazz_frame)
+            return _internal_class_schema(
+                created_dataclass, base_schema, clazz_frame, generic_params_to_args
+            )
         except Exception as exc:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -397,10 +406,11 @@ def _internal_class_schema(
         if hasattr(v, "__marshmallow_hook__") or k in MEMBERS_WHITELIST
     }
 
+    if _is_generic_alias_of_dataclass(clazz) and generic_params_to_args is None:
+        generic_params_to_args = _generic_params_to_args(clazz)
+
+    type_hints = _dataclass_type_hints(clazz, clazz_frame, generic_params_to_args)
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = get_type_hints(
-        clazz, localns=clazz_frame.f_locals if clazz_frame else None
-    )
     attributes.update(
         (
             field.name,
@@ -410,13 +420,14 @@ def _internal_class_schema(
                 field.metadata,
                 base_schema,
                 clazz_frame,
+                generic_params_to_args,
             ),
         )
         for field in fields
         if field.init
     )
 
-    schema_class = type(class_name, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -551,7 +562,7 @@ def _field_for_generic_type(
                 ),
             )
             return tuple_type(children, **metadata)
-        elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
+        if origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
                 keys=field_for_schema(
@@ -603,6 +614,7 @@ def field_for_schema(
     metadata: Mapping[str, Any] = None,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     typ_frame: Optional[types.FrameType] = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -732,7 +744,7 @@ def field_for_schema(
         nested_schema
         or forward_reference
         or _RECURSION_GUARD.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema, typ_frame)
+        or _internal_class_schema(typ, base_schema, typ_frame, generic_params_to_args)
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
@@ -786,35 +798,33 @@ def _is_generic_alias_of_dataclass(clazz: type) -> bool:
     )
 
 
-# noinspection PyDataclass
-def _dataclass_name_and_fields(
-    clazz: type,
-) -> Tuple[str, Tuple[dataclasses.Field, ...]]:
-    if not _is_generic_alias_of_dataclass(clazz):
-        return clazz.__name__, dataclasses.fields(clazz)
-
+def _generic_params_to_args(clazz: type) -> Tuple[Tuple[type, type], ...]:
     base_dataclass = typing_inspect.get_origin(clazz)
     base_parameters = typing_inspect.get_parameters(base_dataclass)
     type_arguments = typing_inspect.get_args(clazz)
-    params_to_args = dict(zip(base_parameters, type_arguments))
-    non_generic_fields = [  # swap generic typed fields with types in given type arguments
-        (
-            f.name,
-            params_to_args.get(f.type, f.type),
-            dataclasses.field(
-                default=f.default,
-                # ignoring mypy: https://github.com/python/mypy/issues/6910
-                default_factory=f.default_factory,  # type: ignore
-                init=f.init,
-                metadata=f.metadata,
-            ),
-        )
-        for f in dataclasses.fields(base_dataclass)
-    ]
-    non_generic_dataclass = dataclasses.make_dataclass(
-        cls_name=f"{base_dataclass.__name__}{type_arguments}", fields=non_generic_fields
-    )
-    return base_dataclass.__name__, dataclasses.fields(non_generic_dataclass)
+    return tuple(zip(base_parameters, type_arguments))
+
+
+def _dataclass_type_hints(
+    clazz: type,
+    clazz_frame: types.FrameType = None,
+    generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
+) -> Mapping[str, type]:
+    localns = clazz_frame.f_locals if clazz_frame else None
+    if not _is_generic_alias_of_dataclass(clazz):
+        return get_type_hints(clazz, localns=localns)
+    # dataclass is generic
+    generic_type_hints = get_type_hints(typing_inspect.get_origin(clazz), localns)
+    generic_params_map = dict(generic_params_to_args if generic_params_to_args else {})
+
+    def _get_hint(_t: type) -> type:
+        if isinstance(_t, TypeVar):
+            return generic_params_map[_t]
+        return _t
+
+    return {
+        field_name: _get_hint(typ) for field_name, typ in generic_type_hints.items()
+    }
 
 
 def NewType(

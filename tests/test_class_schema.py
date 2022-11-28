@@ -14,7 +14,7 @@ from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
 from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema, NewType
+from marshmallow_dataclass import class_schema, NewType, _is_generic_alias_of_dataclass
 
 
 class TestClassSchema(unittest.TestCase):
@@ -409,8 +409,15 @@ class TestClassSchema(unittest.TestCase):
             data: T
 
         @dataclasses.dataclass
-        class Nested:
+        class NestedFixed:
             data: SimpleGeneric[int]
+
+        @dataclasses.dataclass
+        class NestedGeneric(typing.Generic[T]):
+            data: SimpleGeneric[T]
+
+        self.assertTrue(_is_generic_alias_of_dataclass(SimpleGeneric[int]))
+        self.assertFalse(_is_generic_alias_of_dataclass(SimpleGeneric))
 
         schema_s = class_schema(SimpleGeneric[str])()
         self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
@@ -418,15 +425,29 @@ class TestClassSchema(unittest.TestCase):
         with self.assertRaises(ValidationError):
             schema_s.load({"data": 2})
 
-        schema_n = class_schema(Nested)()
+        schema_nested = class_schema(NestedFixed)()
         self.assertEqual(
-            Nested(data=SimpleGeneric(1)), schema_n.load({"data": {"data": 1}})
+            NestedFixed(data=SimpleGeneric(1)),
+            schema_nested.load({"data": {"data": 1}}),
         )
         self.assertEqual(
-            schema_n.dump(Nested(data=SimpleGeneric(data=1))), {"data": {"data": 1}}
+            schema_nested.dump(NestedFixed(data=SimpleGeneric(data=1))),
+            {"data": {"data": 1}},
         )
         with self.assertRaises(ValidationError):
-            schema_n.load({"data": {"data": "str"}})
+            schema_nested.load({"data": {"data": "str"}})
+
+        schema_nested_generic = class_schema(NestedGeneric[int])()
+        self.assertEqual(
+            NestedGeneric(data=SimpleGeneric(1)),
+            schema_nested_generic.load({"data": {"data": 1}}),
+        )
+        self.assertEqual(
+            schema_nested_generic.dump(NestedGeneric(data=SimpleGeneric(data=1))),
+            {"data": {"data": 1}},
+        )
+        with self.assertRaises(ValidationError):
+            schema_nested_generic.load({"data": {"data": "str"}})
 
     def test_recursive_reference(self):
         @dataclasses.dataclass
@@ -460,6 +481,7 @@ class TestClassSchema(unittest.TestCase):
             second_schema.dump(Second(first=First(second=Second(first=None)))),
             {"first": {"second": {"first": None}}},
         )
+
 
 if __name__ == "__main__":
     unittest.main()
