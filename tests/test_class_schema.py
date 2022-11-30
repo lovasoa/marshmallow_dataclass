@@ -7,7 +7,7 @@ from uuid import UUID
 try:
     from typing import Final, Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Final, Literal  # type: ignore[misc]
+    from typing_extensions import Final, Literal  # type: ignore[assignment]
 
 import dataclasses
 from marshmallow import Schema, ValidationError
