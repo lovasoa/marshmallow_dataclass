@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 
 __all__ = ("lazy_class_attribute",)
@@ -13,7 +13,10 @@ class LazyClassAttribute:
     __slots__ = ("func", "name", "called", "forward_value")
 
     def __init__(
-        self, func: Callable[..., Any], name: str = None, forward_value: Any = None
+        self,
+        func: Callable[..., Any],
+        name: Optional[str] = None,
+        forward_value: Any = None,
     ):
         self.func = func
         self.name = name

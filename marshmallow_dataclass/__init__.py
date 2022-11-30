@@ -116,7 +116,7 @@ def dataclass(
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
 def dataclass(
-    _cls: Type[_U] = None,
+    _cls: Optional[Type[_U]] = None,
     *,
     repr: bool = True,
     eq: bool = True,
@@ -173,7 +173,7 @@ def add_schema(_cls: Type[_U]) -> Type[_U]:
 
 @overload
 def add_schema(
-    base_schema: Type[marshmallow.Schema] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
     ...
 
@@ -181,8 +181,8 @@ def add_schema(
 @overload
 def add_schema(
     _cls: Type[_U],
-    base_schema: Type[marshmallow.Schema] = None,
-    cls_frame: types.FrameType = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    cls_frame: Optional[types.FrameType] = None,
 ) -> Type[_U]:
     ...
 
@@ -224,7 +224,7 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
 def class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    clazz_frame: types.FrameType = None,
+    clazz_frame: Optional[types.FrameType] = None,
 ) -> Type[marshmallow.Schema]:
     """
     Convert a class to a marshmallow schema
@@ -363,7 +363,7 @@ def class_schema(
 def _internal_class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-    clazz_frame: types.FrameType = None,
+    clazz_frame: Optional[types.FrameType] = None,
 ) -> Type[marshmallow.Schema]:
     _RECURSION_GUARD.seen_classes[clazz] = clazz.__name__
     try:
@@ -599,7 +599,7 @@ def _field_for_generic_type(
 def field_for_schema(
     typ: type,
     default=marshmallow.missing,
-    metadata: Mapping[str, Any] = None,
+    metadata: Optional[Mapping[str, Any]] = None,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     typ_frame: Optional[types.FrameType] = None,
 ) -> marshmallow.fields.Field:
@@ -748,7 +748,7 @@ def _base_schema(
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
-        def load(self, data: Mapping, *, many: bool = None, **kwargs):
+        def load(self, data: Mapping, *, many: Optional[bool] = None, **kwargs):
             all_loaded = super().load(data, many=many, **kwargs)
             many = self.many if many is None else bool(many)
             if many:
