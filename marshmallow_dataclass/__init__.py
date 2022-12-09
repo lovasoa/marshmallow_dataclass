@@ -841,7 +841,7 @@ def _generic_params_to_args(clazz: type) -> Tuple[Tuple[type, type], ...]:
 
 def _dataclass_type_hints(
     clazz: type,
-    clazz_frame: types.FrameType = None,
+    clazz_frame: Optional[types.FrameType] = None,
     generic_params_to_args: Optional[Tuple[Tuple[type, type], ...]] = None,
 ) -> Mapping[str, type]:
     localns = clazz_frame.f_locals if clazz_frame else None
