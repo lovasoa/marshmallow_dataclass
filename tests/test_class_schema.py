@@ -1,7 +1,7 @@
 import inspect
 import typing
 import unittest
-from typing import Any, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 try:
@@ -10,11 +10,14 @@ except ImportError:
     from typing_extensions import Final, Literal  # type: ignore[assignment]
 
 import dataclasses
+
 from marshmallow import Schema, ValidationError
-from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
+from marshmallow.fields import UUID as UUIDField
+from marshmallow.fields import Field, Integer
+from marshmallow.fields import List as ListField
 from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema, NewType, _is_generic_alias_of_dataclass
+from marshmallow_dataclass import NewType, _is_generic_alias_of_dataclass, class_schema
 
 
 class TestClassSchema(unittest.TestCase):
@@ -465,8 +468,15 @@ class TestClassSchema(unittest.TestCase):
             data: T
 
         @dataclasses.dataclass
-        class Nested:
+        class NestedFixed:
             data: SimpleGeneric[int]
+
+        @dataclasses.dataclass
+        class NestedGeneric(typing.Generic[T]):
+            data: SimpleGeneric[T]
+
+        self.assertTrue(_is_generic_alias_of_dataclass(SimpleGeneric[int]))
+        self.assertFalse(_is_generic_alias_of_dataclass(SimpleGeneric))
 
         schema_s = class_schema(SimpleGeneric[str])()
         self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
@@ -474,15 +484,54 @@ class TestClassSchema(unittest.TestCase):
         with self.assertRaises(ValidationError):
             schema_s.load({"data": 2})
 
-        schema_n = class_schema(Nested)()
+        schema_nested = class_schema(NestedFixed)()
         self.assertEqual(
-            Nested(data=SimpleGeneric(1)), schema_n.load({"data": {"data": 1}})
+            NestedFixed(data=SimpleGeneric(1)),
+            schema_nested.load({"data": {"data": 1}}),
         )
         self.assertEqual(
-            schema_n.dump(Nested(data=SimpleGeneric(data=1))), {"data": {"data": 1}}
+            schema_nested.dump(NestedFixed(data=SimpleGeneric(data=1))),
+            {"data": {"data": 1}},
         )
         with self.assertRaises(ValidationError):
-            schema_n.load({"data": {"data": "str"}})
+            schema_nested.load({"data": {"data": "str"}})
+
+        schema_nested_generic = class_schema(NestedGeneric[int])()
+        self.assertEqual(
+            NestedGeneric(data=SimpleGeneric(1)),
+            schema_nested_generic.load({"data": {"data": 1}}),
+        )
+        self.assertEqual(
+            schema_nested_generic.dump(NestedGeneric(data=SimpleGeneric(data=1))),
+            {"data": {"data": 1}},
+        )
+        with self.assertRaises(ValidationError):
+            schema_nested_generic.load({"data": {"data": "str"}})
+
+    def test_generic_dataclass_repeated_fields(self):
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class AA:
+            a: int
+
+        @dataclasses.dataclass
+        class BB(typing.Generic[T]):
+            b: T
+
+        @dataclasses.dataclass
+        class Nested:
+            x: BB[float]
+            z: BB[float]
+            # if y is the first field in this class, deserialisation will fail.
+            # see https://github.com/lovasoa/marshmallow_dataclass/pull/172#issuecomment-1334024027
+            y: BB[AA]
+
+        schema_nested = class_schema(Nested)()
+        self.assertEqual(
+            Nested(x=BB(b=1), z=BB(b=1), y=BB(b=AA(1))),
+            schema_nested.load({"x": {"b": 1}, "z": {"b": 1}, "y": {"b": {"a": 1}}}),
+        )
 
 
 if __name__ == "__main__":
