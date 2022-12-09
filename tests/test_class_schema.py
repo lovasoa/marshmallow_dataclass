@@ -449,6 +449,31 @@ class TestClassSchema(unittest.TestCase):
         with self.assertRaises(ValidationError):
             schema_nested_generic.load({"data": {"data": "str"}})
 
+    def test_generic_dataclass_repeated_fields(self):
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class AA:
+            a: int
+
+        @dataclasses.dataclass
+        class BB(typing.Generic[T]):
+            b: T
+
+        @dataclasses.dataclass
+        class Nested:
+            x: BB[float]
+            z: BB[float]
+            # if y is the first field in this class, deserialisation will fail.
+            # see https://github.com/lovasoa/marshmallow_dataclass/pull/172#issuecomment-1334024027
+            y: BB[AA]
+
+        schema_nested = class_schema(Nested)()
+        self.assertEqual(
+            Nested(x=BB(b=1), z=BB(b=1), y=BB(b=AA(1))),
+            schema_nested.load({"x": {"b": 1}, "z": {"b": 1}, "y": {"b": {"a": 1}}}),
+        )
+
     def test_recursive_reference(self):
         @dataclasses.dataclass
         class Tree:
