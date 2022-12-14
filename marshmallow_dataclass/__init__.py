@@ -40,7 +40,7 @@ import inspect
 import threading
 import types
 import warnings
-from enum import EnumMeta
+from enum import Enum, EnumMeta
 from functools import lru_cache, partial
 from typing import (
     Any,
@@ -653,7 +653,22 @@ def field_for_schema(
 
     if typing_inspect.is_literal_type(typ):
         arguments = typing_inspect.get_args(typ)
-        return marshmallow.fields.Raw(
+
+        field_type = marshmallow.fields.Raw
+
+        # If all fields are an enum of the same type, interpret our literal as
+        # an enum instead.
+        if (
+            len(arguments) > 0
+            and isinstance(arguments[0], Enum)
+            and all(type(arguments[0]) == type(arg) for arg in arguments)
+        ):
+            import marshmallow_enum
+
+            metadata["enum"] = type(arguments[0])
+            field_type = marshmallow_enum.EnumField
+
+        return field_type(
             validate=(
                 marshmallow.validate.Equal(arguments[0])
                 if len(arguments) == 1

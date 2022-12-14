@@ -20,6 +20,12 @@ from marshmallow_dataclass import (
 )
 
 
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+
+
 class TestFieldForSchema(unittest.TestCase):
     def assertFieldsEqual(self, a: fields.Field, b: fields.Field):
         self.assertEqual(a.__class__, b.__class__, "field class")
@@ -116,11 +122,6 @@ class TestFieldForSchema(unittest.TestCase):
     def test_enum(self):
         import marshmallow_enum
 
-        class Color(Enum):
-            RED: 1
-            GREEN: 2
-            BLUE: 3
-
         self.assertFieldsEqual(
             field_for_schema(Color),
             marshmallow_enum.EnumField(enum=Color, required=True),
@@ -136,6 +137,16 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertFieldsEqual(
             field_for_schema(Literal["a", 1, 1.23, True]),
             fields.Raw(required=True, validate=validate.OneOf(("a", 1, 1.23, True))),
+        )
+
+    def test_literal_enum(self):
+        import marshmallow_enum
+
+        self.assertFieldsEqual(
+            field_for_schema(Literal[Color.BLUE]),
+            marshmallow_enum.EnumField(
+                required=True, enum=Color, validate=validate.Equal(Color.BLUE)
+            ),
         )
 
     def test_final(self):
