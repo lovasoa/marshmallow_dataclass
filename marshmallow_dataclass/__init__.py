@@ -1044,8 +1044,13 @@ def _is_generic_alias_of_dataclass(clazz: type) -> bool:
     Check if given class is a generic alias of a dataclass, if the dataclass is
     defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
     """
-    return typing_inspect.is_generic_type(clazz) and dataclasses.is_dataclass(
-        typing_inspect.get_origin(clazz)
+    is_generic = typing_inspect.is_generic_type(clazz)
+    type_arguments = typing_inspect.get_args(clazz)
+    origin_class = typing_inspect.get_origin(clazz)
+    return (
+        is_generic
+        and len(type_arguments) > 0
+        and dataclasses.is_dataclass(origin_class)
     )
 
 
