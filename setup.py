@@ -58,7 +58,10 @@ setup(
     classifiers=CLASSIFIERS,
     license="MIT",
     python_requires=">=3.6",
-    install_requires=["marshmallow>=3.13.0,<4.0", "typing-inspect>=0.7.1"],
+    install_requires=[
+        "marshmallow>=3.13.0,<4.0",
+        "typing-inspect>=0.8.0",
+    ],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )
