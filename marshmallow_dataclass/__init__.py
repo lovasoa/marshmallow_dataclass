@@ -40,6 +40,7 @@ import inspect
 import threading
 import types
 import warnings
+from contextlib import contextmanager
 from enum import EnumMeta
 from functools import lru_cache, partial
 from typing import (
@@ -737,6 +738,28 @@ def field_for_schema(
     return marshmallow.fields.Nested(nested, **metadata)
 
 
+class _ThreadLocalBool(threading.local):
+    """A thread-local boolean flag."""
+
+    def __init__(self, value: bool = False):
+        self.value = value
+
+    def __bool__(self):
+        return self.value
+
+    @contextmanager
+    def temporarily(self, value: bool):
+        orig = self.value
+        self.value = value
+        try:
+            yield self
+        finally:
+            self.value = orig
+
+
+_disable_magic = _ThreadLocalBool(False)
+
+
 def _base_schema(
     clazz: type, base_schema: Optional[Type[marshmallow.Schema]] = None
 ) -> Type[marshmallow.Schema]:
@@ -750,11 +773,19 @@ def _base_schema(
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         def load(self, data: Mapping, *, many: Optional[bool] = None, **kwargs):
             all_loaded = super().load(data, many=many, **kwargs)
+            if _disable_magic:
+                return all_loaded
             many = self.many if many is None else bool(many)
             if many:
                 return [clazz(**loaded) for loaded in all_loaded]
             else:
                 return clazz(**all_loaded)
+
+        def load_to_dict(
+            self, data: Mapping, **kwargs
+        ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+            with _disable_magic.temporarily(True):
+                return self.load(data, **kwargs)
 
     return BaseSchema
 
