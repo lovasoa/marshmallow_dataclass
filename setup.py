@@ -18,7 +18,6 @@ CLASSIFIERS = [
 ]
 
 EXTRAS_REQUIRE = {
-    "enum": ["marshmallow-enum"],
     "union": ["typeguard"],
     "lint": ["pre-commit~=2.17"],
     ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
@@ -35,8 +34,7 @@ EXTRAS_REQUIRE = {
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["enum"]
-    + EXTRAS_REQUIRE["union"]
+    EXTRAS_REQUIRE["union"]
     + EXTRAS_REQUIRE["lint"]
     + EXTRAS_REQUIRE["docs"]
     + EXTRAS_REQUIRE["tests"]
@@ -59,7 +57,7 @@ setup(
     license="MIT",
     python_requires=">=3.6",
     install_requires=[
-        "marshmallow>=3.13.0,<4.0",
+        "marshmallow>=3.18.0,<4.0",
         "typing-inspect>=0.8.0",
     ],
     extras_require=EXTRAS_REQUIRE,
