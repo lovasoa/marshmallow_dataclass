@@ -40,7 +40,7 @@ import inspect
 import threading
 import types
 import warnings
-from enum import EnumMeta
+from enum import Enum
 from functools import lru_cache, partial
 from typing import (
     Any,
@@ -715,10 +715,14 @@ def field_for_schema(
         )
 
     # enumerations
-    if isinstance(typ, EnumMeta):
-        import marshmallow_enum
+    if issubclass(typ, Enum):
+        try:
+            return marshmallow.fields.Enum(typ, **metadata)
+        except AttributeError:
+            # Remove this once support for python 3.6 is dropped.
+            import marshmallow_enum
 
-        return marshmallow_enum.EnumField(typ, **metadata)
+            return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested marshmallow dataclass
     # it would be just a class name instead of actual schema util the schema is not ready yet
@@ -731,7 +735,7 @@ def field_for_schema(
         nested_schema
         or forward_reference
         or _RECURSION_GUARD.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema, typ_frame)
+        or _internal_class_schema(typ, base_schema, typ_frame)  # type: ignore [arg-type]
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
