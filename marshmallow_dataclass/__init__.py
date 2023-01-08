@@ -716,7 +716,13 @@ def field_for_schema(
 
     # enumerations
     if issubclass(typ, Enum):
-        return marshmallow.fields.Enum(typ, **metadata)
+        try:
+            return marshmallow.fields.Enum(typ, **metadata)
+        except AttributeError:
+            # Remove this once support for python 3.6 is dropped.
+            import marshmallow_enum
+
+            return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested marshmallow dataclass
     # it would be just a class name instead of actual schema util the schema is not ready yet
