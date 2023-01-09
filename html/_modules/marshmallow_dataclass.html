@@ -72,7 +72,7 @@
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">EnumMeta</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span><span class="p">,</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
@@ -148,7 +148,7 @@
 <span class="c1"># underscore.  The presence of _cls is used to detect if this</span>
 <span class="c1"># decorator is being called with parameters or not.</span>
 <div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span>
-    <span class="n">_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="nb">repr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">eq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -158,7 +158,7 @@
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cls_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]],</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]]]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.</span>
 <span class="sd">    It adds a `.Schema` attribute to the class object</span>
 
@@ -205,7 +205,7 @@
 
 <span class="nd">@overload</span>
 <span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span>
-    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]],</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]]:</span>
     <span class="o">...</span>
 
@@ -213,14 +213,14 @@
 <span class="nd">@overload</span>
 <span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span>
     <span class="n">_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span>
-    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">cls_frame</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">FrameType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cls_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
     <span class="o">...</span>
 
 
 <div class="viewcode-block" id="add_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema">[docs]</a><span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator adds a marshmallow schema as the &#39;Schema&#39; attribute in a dataclass.</span>
 <span class="sd">    It uses :func:`class_schema` internally.</span>
 
@@ -256,9 +256,9 @@
 <div class="viewcode-block" id="class_schema"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema">[docs]</a><span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">FrameType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a class to a marshmallow schema</span>
 
 <span class="sd">    :param clazz: A python class (may be a dataclass)</span>
@@ -395,7 +395,7 @@
 <span class="k">def</span> <span class="nf">_internal_class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">FrameType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
     <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="p">[</span><span class="n">clazz</span><span class="p">]</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="k">try</span><span class="p">:</span>
@@ -418,7 +418,7 @@
             <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">created_dataclass</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span><span class="si">}</span><span class="s2"> is not a dataclass and cannot be turned into one.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;__name__&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">repr</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span><span class="si">}</span><span class="s2"> is not a dataclass and cannot be turned into one.&quot;</span>
             <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
 
     <span class="c1"># Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.</span>
@@ -467,7 +467,7 @@
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]],</span>
     <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a new field for fields based on a super field. (Usually spawned from NewType)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Add the information coming our custom NewType implementation</span>
@@ -501,7 +501,7 @@
 
 
 <span class="k">def</span> <span class="nf">_generic_type_add_any</span><span class="p">(</span><span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;if typ is generic type without arguments, replace them by Any.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;if typ is generic type without arguments, replace them by Any.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">list</span> <span class="ow">or</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">List</span><span class="p">:</span>
         <span class="n">typ</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">typ</span> <span class="ow">is</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="n">typ</span> <span class="ow">is</span> <span class="n">Dict</span><span class="p">:</span>
@@ -523,7 +523,7 @@
     <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">],</span>
     <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    If the type is a generic interface, resolve the arguments and construct the appropriate Field.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">origin</span> <span class="o">=</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
@@ -631,11 +631,11 @@
 <div class="viewcode-block" id="field_for_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.field_for_schema">[docs]</a><span class="k">def</span> <span class="nf">field_for_schema</span><span class="p">(</span>
     <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
-    <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a marshmallow Field corresponding to the given python type.</span>
 <span class="sd">    The metadata of the dataclass field is used as arguments to the marshmallow Field.</span>
 
@@ -747,10 +747,14 @@
         <span class="p">)</span>
 
     <span class="c1"># enumerations</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">EnumMeta</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">marshmallow_enum</span>
+    <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># Remove this once support for python 3.6 is dropped.</span>
+            <span class="kn">import</span> <span class="nn">marshmallow_enum</span>
 
-        <span class="k">return</span> <span class="n">marshmallow_enum</span><span class="o">.</span><span class="n">EnumField</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">marshmallow_enum</span><span class="o">.</span><span class="n">EnumField</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
 
     <span class="c1"># Nested marshmallow dataclass</span>
     <span class="c1"># it would be just a class name instead of actual schema util the schema is not ready yet</span>
@@ -763,7 +767,7 @@
         <span class="n">nested_schema</span>
         <span class="ow">or</span> <span class="n">forward_reference</span>
         <span class="ow">or</span> <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
-        <span class="ow">or</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">)</span>  <span class="c1"># type: ignore [arg-type]</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span></div>
@@ -772,7 +776,7 @@
 <span class="k">def</span> <span class="nf">_base_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base schema factory that creates a schema for `clazz` derived either from `base_schema`</span>
 <span class="sd">    or `BaseSchema`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -780,7 +784,7 @@
     <span class="c1"># Remove `type: ignore` when mypy handles dynamic base classes</span>
     <span class="c1"># https://github.com/python/mypy/issues/2813</span>
     <span class="k">class</span> <span class="nc">BaseSchema</span><span class="p">(</span><span class="n">base_schema</span> <span class="ow">or</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-        <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">many</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">many</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="n">all_loaded</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="n">many</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">many</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">many</span> <span class="k">if</span> <span class="n">many</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">bool</span><span class="p">(</span><span class="n">many</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">many</span><span class="p">:</span>
@@ -792,7 +796,7 @@
 
 
 <span class="k">def</span> <span class="nf">_get_field_default</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a marshmallow default value given a dataclass default value</span>
 
 <span class="sd">    &gt;&gt;&gt; _get_field_default(dataclasses.field())</span>
@@ -813,7 +817,7 @@
     <span class="n">field</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_U</span><span class="p">],</span> <span class="n">_U</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;NewType creates simple unique types</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;NewType creates simple unique types</span>
 <span class="sd">    to which you can attach custom marshmallow attributes.</span>
 <span class="sd">    All the keyword arguments passed to this function will be transmitted</span>
 <span class="sd">    to the marshmallow field constructor.</span>
@@ -912,7 +916,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.0.0b2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

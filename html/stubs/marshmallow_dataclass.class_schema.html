@@ -35,7 +35,7 @@
 <h1>marshmallow_dataclass.class_schema<a class="headerlink" href="#marshmallow-dataclass-class-schema" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="marshmallow_dataclass.class_schema">
-<span class="sig-prename descclassname"><span class="pre">marshmallow_dataclass.</span></span><span class="sig-name descname"><span class="pre">class_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clazz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clazz_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">frame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">marshmallow_dataclass.</span></span><span class="sig-name descname"><span class="pre">class_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clazz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clazz_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">frame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Schema</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/marshmallow_dataclass.html#class_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marshmallow_dataclass.class_schema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a class to a marshmallow schema</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -82,7 +82,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">citySchema</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;Paris&quot;</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
-    <span class="o">...</span>
+<span class="w">    </span><span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;best_building&#39;: [&#39;Missing data for required field.&#39;]}</span>
 </pre></div>
 </div>
@@ -125,7 +125,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Website</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;I am not a good URL !&quot;</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
-    <span class="o">...</span>
+<span class="w">    </span><span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;url&#39;: [&#39;Not a valid URL.&#39;]}</span>
 </pre></div>
 </div>
@@ -137,7 +137,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">NeverValid</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
 <span class="gt">Traceback (most recent call last):</span>
-    <span class="o">...</span>
+<span class="w">    </span><span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;_schema&#39;: [&#39;never valid&#39;]}</span>
 </pre></div>
 </div>
@@ -160,7 +160,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
 <span class="gp">... </span>    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allow_none&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Custom</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
-    <span class="o">...</span>
+<span class="w">    </span><span class="o">...</span>
 <span class="gr">marshmallow.exceptions.ValidationError</span>: <span class="n">{&#39;name&#39;: [&#39;Field may not be null.&#39;]}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">class_schema</span><span class="p">(</span><span class="n">Custom</span><span class="p">)()</span><span class="o">.</span><span class="n">load</span><span class="p">({})</span>
 <span class="go">Custom(name=None)</span>
@@ -243,7 +243,7 @@ be passed in the <cite>metadata</cite> dictionary of a field.</p>
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.0.0b2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
