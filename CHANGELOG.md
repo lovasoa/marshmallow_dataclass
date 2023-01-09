@@ -1,5 +1,14 @@
 # marshmallow\_dataclass change log
 
+## v8.5.11 (2023-01-08)
+
+ - Replace the use of `marshmallow-enum` with the native
+   `marshmallow.field.Enum` (when using a sufficiently recent version
+   of `marshmallow`). ([#227][], [#225][])
+
+[#225]: https://github.com/lovasoa/marshmallow_dataclass/issues/225
+[#227]: https://github.com/lovasoa/marshmallow_dataclass/pull/227
+
 ## v8.5.10 (2022-11-09)
 
  - We now test under python version 3.11 (as well as 3.6 through 3.10). ([#220][])
