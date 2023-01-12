@@ -4,6 +4,12 @@ from typing import List, Tuple, Any, Optional
 import typeguard
 from marshmallow import fields, Schema, ValidationError
 
+try:
+    from typeguard import TypeCheckError  # type: ignore[attr-defined]
+except ImportError:
+    # typeguard < 3
+    TypeCheckError = TypeError
+
 
 class Union(fields.Field):
     """A union field, composed other `Field` classes or instances.
@@ -44,7 +50,7 @@ class Union(fields.Field):
                     value=value, expected_type=typ, argname=attr or "anonymous"
                 )
                 return field._serialize(value, attr, obj, **kwargs)
-            except TypeError as e:
+            except TypeCheckError as e:
                 errors.append(e)
         raise TypeError(
             f"Unable to serialize value with any of the fields in the union: {errors}"
@@ -59,7 +65,7 @@ class Union(fields.Field):
                     value=result, expected_type=typ, argname=attr or "anonymous"
                 )
                 return result
-            except (TypeError, ValidationError) as e:
+            except (TypeCheckError, ValidationError) as e:
                 errors.append(e)
 
         raise ValidationError(errors)

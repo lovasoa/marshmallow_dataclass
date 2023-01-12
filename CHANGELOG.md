@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.5.12 (unreleased)
+
+ - Fix to work with typeguard 3.x
+
 ## v8.5.11 (2023-01-08)
 
  - Replace the use of `marshmallow-enum` with the native
