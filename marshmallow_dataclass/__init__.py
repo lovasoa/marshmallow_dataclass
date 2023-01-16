@@ -544,7 +544,7 @@ def _field_by_supertype(
     typ: Type,
     default: Any,
     newtype_supertype: Type,
-    metadata: dict,
+    metadata: Dict[str, Any],
 ) -> marshmallow.fields.Field:
     """
     Return a new field for fields based on a super field. (Usually spawned from NewType)
@@ -596,7 +596,7 @@ def _generic_type_add_any(typ: type) -> type:
 
 def _field_for_generic_type(
     typ: type,
-    **metadata: Any,
+    metadata: Dict[str, Any],
 ) -> Optional[marshmallow.fields.Field]:
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
@@ -810,7 +810,7 @@ def _field_for_schema(
         return _field_for_schema(subtyp, default, metadata)
 
     # Generic types
-    generic_field = _field_for_generic_type(typ, **metadata)
+    generic_field = _field_for_generic_type(typ, metadata)
     if generic_field:
         return generic_field
 
