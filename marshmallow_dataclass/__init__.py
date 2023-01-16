@@ -439,6 +439,7 @@ class _SchemaContext:
 
     globalns: Optional[Dict[str, Any]] = None
     localns: Optional[Dict[str, Any]] = None
+    base_schema: Optional[Type[marshmallow.Schema]] = None
     seen_classes: Dict[type, str] = dataclasses.field(default_factory=dict)
 
     def __enter__(self) -> "_SchemaContext":
@@ -513,27 +514,27 @@ def _internal_class_schema(
     type_hints = get_type_hints(
         clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
     )
-    attributes.update(
-        (
-            field.name,
-            _field_for_schema(
-                type_hints[field.name],
-                _get_field_default(field),
-                field.metadata,
-                base_schema,
-            ),
+    with dataclasses.replace(schema_ctx, base_schema=base_schema):
+        attributes.update(
+            (
+                field.name,
+                _field_for_schema(
+                    type_hints[field.name],
+                    _get_field_default(field),
+                    field.metadata,
+                ),
+            )
+            for field in fields
+            if field.init
         )
-        for field in fields
-        if field.init
-    )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
-def _field_by_type(
-    typ: Union[type, Any], base_schema: Optional[Type[marshmallow.Schema]]
-) -> Optional[Type[marshmallow.fields.Field]]:
+def _field_by_type(typ: Union[type, Any]) -> Optional[Type[marshmallow.fields.Field]]:
+    # FIXME: remove this function
+    base_schema = _schema_ctx_stack.top.base_schema
     return (
         base_schema and base_schema.TYPE_MAPPING.get(typ)
     ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
@@ -544,7 +545,6 @@ def _field_by_supertype(
     default: Any,
     newtype_supertype: Type,
     metadata: dict,
-    base_schema: Optional[Type[marshmallow.Schema]],
 ) -> marshmallow.fields.Field:
     """
     Return a new field for fields based on a super field. (Usually spawned from NewType)
@@ -574,7 +574,6 @@ def _field_by_supertype(
             newtype_supertype,
             metadata=metadata,
             default=default,
-            base_schema=base_schema,
         )
 
 
@@ -597,7 +596,6 @@ def _generic_type_add_any(typ: type) -> type:
 
 def _field_for_generic_type(
     typ: type,
-    base_schema: Optional[Type[marshmallow.Schema]],
     **metadata: Any,
 ) -> Optional[marshmallow.fields.Field]:
     """
@@ -607,10 +605,11 @@ def _field_for_generic_type(
     arguments = typing_inspect.get_args(typ, True)
     if origin:
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
+        base_schema = _schema_ctx_stack.top.base_schema
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
         if origin in (list, List):
-            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
+            child_type = _field_for_schema(arguments[0])
             list_type = cast(
                 Type[marshmallow.fields.List],
                 type_mapping.get(List, marshmallow.fields.List),
@@ -623,26 +622,24 @@ def _field_for_generic_type(
         ):
             from . import collection_field
 
-            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
+            child_type = _field_for_schema(arguments[0])
             return collection_field.Sequence(cls_or_instance=child_type, **metadata)
         if origin in (set, Set):
             from . import collection_field
 
-            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
+            child_type = _field_for_schema(arguments[0])
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=False, **metadata
             )
         if origin in (frozenset, FrozenSet):
             from . import collection_field
 
-            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
+            child_type = _field_for_schema(arguments[0])
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=True, **metadata
             )
         if origin in (tuple, Tuple):
-            children = tuple(
-                _field_for_schema(arg, base_schema=base_schema) for arg in arguments
-            )
+            children = tuple(_field_for_schema(arg) for arg in arguments)
             tuple_type = cast(
                 Type[marshmallow.fields.Tuple],
                 type_mapping.get(  # type:ignore[call-overload]
@@ -653,8 +650,8 @@ def _field_for_generic_type(
         elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
-                keys=_field_for_schema(arguments[0], base_schema=base_schema),
-                values=_field_for_schema(arguments[1], base_schema=base_schema),
+                keys=_field_for_schema(arguments[0]),
+                values=_field_for_schema(arguments[1]),
                 **metadata,
             )
 
@@ -670,7 +667,6 @@ def _field_for_generic_type(
             return _field_for_schema(
                 subtypes[0],
                 metadata=metadata,
-                base_schema=base_schema,
             )
         from . import union_field
 
@@ -681,7 +677,6 @@ def _field_for_generic_type(
                     _field_for_schema(
                         subtyp,
                         metadata={"required": True},
-                        base_schema=base_schema,
                     ),
                 )
                 for subtyp in subtypes
@@ -719,15 +714,15 @@ def field_for_schema(
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
     """
-    with _SchemaContext(localns=typ_frame.f_locals if typ_frame is not None else None):
-        return _field_for_schema(typ, default, metadata, base_schema)
+    localns = typ_frame.f_locals if typ_frame is not None else None
+    with _SchemaContext(localns=localns, base_schema=base_schema):
+        return _field_for_schema(typ, default, metadata)
 
 
 def _field_for_schema(
     typ: type,
     default: Any = marshmallow.missing,
     metadata: Optional[Mapping[str, Any]] = None,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> marshmallow.fields.Field:
     """
     Get a marshmallow Field corresponding to the given python type.
@@ -739,7 +734,6 @@ def _field_for_schema(
     :param typ: The type for which a field should be generated
     :param default: value to use for (de)serialization when the field is missing
     :param metadata: Additional parameters to pass to the marshmallow field constructor
-    :param base_schema: marshmallow schema used as a base class when deriving dataclass schema
 
     """
 
@@ -762,7 +756,7 @@ def _field_for_schema(
     typ = _generic_type_add_any(typ)
 
     # Base types
-    field = _field_by_type(typ, base_schema)
+    field = _field_by_type(typ)
     if field:
         return field(**metadata)
 
@@ -813,10 +807,10 @@ def _field_for_schema(
                 )
         else:
             subtyp = Any
-        return _field_for_schema(subtyp, default, metadata, base_schema)
+        return _field_for_schema(subtyp, default, metadata)
 
     # Generic types
-    generic_field = _field_for_generic_type(typ, base_schema, **metadata)
+    generic_field = _field_for_generic_type(typ, **metadata)
     if generic_field:
         return generic_field
 
@@ -829,7 +823,6 @@ def _field_for_schema(
             default=default,
             newtype_supertype=newtype_supertype,
             metadata=metadata,
-            base_schema=base_schema,
         )
 
     # enumerations
@@ -849,6 +842,7 @@ def _field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
 
+    base_schema = _schema_ctx_stack.top.base_schema
     nested = (
         nested_schema
         or forward_reference
