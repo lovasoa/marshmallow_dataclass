@@ -552,13 +552,6 @@ def _internal_class_schema(
     return cast(Type[marshmallow.Schema], schema_class)
 
 
-def _field_by_type(typ: Union[type, Any]) -> Optional[Type[marshmallow.fields.Field]]:
-    # FIXME: remove this function
-    schema_ctx = _schema_ctx_stack.top
-    type_mapping = schema_ctx.get_type_mapping(use_mro=True)
-    return type_mapping.get(typ)
-
-
 def _field_by_supertype(
     typ: Type,
     default: Any,
@@ -769,9 +762,12 @@ def _field_for_schema(
     # Generic types specified without type arguments
     typ = _generic_type_add_any(typ)
 
+    schema_ctx = _schema_ctx_stack.top
+
     # Base types
-    field = _field_by_type(typ)
-    if field:
+    type_mapping = schema_ctx.get_type_mapping(use_mro=True)
+    field = type_mapping.get(typ)
+    if field is not None:
         return field(**metadata)
 
     if typ is Any:
@@ -856,12 +852,13 @@ def _field_for_schema(
     # Nested dataclasses
     forward_reference = getattr(typ, "__forward_arg__", None)
 
-    base_schema = _schema_ctx_stack.top.base_schema
     nested = (
         nested_schema
         or forward_reference
-        or _schema_ctx_stack.top.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema)  # type: ignore[arg-type] # FIXME
+        or schema_ctx.seen_classes.get(typ)
+        or _internal_class_schema(
+            typ, schema_ctx.base_schema  # type: ignore[arg-type] # FIXME
+        )
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
