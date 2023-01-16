@@ -433,17 +433,13 @@ def class_schema(
         return _internal_class_schema(clazz, base_schema)
 
 
+@dataclasses.dataclass
 class _SchemaContext:
     """Global context for an invocation of class_schema."""
 
-    def __init__(
-        self,
-        globalns: Optional[Dict[str, Any]] = None,
-        localns: Optional[Dict[str, Any]] = None,
-    ):
-        self.seen_classes: Dict[type, str] = {}
-        self.globalns = globalns
-        self.localns = localns
+    globalns: Optional[Dict[str, Any]] = None
+    localns: Optional[Dict[str, Any]] = None
+    seen_classes: Dict[type, str] = dataclasses.field(default_factory=dict)
 
     def __enter__(self) -> "_SchemaContext":
         _schema_ctx_stack.push(self)
