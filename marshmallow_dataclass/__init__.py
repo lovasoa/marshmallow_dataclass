@@ -49,6 +49,9 @@ from typing import (
     ChainMap,
     Dict,
     Generic,
+    Hashable,
+    Iterable,
+    Iterator,
     List,
     Mapping,
     NewType as typing_NewType,
@@ -58,7 +61,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     get_type_hints,
     overload,
     Sequence,
@@ -70,8 +72,50 @@ import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
-
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
+
+
+if sys.version_info >= (3, 8):
+    from typing import get_args
+    from typing import get_origin
+elif sys.version_info >= (3, 7):
+    from typing_extensions import get_args
+    from typing_extensions import get_origin
+else:
+
+    def get_args(tp):
+        return typing_inspect.get_args(tp, evaluate=True)
+
+    def get_origin(tp):
+        TYPE_MAP = {
+            List: list,
+            Sequence: collections.abc.Sequence,
+            Set: set,
+            FrozenSet: frozenset,
+            Tuple: tuple,
+            Dict: dict,
+            Mapping: collections.abc.Mapping,
+            Generic: Generic,
+        }
+
+        origin = typing_inspect.get_origin(tp)
+        if origin in TYPE_MAP:
+            return TYPE_MAP[origin]
+        elif origin is not tp:
+            return origin
+        return None
+
+
+if sys.version_info >= (3, 7):
+    TypeVar_ = TypeVar
+else:
+    TypeVar_ = type
+
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
+
 
 NoneType = type(None)
 _U = TypeVar("_U")
@@ -204,8 +248,9 @@ def dataclass(
     )
 
     def decorator(cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
+        dc(cls)
         return add_schema(
-            dc(cls), base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
+            cls, base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
         )
 
     if _cls is None:
@@ -299,7 +344,7 @@ def class_schema(
 
 
 def class_schema(
-    clazz: type,
+    clazz: type,  # FIXME: type | _GenericAlias
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     # FIXME: delete clazz_frame from API?
     clazz_frame: Optional[types.FrameType] = None,
@@ -425,15 +470,110 @@ def class_schema(
     >>> class_schema(Custom)().load({})
     Custom(name=None)
     """
-    if not dataclasses.is_dataclass(clazz):
-        clazz = dataclasses.dataclass(clazz)
     if localns is None:
         if clazz_frame is None:
             clazz_frame = _maybe_get_callers_frame(clazz)
         if clazz_frame is not None:
             localns = clazz_frame.f_locals
     with _SchemaContext(globalns, localns):
-        return _internal_class_schema(clazz, base_schema)
+        schema = _internal_class_schema(clazz, base_schema)
+
+    assert not isinstance(schema, _Future)
+    return schema
+
+
+class InvalidStateError(Exception):
+    """Raised when an operation is performed on a future that is not
+    allowed in the current state.
+    """
+
+
+class _Future(Generic[_U]):
+    """The _Future class allows deferred access to a result that is not
+    yet available.
+    """
+
+    _done: bool
+    _result: _U
+
+    def __init__(self) -> None:
+        self._done = False
+
+    def done(self) -> bool:
+        """Return ``True`` if the value is available"""
+        return self._done
+
+    def result(self) -> _U:
+        """Return the deferred value.
+
+        Raises ``InvalidStateError`` if the value has not been set.
+        """
+        if self.done():
+            return self._result
+        raise InvalidStateError("result has not been set")
+
+    def set_result(self, result: _U) -> None:
+        if self.done():
+            raise InvalidStateError("result has already been set")
+        self._result = result
+        self._done = True
+
+
+TypeSpec = typing_NewType("TypeSpec", object)
+GenericAliasOfDataclass = typing_NewType("GenericAliasOfDataclass", object)
+
+
+def _is_generic_alias_of_dataclass(
+    cls: object,
+) -> TypeGuard[GenericAliasOfDataclass]:
+    """
+    Check if given class is a generic alias of a dataclass, if the dataclass is
+    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    """
+    return dataclasses.is_dataclass(get_origin(cls))
+
+
+class _GenericArgs(Mapping[TypeVar_, TypeSpec], collections.abc.Hashable):
+    """A mapping of TypeVars to type specs"""
+
+    def __init__(
+        self,
+        generic_alias: GenericAliasOfDataclass,
+        binding: Optional["_GenericArgs"] = None,
+    ):
+        origin = typing_inspect.get_origin(generic_alias)
+        parameters: Iterable[TypeVar_] = typing_inspect.get_parameters(origin)
+        arguments: Iterable[TypeSpec] = get_args(generic_alias)
+        if binding is not None:
+            arguments = map(binding.resolve, arguments)
+
+        self._args = dict(zip(parameters, arguments))
+        self._hashvalue = hash(tuple(self._args.items()))
+
+    _args: Mapping[TypeVar_, TypeSpec]
+    _hashvalue: int
+
+    def resolve(self, spec: Union[TypeVar_, TypeSpec]) -> TypeSpec:
+        if isinstance(spec, TypeVar):
+            try:
+                return self._args[spec]
+            except KeyError as exc:
+                raise TypeError(
+                    f"generic type variable {spec.__name__} is not bound"
+                ) from exc
+        return spec
+
+    def __getitem__(self, param: TypeVar_) -> TypeSpec:
+        return self._args[param]
+
+    def __iter__(self) -> Iterator[TypeVar_]:
+        return iter(self._args.keys())
+
+    def __len__(self) -> int:
+        return len(self._args)
+
+    def __hash__(self) -> int:
+        return self._hashvalue
 
 
 @dataclasses.dataclass
@@ -443,7 +583,10 @@ class _SchemaContext:
     globalns: Optional[Dict[str, Any]] = None
     localns: Optional[Dict[str, Any]] = None
     base_schema: Optional[Type[marshmallow.Schema]] = None
-    seen_classes: Dict[type, str] = dataclasses.field(default_factory=dict)
+    generic_args: Optional[_GenericArgs] = None
+    seen_classes: Dict[type, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
+        default_factory=dict
+    )
 
     def get_type_mapping(
         self, use_mro: bool = False
@@ -497,13 +640,20 @@ _schema_ctx_stack = _LocalStack[_SchemaContext]()
 def _internal_class_schema(
     clazz: type,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Type[marshmallow.Schema]:
+) -> Union[Type[marshmallow.Schema], _Future[Type[marshmallow.Schema]]]:
     schema_ctx = _schema_ctx_stack.top
-    schema_ctx.seen_classes[clazz] = clazz.__name__
-    try:
-        # noinspection PyDataclass
-        fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
-    except TypeError:  # Not a dataclass
+    if clazz in schema_ctx.seen_classes:
+        return schema_ctx.seen_classes[clazz]
+
+    future: _Future[Type[marshmallow.Schema]] = _Future()
+    schema_ctx.seen_classes[clazz] = future
+
+    generic_args = schema_ctx.generic_args
+
+    if _is_generic_alias_of_dataclass(clazz):
+        generic_args = _GenericArgs(clazz, generic_args)
+        clazz = typing_inspect.get_origin(clazz)
+    elif not dataclasses.is_dataclass(clazz):
         try:
             warnings.warn(
                 "****** WARNING ****** "
@@ -516,12 +666,13 @@ def _internal_class_schema(
                 "https://github.com/lovasoa/marshmallow_dataclass/issues/51 "
                 "****** WARNING ******"
             )
-            created_dataclass: type = dataclasses.dataclass(clazz)
-            return _internal_class_schema(created_dataclass, base_schema)
+            dataclasses.dataclass(clazz)
         except Exception as exc:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
             ) from exc
+
+    fields = dataclasses.fields(clazz)
 
     # Copy all marshmallow hooks and whitelisted members of the dataclass to the schema.
     attributes = {
@@ -534,7 +685,9 @@ def _internal_class_schema(
     type_hints = get_type_hints(
         clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
     )
-    with dataclasses.replace(schema_ctx, base_schema=base_schema):
+    with dataclasses.replace(
+        schema_ctx, base_schema=base_schema, generic_args=generic_args
+    ):
         attributes.update(
             (
                 field.name,
@@ -548,48 +701,14 @@ def _internal_class_schema(
             if field.init
         )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
-    return cast(Type[marshmallow.Schema], schema_class)
+    schema_class: Type[marshmallow.Schema] = type(
+        clazz.__name__, (_base_schema(clazz, base_schema),), attributes
+    )
+    future.set_result(schema_class)
+    return schema_class
 
 
-def _field_by_supertype(
-    typ: Type,
-    default: Any,
-    newtype_supertype: Type,
-    metadata: Dict[str, Any],
-) -> marshmallow.fields.Field:
-    """
-    Return a new field for fields based on a super field. (Usually spawned from NewType)
-    """
-    # Add the information coming our custom NewType implementation
-
-    typ_args = getattr(typ, "_marshmallow_args", {})
-
-    # Handle multiple validators from both `typ` and `metadata`.
-    # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
-    new_validators: List[Callable] = []
-    for meta_dict in (typ_args, metadata):
-        if "validate" in meta_dict:
-            if marshmallow.utils.is_iterable_but_not_string(meta_dict["validate"]):
-                new_validators.extend(meta_dict["validate"])
-            elif callable(meta_dict["validate"]):
-                new_validators.append(meta_dict["validate"])
-    metadata["validate"] = new_validators if new_validators else None
-
-    metadata = {**typ_args, **metadata}
-    metadata.setdefault("metadata", {}).setdefault("description", typ.__name__)
-    field = getattr(typ, "_marshmallow_field", None)
-    if field:
-        return field(**metadata)
-    else:
-        return _field_for_schema(
-            newtype_supertype,
-            metadata=metadata,
-            default=default,
-        )
-
-
-def _generic_type_add_any(typ: type) -> type:
+def _generic_type_add_any(typ: type) -> type:  # FIXME: signature is wrong
     """if typ is generic type without arguments, replace them by Any."""
     if typ is list or typ is List:
         typ = List[Any]
@@ -606,91 +725,231 @@ def _generic_type_add_any(typ: type) -> type:
     return typ
 
 
-def _field_for_generic_type(
-    typ: type,
-    metadata: Dict[str, Any],
-) -> Optional[marshmallow.fields.Field]:
+def _is_builtin_collection_type(typ: object) -> bool:
+    return get_origin(typ) in {
+        list,
+        collections.abc.Sequence,
+        set,
+        frozenset,
+        tuple,
+        dict,
+        collections.abc.Mapping,
+    }
+
+
+def _field_for_builtin_collection_type(
+    typ: object, metadata: Dict[str, Any]
+) -> marshmallow.fields.Field:
     """
-    If the type is a generic interface, resolve the arguments and construct the appropriate Field.
+    Handle builtin container types like list, tuple, set, etc.
     """
-    origin = typing_inspect.get_origin(typ)
-    arguments = typing_inspect.get_args(typ, True)
-    if origin:
-        # Override base_schema.TYPE_MAPPING to change the class used for generic types below
-        schema_ctx = _schema_ctx_stack.top
+    origin = get_origin(typ)
+    assert origin is not None
+    assert not typing_inspect.is_union_type(typ)
 
-        def get_field_type(type_spec: Any, default: Type[_Field]) -> Type[_Field]:
-            type_mapping = schema_ctx.get_type_mapping()
-            return type_mapping.get(type_spec, default)  # type: ignore[return-value]
+    arguments = get_args(typ)
+    # if len(arguments) == 0:
+    #     if issubclass(origin, (collections.abc.Sequence, collections.abc.Set)):
+    #         arguments = (Any,)
+    #     elif issubclass(origin, collections.abc.Mapping):
+    #         arguments = (Any, Any)
+    #     else:
+    #         print(repr(origin))
+    #         raise TypeError(f"{typ!r} requires generic arguments")
 
-        if origin in (list, List):
-            child_type = _field_for_schema(arguments[0])
-            list_type = get_field_type(List, default=marshmallow.fields.List)
-            return list_type(child_type, **metadata)
-        if origin in (collections.abc.Sequence, Sequence) or (
-            origin in (tuple, Tuple)
-            and len(arguments) == 2
-            and arguments[1] is Ellipsis
-        ):
-            from . import collection_field
+    if origin is tuple and len(arguments) == 2 and arguments[1] is Ellipsis:
+        origin = collections.abc.Sequence
+        arguments = (arguments[0],)
 
-            child_type = _field_for_schema(arguments[0])
-            return collection_field.Sequence(cls_or_instance=child_type, **metadata)
-        if origin in (set, Set):
-            from . import collection_field
+    fields = tuple(map(_field_for_schema, arguments))
 
-            child_type = _field_for_schema(arguments[0])
-            return collection_field.Set(
-                cls_or_instance=child_type, frozen=False, **metadata
-            )
-        if origin in (frozenset, FrozenSet):
-            from . import collection_field
+    schema_ctx = _schema_ctx_stack.top
 
-            child_type = _field_for_schema(arguments[0])
-            return collection_field.Set(
-                cls_or_instance=child_type, frozen=True, **metadata
-            )
-        if origin in (tuple, Tuple):
-            children = tuple(_field_for_schema(arg) for arg in arguments)
-            tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
-            return tuple_type(children, **metadata)
-        elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
-            dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
-            return dict_type(
-                keys=_field_for_schema(arguments[0]),
-                values=_field_for_schema(arguments[1]),
-                **metadata,
-            )
+    # Override base_schema.TYPE_MAPPING to change the class used for generic types below
+    def get_field_type(type_spec: Any, default: Type[_Field]) -> Type[_Field]:
+        type_mapping = schema_ctx.get_type_mapping()
+        return type_mapping.get(type_spec, default)  # type: ignore[return-value]
 
-    if typing_inspect.is_union_type(typ):
-        if typing_inspect.is_optional_type(typ):
-            metadata["allow_none"] = metadata.get("allow_none", True)
-            metadata["dump_default"] = metadata.get("dump_default", None)
-            if not metadata.get("required"):
-                metadata["load_default"] = metadata.get("load_default", None)
-            metadata.setdefault("required", False)
-        subtypes = [t for t in arguments if t is not NoneType]  # type: ignore
-        if len(subtypes) == 1:
-            return _field_for_schema(
-                subtypes[0],
-                metadata=metadata,
-            )
-        from . import union_field
+    if origin is list:
+        assert len(fields) == 1
+        list_type = get_field_type(List, default=marshmallow.fields.List)
+        return list_type(fields[0], **metadata)
 
-        return union_field.Union(
-            [
-                (
-                    subtyp,
-                    _field_for_schema(
-                        subtyp,
-                        metadata={"required": True},
-                    ),
-                )
-                for subtyp in subtypes
-            ],
+    if origin is collections.abc.Sequence:
+        from . import collection_field
+
+        assert len(fields) == 1
+        return collection_field.Sequence(fields[0], **metadata)
+
+    if origin in (set, frozenset):
+        from . import collection_field
+
+        assert len(fields) == 1
+        frozen = origin is frozenset
+        return collection_field.Set(fields[0], frozen=frozen, **metadata)
+
+    if origin is tuple:
+        tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
+        return tuple_type(fields, **metadata)
+
+    assert origin in (dict, collections.abc.Mapping)
+    dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
+    return dict_type(keys=fields[0], values=fields[1], **metadata)
+
+
+def _field_for_union_type(
+    typ: type, metadata: Dict[str, Any]
+) -> marshmallow.fields.Field:
+    """
+    Construct the appropriate Field for a union or optional type.
+    """
+    assert typing_inspect.is_union_type(typ)
+    subtypes = [t for t in get_args(typ) if t is not NoneType]
+
+    if typing_inspect.is_optional_type(typ):
+        metadata = {
+            "allow_none": True,
+            "dump_default": None,
             **metadata,
+        }
+        if not metadata.setdefault("required", False):
+            metadata.setdefault("load_default", None)
+
+    if len(subtypes) == 1:
+        return _field_for_schema(subtypes[0], metadata=metadata)
+
+    from . import union_field
+
+    return union_field.Union(
+        [
+            (typ, _field_for_schema(typ, metadata={"required": True}))
+            for typ in subtypes
+        ],
+        **metadata,
+    )
+
+
+def _field_for_literal_type(
+    typ: type, metadata: Dict[str, Any]
+) -> marshmallow.fields.Field:
+    """
+    Construct the appropriate Field for a Literal type.
+    """
+    validate: marshmallow.validate.Validator
+
+    assert typing_inspect.is_literal_type(typ)
+    arguments = typing_inspect.get_args(typ)
+    if len(arguments) == 1:
+        validate = marshmallow.validate.Equal(arguments[0])
+    else:
+        validate = marshmallow.validate.OneOf(arguments)
+    return marshmallow.fields.Raw(validate=validate, **metadata)
+
+
+def _get_subtype_for_final_type(typ: type, default: Any) -> Any:
+    """
+    Construct the appropriate Field for a Final type.
+    """
+    assert typing_inspect.is_final_type(typ)
+    arguments = typing_inspect.get_args(typ)
+    if arguments:
+        return arguments[0]
+    elif default is marshmallow.missing:
+        return Any
+    elif callable(default):
+        warnings.warn(
+            "****** WARNING ****** "
+            "marshmallow_dataclass was called on a dataclass with an "
+            'attribute that is type-annotated with "Final" and uses '
+            "dataclasses.field for specifying a default value using a "
+            "factory. The Marshmallow field type cannot be inferred from the "
+            "factory and will fall back to a raw field which is equivalent to "
+            'the type annotation "Any" and will result in no validation. '
+            "Provide a type to Final[...] to ensure accurate validation. "
+            "****** WARNING ******"
         )
-    return None
+        return Any
+    warnings.warn(
+        "****** WARNING ****** "
+        "marshmallow_dataclass was called on a dataclass with an "
+        'attribute that is type-annotated with "Final" with a default '
+        "value from which the Marshmallow field type is inferred. "
+        "Support for type inference from a default value is limited and "
+        "may result in inaccurate validation. Provide a type to "
+        "Final[...] to ensure accurate validation. "
+        "****** WARNING ******"
+    )
+    return type(default)
+
+
+def _field_for_new_type(
+    typ: Type, default: Any, metadata: Dict[str, Any]
+) -> marshmallow.fields.Field:
+    """
+    Return a new field for fields based on a NewType.
+    """
+    # Add the information coming our custom NewType implementation
+    typ_args = getattr(typ, "_marshmallow_args", {})
+
+    # Handle multiple validators from both `typ` and `metadata`.
+    # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
+    validators: List[Callable[[Any], Any]] = []
+    for args in (typ_args, metadata):
+        validate = args.get("validate")
+        if marshmallow.utils.is_iterable_but_not_string(validate):
+            validators.extend(validate)  # type: ignore[arg-type]
+        elif validate is not None:
+            validators.append(validate)
+
+    metadata = {
+        **typ_args,
+        **metadata,
+        "validate": validators if validators else None,
+    }
+    metadata.setdefault("metadata", {}).setdefault("description", typ.__name__)
+
+    field: Optional[Type[marshmallow.fields.Field]] = getattr(
+        typ, "_marshmallow_field", None
+    )
+    if field is not None:
+        return field(**metadata)
+    return _field_for_schema(
+        typ.__supertype__,  # type: ignore[attr-defined]
+        default=default,
+        metadata=metadata,
+    )
+
+
+def _field_for_enum(typ: type, metadata: Dict[str, Any]) -> marshmallow.fields.Field:
+    """
+    Return a new field for an Enum field.
+    """
+    if sys.version_info >= (3, 7):
+        return marshmallow.fields.Enum(typ, **metadata)
+    else:
+        # Remove this once support for python 3.6 is dropped.
+        import marshmallow_enum
+
+        return marshmallow_enum.EnumField(typ, **metadata)
+
+
+def _field_for_dataclass(
+    typ: Union[Type, object], metadata: Dict[str, Any]
+) -> marshmallow.fields.Field:
+    """
+    Return a new field for a nested dataclass field.
+    """
+    if isinstance(typ, type) and hasattr(typ, "Schema"):
+        # marshmallow_dataclass.dataclass
+        nested = typ.Schema
+    else:
+        assert isinstance(typ, Hashable)
+        schema_ctx = _schema_ctx_stack.top
+        nested = _internal_class_schema(typ, schema_ctx.base_schema)
+        if isinstance(nested, _Future):
+            nested = nested.result
+
+    return marshmallow.fields.Nested(nested, **metadata)
 
 
 def field_for_schema(
@@ -746,6 +1005,11 @@ def _field_for_schema(
 
     metadata = {} if metadata is None else dict(metadata)
 
+    # If the field was already defined by the user
+    predefined_field = metadata.get("marshmallow_field")
+    if predefined_field:
+        return predefined_field
+
     if default is not marshmallow.missing:
         metadata.setdefault("dump_default", default)
         # 'missing' must not be set for required fields.
@@ -754,15 +1018,13 @@ def _field_for_schema(
     else:
         metadata.setdefault("required", not typing_inspect.is_optional_type(typ))
 
-    # If the field was already defined by the user
-    predefined_field = metadata.get("marshmallow_field")
-    if predefined_field:
-        return predefined_field
+    schema_ctx = _schema_ctx_stack.top
+
+    if schema_ctx.generic_args is not None and isinstance(typ, TypeVar):
+        typ = schema_ctx.generic_args.resolve(typ)
 
     # Generic types specified without type arguments
     typ = _generic_type_add_any(typ)
-
-    schema_ctx = _schema_ctx_stack.top
 
     # Base types
     type_mapping = schema_ctx.get_type_mapping(use_mro=True)
@@ -775,93 +1037,30 @@ def _field_for_schema(
         return marshmallow.fields.Raw(**metadata)
 
     if typing_inspect.is_literal_type(typ):
-        arguments = typing_inspect.get_args(typ)
-        return marshmallow.fields.Raw(
-            validate=(
-                marshmallow.validate.Equal(arguments[0])
-                if len(arguments) == 1
-                else marshmallow.validate.OneOf(arguments)
-            ),
-            **metadata,
-        )
+        return _field_for_literal_type(typ, metadata)
 
     if typing_inspect.is_final_type(typ):
-        arguments = typing_inspect.get_args(typ)
-        if arguments:
-            subtyp = arguments[0]
-        elif default is not marshmallow.missing:
-            if callable(default):
-                subtyp = Any
-                warnings.warn(
-                    "****** WARNING ****** "
-                    "marshmallow_dataclass was called on a dataclass with an "
-                    'attribute that is type-annotated with "Final" and uses '
-                    "dataclasses.field for specifying a default value using a "
-                    "factory. The Marshmallow field type cannot be inferred from the "
-                    "factory and will fall back to a raw field which is equivalent to "
-                    'the type annotation "Any" and will result in no validation. '
-                    "Provide a type to Final[...] to ensure accurate validation. "
-                    "****** WARNING ******"
-                )
-            else:
-                subtyp = type(default)
-                warnings.warn(
-                    "****** WARNING ****** "
-                    "marshmallow_dataclass was called on a dataclass with an "
-                    'attribute that is type-annotated with "Final" with a default '
-                    "value from which the Marshmallow field type is inferred. "
-                    "Support for type inference from a default value is limited and "
-                    "may result in inaccurate validation. Provide a type to "
-                    "Final[...] to ensure accurate validation. "
-                    "****** WARNING ******"
-                )
-        else:
-            subtyp = Any
-        return _field_for_schema(subtyp, default, metadata)
-
-    # Generic types
-    generic_field = _field_for_generic_type(typ, metadata)
-    if generic_field:
-        return generic_field
-
-    # typing.NewType returns a function (in python <= 3.9) or a class (python >= 3.10) with a
-    # __supertype__ attribute
-    newtype_supertype = getattr(typ, "__supertype__", None)
-    if typing_inspect.is_new_type(typ) and newtype_supertype is not None:
-        return _field_by_supertype(
-            typ=typ,
+        return _field_for_schema(
+            _get_subtype_for_final_type(typ, default),
             default=default,
-            newtype_supertype=newtype_supertype,
             metadata=metadata,
         )
 
+    if _is_builtin_collection_type(typ):
+        return _field_for_builtin_collection_type(typ, metadata)
+
+    if typing_inspect.is_union_type(typ):
+        return _field_for_union_type(typ, metadata)
+
+    if typing_inspect.is_new_type(typ):
+        return _field_for_new_type(typ, default, metadata)
+
     # enumerations
-    if issubclass(typ, Enum):
-        try:
-            return marshmallow.fields.Enum(typ, **metadata)
-        except AttributeError:
-            # Remove this once support for python 3.6 is dropped.
-            import marshmallow_enum
+    if isinstance(typ, type) and issubclass(typ, Enum):
+        return _field_for_enum(typ, metadata)
 
-            return marshmallow_enum.EnumField(typ, **metadata)
-
-    # Nested marshmallow dataclass
-    # it would be just a class name instead of actual schema util the schema is not ready yet
-    nested_schema = getattr(typ, "Schema", None)
-
-    # Nested dataclasses
-    forward_reference = getattr(typ, "__forward_arg__", None)
-
-    nested = (
-        nested_schema
-        or forward_reference
-        or schema_ctx.seen_classes.get(typ)
-        or _internal_class_schema(
-            typ, schema_ctx.base_schema  # type: ignore[arg-type] # FIXME
-        )
-    )
-
-    return marshmallow.fields.Nested(nested, **metadata)
+    # Assume nested marshmallow dataclass (and hope for the best)
+    return _field_for_dataclass(typ, metadata)
 
 
 def _base_schema(
