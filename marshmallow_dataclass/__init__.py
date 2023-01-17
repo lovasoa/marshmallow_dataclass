@@ -42,7 +42,7 @@ import threading
 import types
 import warnings
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from typing import (
     Any,
     Callable,
@@ -107,8 +107,12 @@ else:
 
 
 if sys.version_info >= (3, 7):
+    from typing import OrderedDict
+
     TypeVar_ = TypeVar
 else:
+    from typing_extensions import OrderedDict
+
     TypeVar_ = type
 
 if sys.version_info >= (3, 10):
@@ -119,8 +123,8 @@ else:
 
 NoneType = type(None)
 _U = TypeVar("_U")
+_V = TypeVar("_V")
 _Field = TypeVar("_Field", bound=marshmallow.fields.Field)
-
 
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
@@ -490,11 +494,57 @@ def class_schema(
             clazz_frame = _maybe_get_callers_frame(clazz)
         if clazz_frame is not None:
             localns = clazz_frame.f_locals
-    with _SchemaContext(globalns, localns):
-        schema = _internal_class_schema(clazz, base_schema)
+
+    if base_schema is None:
+        base_schema = marshmallow.Schema
+
+    with _SchemaContext(globalns, localns, base_schema):
+        schema = _internal_class_schema(clazz)
 
     assert not isinstance(schema, _Future)
     return schema
+
+
+class _LRUDict(OrderedDict[_U, _V]):
+    """Limited-length dict which discards LRU entries."""
+
+    def __init__(self, maxsize: int = 128):
+        self.maxsize = maxsize
+        super().__init__()
+
+    def __setitem__(self, key: _U, value: _V) -> None:
+        super().__setitem__(key, value)
+        super().move_to_end(key)
+
+        while len(self) > self.maxsize:
+            oldkey = next(iter(self))
+            super().__delitem__(oldkey)
+
+    def __getitem__(self, key: _U) -> _V:
+        val = super().__getitem__(key)
+        super().move_to_end(key)
+        return val
+
+    _T = TypeVar("_T")
+
+    @overload
+    def get(self, key: _U) -> Optional[_V]:
+        ...
+
+    @overload
+    def get(self, key: _U, default: _T) -> Union[_V, _T]:
+        ...
+
+    def get(self, key: _U, default: Any = None) -> Any:
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+
+_schema_cache = _LRUDict[Hashable, Type[marshmallow.Schema]](
+    MAX_CLASS_SCHEMA_CACHE_SIZE
+)
 
 
 class InvalidStateError(Exception):
@@ -597,7 +647,7 @@ class _SchemaContext:
 
     globalns: Optional[Dict[str, Any]] = None
     localns: Optional[Dict[str, Any]] = None
-    base_schema: Optional[Type[marshmallow.Schema]] = None
+    base_schema: Type[marshmallow.Schema] = marshmallow.Schema
     generic_args: Optional[_GenericArgs] = None
     seen_classes: Dict[type, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
         default_factory=dict
@@ -612,8 +662,6 @@ class _SchemaContext:
         all bases in base_schema's MRO.
         """
         base_schema = self.base_schema
-        if base_schema is None:
-            base_schema = marshmallow.Schema
         if use_mro:
             return ChainMap(
                 *(getattr(cls, "TYPE_MAPPING", {}) for cls in base_schema.__mro__)
@@ -651,14 +699,18 @@ class _LocalStack(threading.local, Generic[_U]):
 _schema_ctx_stack = _LocalStack[_SchemaContext]()
 
 
-@lru_cache(maxsize=MAX_CLASS_SCHEMA_CACHE_SIZE)
 def _internal_class_schema(
     clazz: type,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> Union[Type[marshmallow.Schema], _Future[Type[marshmallow.Schema]]]:
     schema_ctx = _schema_ctx_stack.top
     if clazz in schema_ctx.seen_classes:
         return schema_ctx.seen_classes[clazz]
+
+    cache_key = clazz, schema_ctx.base_schema
+    try:
+        return _schema_cache[cache_key]
+    except KeyError:
+        pass
 
     future: _Future[Type[marshmallow.Schema]] = _Future()
     schema_ctx.seen_classes[clazz] = future
@@ -700,9 +752,7 @@ def _internal_class_schema(
     type_hints = get_type_hints(
         clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
     )
-    with dataclasses.replace(
-        schema_ctx, base_schema=base_schema, generic_args=generic_args
-    ):
+    with dataclasses.replace(schema_ctx, generic_args=generic_args):
         attributes.update(
             (
                 field.name,
@@ -717,9 +767,10 @@ def _internal_class_schema(
         )
 
     schema_class: Type[marshmallow.Schema] = type(
-        clazz.__name__, (_base_schema(clazz, base_schema),), attributes
+        clazz.__name__, (_base_schema(clazz, schema_ctx.base_schema),), attributes
     )
     future.set_result(schema_class)
+    _schema_cache[cache_key] = schema_class
     return schema_class
 
 
@@ -941,8 +992,7 @@ def _field_for_dataclass(
         nested = typ.Schema
     else:
         assert isinstance(typ, Hashable)
-        schema_ctx = _schema_ctx_stack.top
-        nested = _internal_class_schema(typ, schema_ctx.base_schema)
+        nested = _internal_class_schema(typ)  # type: ignore[arg-type] # FIXME
         if isinstance(nested, _Future):
             nested = nested.result
 
@@ -977,6 +1027,8 @@ def field_for_schema(
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
     """
+    if base_schema is None:
+        base_schema = marshmallow.Schema
     localns = typ_frame.f_locals if typ_frame is not None else None
     with _SchemaContext(localns=localns, base_schema=base_schema):
         return _field_for_schema(typ, default, metadata)
