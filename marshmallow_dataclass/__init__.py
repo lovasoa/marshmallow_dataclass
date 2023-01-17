@@ -723,25 +723,12 @@ def _internal_class_schema(
     return schema_class
 
 
-def _generic_type_add_any(typ: object) -> object:
-    """if typ is generic type without arguments, replace them by Any."""
-    if typ is list or typ is List:
-        typ = List[Any]
-    elif typ is dict or typ is Dict:
-        typ = Dict[Any, Any]
-    elif typ is Mapping:
-        typ = Mapping[Any, Any]
-    elif typ is Sequence:
-        typ = Sequence[Any]
-    elif typ is set or typ is Set:
-        typ = Set[Any]
-    elif typ is frozenset or typ is FrozenSet:
-        typ = FrozenSet[Any]
-    return typ
-
-
 def _is_builtin_collection_type(typ: object) -> bool:
-    return get_origin(typ) in {
+    origin = get_origin(typ)
+    if origin is None:
+        origin = typ
+
+    return origin in {
         list,
         collections.abc.Sequence,
         set,
@@ -759,24 +746,11 @@ def _field_for_builtin_collection_type(
     Handle builtin container types like list, tuple, set, etc.
     """
     origin = get_origin(typ)
-    assert origin is not None
-    assert not typing_inspect.is_union_type(typ)
+    if origin is None:
+        origin = typ
+        assert len(get_args(typ)) == 0
 
-    arguments = get_args(typ)
-    # if len(arguments) == 0:
-    #     if issubclass(origin, (collections.abc.Sequence, collections.abc.Set)):
-    #         arguments = (Any,)
-    #     elif issubclass(origin, collections.abc.Mapping):
-    #         arguments = (Any, Any)
-    #     else:
-    #         print(repr(origin))
-    #         raise TypeError(f"{typ!r} requires generic arguments")
-
-    if origin is tuple and len(arguments) == 2 and arguments[1] is Ellipsis:
-        origin = collections.abc.Sequence
-        arguments = (arguments[0],)
-
-    fields = tuple(map(_field_for_schema, arguments))
+    args = get_args(typ)
 
     schema_ctx = _schema_ctx_stack.top
 
@@ -785,31 +759,38 @@ def _field_for_builtin_collection_type(
         type_mapping = schema_ctx.get_type_mapping()
         return type_mapping.get(type_spec, default)  # type: ignore[return-value]
 
+    if origin is tuple and (len(args) == 0 or (len(args) == 2 and args[1] is Ellipsis)):
+        # Special case: homogeneous tuple — treat as Sequence
+        origin = collections.abc.Sequence
+        args = args[:1]
+
+    if origin is tuple:
+        tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
+        return tuple_type(tuple(map(_field_for_schema, args)), **metadata)
+
+    def get_field(i: int) -> marshmallow.fields.Field:
+        return _field_for_schema(args[i] if args else Any)
+
+    if origin in (dict, collections.abc.Mapping):
+        dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
+        return dict_type(keys=get_field(0), values=get_field(1), **metadata)
+
     if origin is list:
-        assert len(fields) == 1
         list_type = get_field_type(List, default=marshmallow.fields.List)
-        return list_type(fields[0], **metadata)
+        return list_type(get_field(0), **metadata)
 
     if origin is collections.abc.Sequence:
         from . import collection_field
 
-        assert len(fields) == 1
-        return collection_field.Sequence(fields[0], **metadata)
+        return collection_field.Sequence(get_field(0), **metadata)
 
     if origin in (set, frozenset):
         from . import collection_field
 
-        assert len(fields) == 1
         frozen = origin is frozenset
-        return collection_field.Set(fields[0], frozen=frozen, **metadata)
+        return collection_field.Set(get_field(0), frozen=frozen, **metadata)
 
-    if origin is tuple:
-        tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
-        return tuple_type(fields, **metadata)
-
-    assert origin in (dict, collections.abc.Mapping)
-    dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
-    return dict_type(keys=fields[0], values=fields[1], **metadata)
+    raise ValueError(f"{typ} is not a builtin collection type")
 
 
 def _field_for_union_type(
@@ -1039,8 +1020,8 @@ def _field_for_schema(
     if schema_ctx.generic_args is not None and isinstance(typ, TypeVar):
         typ = schema_ctx.generic_args.resolve(typ)
 
-    # Generic types specified without type arguments
-    typ = _generic_type_add_any(typ)
+    if _is_builtin_collection_type(typ):
+        return _field_for_builtin_collection_type(typ, metadata)
 
     # Base types
     type_mapping = schema_ctx.get_type_mapping(use_mro=True)
@@ -1061,9 +1042,6 @@ def _field_for_schema(
             default=default,
             metadata=metadata,
         )
-
-    if _is_builtin_collection_type(typ):
-        return _field_for_builtin_collection_type(typ, metadata)
 
     if typing_inspect.is_union_type(typ):
         return _field_for_union_type(typ, metadata)
