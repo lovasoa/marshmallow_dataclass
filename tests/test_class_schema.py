@@ -406,6 +406,19 @@ class TestClassSchema(unittest.TestCase):
             [validator_a, validator_b, validator_c, validator_d],
         )
 
+    def test_simple_annotated_class(self):
+        class Child:
+            x: int
+
+        @dataclasses.dataclass
+        class Container:
+            child: Child
+
+        schema = class_schema(Container)()
+
+        loaded = schema.load({"child": {"x": "42"}})
+        self.assertEqual(loaded.child.x, 42)
+
     def test_generic_dataclass(self):
         T = typing.TypeVar("T")
 

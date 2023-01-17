@@ -3,12 +3,12 @@ import sys
 import typing
 import unittest
 from enum import Enum
-from typing import Dict, Optional, Union, Any, List, Tuple
+from typing import Dict, Optional, Union, Any, List, Tuple, Iterable
 
-try:
-    from typing import Final, Literal  # type: ignore[attr-defined]
-except ImportError:
-    from typing_extensions import Final, Literal  # type: ignore[assignment]
+if sys.version_info >= (3, 8):
+    from typing import Final, Literal
+else:
+    from typing_extensions import Final, Literal
 
 from marshmallow import fields, Schema, validate
 
@@ -21,14 +21,18 @@ from marshmallow_dataclass import (
 
 
 class TestFieldForSchema(unittest.TestCase):
-    def assertFieldsEqual(self, a: fields.Field, b: fields.Field):
+    def assertFieldsEqual(
+        self, a: fields.Field, b: fields.Field, *, ignore_attrs: Iterable[str] = ()
+    ) -> None:
+        ignored = set(ignore_attrs)
+
         self.assertEqual(a.__class__, b.__class__, "field class")
 
         def attrs(x):
             return {
                 k: f"{v!r} ({v.__mro__!r})" if inspect.isclass(v) else repr(v)
                 for k, v in x.__dict__.items()
-                if not k.startswith("_")
+                if not (k in ignored or k.startswith("_"))
             }
 
         self.assertEqual(attrs(a), attrs(b))
@@ -213,10 +217,12 @@ class TestFieldForSchema(unittest.TestCase):
         class NewDataclass:
             pass
 
+        field = field_for_schema(NewDataclass, metadata=dict(required=False))
+
         self.assertFieldsEqual(
-            field_for_schema(NewDataclass, metadata=dict(required=False)),
-            fields.Nested(NewDataclass.Schema),
+            field, fields.Nested(NewDataclass.Schema), ignore_attrs=["nested"]
         )
+        self.assertIs(type(field.schema), NewDataclass.Schema)
 
     def test_override_container_type_with_type_mapping(self):
         type_mapping = [
