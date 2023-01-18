@@ -120,6 +120,11 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+if sys.version_info >= (3, 8):
+    from typing import Protocol
+else:
+    from typing_extensions import Protocol
+
 
 NoneType = type(None)
 _U = TypeVar("_U")
@@ -275,15 +280,18 @@ def dataclass(
     return decorator(_cls, stacklevel=stacklevel + 1)
 
 
-@overload
-def add_schema(_cls: Type[_U]) -> Type[_U]:
-    ...
+class ClassDecorator(Protocol):
+    def __call__(self, cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
+        ...
 
 
 @overload
 def add_schema(
+    *,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
+    cls_frame: Optional[types.FrameType] = None,
+    stacklevel: int = 1,
+) -> ClassDecorator:
     ...
 
 
@@ -297,7 +305,12 @@ def add_schema(
     ...
 
 
-def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
+def add_schema(
+    _cls: Optional[Type[_U]] = None,
+    base_schema: Optional[Type[marshmallow.Schema]] = None,
+    cls_frame: Optional[types.FrameType] = None,
+    stacklevel: int = 1,
+) -> Union[Type[_U], ClassDecorator]:
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
@@ -319,21 +332,19 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
     Artist(names=('Martin', 'Ramirez'))
     """
 
-    def decorator(clazz: Type[_U], stacklevel: int = stacklevel) -> Type[_U]:
-        _check_decorated_type(clazz)
-
-        if cls_frame is not None:
-            frame = cls_frame
-        else:
-            frame = _maybe_get_callers_frame(clazz, stacklevel=stacklevel)
+    def decorator(cls: Type[_V], stacklevel: int = stacklevel) -> Type[_V]:
+        _check_decorated_type(cls)
+        frame = cls_frame
+        if frame is None:
+            frame = _maybe_get_callers_frame(cls, stacklevel=stacklevel)
 
         # noinspection PyTypeHints
-        clazz.Schema = lazy_class_attribute(  # type: ignore
-            partial(class_schema, clazz, base_schema, frame),
+        cls.Schema = lazy_class_attribute(  # type: ignore[attr-defined]
+            partial(class_schema, cls, base_schema, frame),
             "Schema",
-            clazz.__name__,
+            cls.__name__,
         )
-        return clazz
+        return cls
 
     if _cls is None:
         return decorator
