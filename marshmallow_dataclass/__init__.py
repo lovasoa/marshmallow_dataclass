@@ -46,6 +46,7 @@ from functools import lru_cache, partial
 from typing import (
     Any,
     Callable,
+    ChainMap,
     Dict,
     Generic,
     List,
@@ -74,6 +75,8 @@ __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewTy
 
 NoneType = type(None)
 _U = TypeVar("_U")
+_Field = TypeVar("_Field", bound=marshmallow.fields.Field)
+
 
 # Whitelist of dataclass members that will be copied to generated schema.
 MEMBERS_WHITELIST: Set[str] = {"Meta"}
@@ -442,6 +445,23 @@ class _SchemaContext:
     base_schema: Optional[Type[marshmallow.Schema]] = None
     seen_classes: Dict[type, str] = dataclasses.field(default_factory=dict)
 
+    def get_type_mapping(
+        self, use_mro: bool = False
+    ) -> Mapping[Any, Type[marshmallow.fields.Field]]:
+        """Get base_schema.TYPE_MAPPING.
+
+        If use_mro is true, then merges the TYPE_MAPPINGs from
+        all bases in base_schema's MRO.
+        """
+        base_schema = self.base_schema
+        if base_schema is None:
+            base_schema = marshmallow.Schema
+        if use_mro:
+            return ChainMap(
+                *(getattr(cls, "TYPE_MAPPING", {}) for cls in base_schema.__mro__)
+            )
+        return getattr(base_schema, "TYPE_MAPPING", {})
+
     def __enter__(self) -> "_SchemaContext":
         _schema_ctx_stack.push(self)
         return self
@@ -534,10 +554,9 @@ def _internal_class_schema(
 
 def _field_by_type(typ: Union[type, Any]) -> Optional[Type[marshmallow.fields.Field]]:
     # FIXME: remove this function
-    base_schema = _schema_ctx_stack.top.base_schema
-    return (
-        base_schema and base_schema.TYPE_MAPPING.get(typ)
-    ) or marshmallow.Schema.TYPE_MAPPING.get(typ)
+    schema_ctx = _schema_ctx_stack.top
+    type_mapping = schema_ctx.get_type_mapping(use_mro=True)
+    return type_mapping.get(typ)
 
 
 def _field_by_supertype(
@@ -605,15 +624,15 @@ def _field_for_generic_type(
     arguments = typing_inspect.get_args(typ, True)
     if origin:
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
-        base_schema = _schema_ctx_stack.top.base_schema
-        type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
+        schema_ctx = _schema_ctx_stack.top
+
+        def get_field_type(type_spec: Any, default: Type[_Field]) -> Type[_Field]:
+            type_mapping = schema_ctx.get_type_mapping()
+            return type_mapping.get(type_spec, default)  # type: ignore[return-value]
 
         if origin in (list, List):
             child_type = _field_for_schema(arguments[0])
-            list_type = cast(
-                Type[marshmallow.fields.List],
-                type_mapping.get(List, marshmallow.fields.List),
-            )
+            list_type = get_field_type(List, default=marshmallow.fields.List)
             return list_type(child_type, **metadata)
         if origin in (collections.abc.Sequence, Sequence) or (
             origin in (tuple, Tuple)
@@ -640,15 +659,10 @@ def _field_for_generic_type(
             )
         if origin in (tuple, Tuple):
             children = tuple(_field_for_schema(arg) for arg in arguments)
-            tuple_type = cast(
-                Type[marshmallow.fields.Tuple],
-                type_mapping.get(  # type:ignore[call-overload]
-                    Tuple, marshmallow.fields.Tuple
-                ),
-            )
+            tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
             return tuple_type(children, **metadata)
         elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
-            dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
+            dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
             return dict_type(
                 keys=_field_for_schema(arguments[0]),
                 values=_field_for_schema(arguments[1]),
