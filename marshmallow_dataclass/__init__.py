@@ -1141,6 +1141,11 @@ def _field_for_schema(
     # If the field was already defined by the user
     predefined_field = metadata.get("marshmallow_field")
     if predefined_field:
+        if not isinstance(predefined_field, marshmallow.fields.Field):
+            raise TypeError(
+                "metadata['marshmallow_field'] must be set to a Field instance, "
+                f"not {predefined_field}"
+            )
         return predefined_field
 
     if default is not marshmallow.missing:
