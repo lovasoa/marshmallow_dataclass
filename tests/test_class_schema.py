@@ -1,13 +1,14 @@
 import inspect
+import sys
 import typing
 import unittest
-from typing import Any, cast, TYPE_CHECKING
+from typing import Any, cast
 from uuid import UUID
 
-try:
-    from typing import Final, Literal  # type: ignore[attr-defined]
-except ImportError:
-    from typing_extensions import Final, Literal  # type: ignore[assignment]
+if sys.version_info >= (3, 8):
+    from typing import Final, Literal
+else:
+    from typing_extensions import Final, Literal
 
 import dataclasses
 from marshmallow import Schema, ValidationError
@@ -231,21 +232,14 @@ class TestClassSchema(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 schema.load({"data": data})
 
-    def test_final_infers_type_from_default(self):
-        # @dataclasses.dataclass(frozen=True)
+    def test_final_infers_type_from_default(self) -> None:
+        @dataclasses.dataclass(frozen=True)
         class A:
             data: Final = "a"
 
-        # @dataclasses.dataclass
+        @dataclasses.dataclass
         class B:
-            data: Final = A()
-
-        # NOTE: This workaround is needed to avoid a Mypy crash.
-        # See: https://github.com/python/mypy/issues/10090#issuecomment-865971891
-        if not TYPE_CHECKING:
-            frozen_dataclass = dataclasses.dataclass(frozen=True)
-            A = frozen_dataclass(A)
-            B = dataclasses.dataclass(B)
+            data: Final = A()  # type: ignore[misc]
 
         with self.assertWarns(Warning):
             schema_a = class_schema(A)()
@@ -274,14 +268,9 @@ class TestClassSchema(unittest.TestCase):
                 schema_b.load({"data": data})
 
     def test_final_infers_type_any_from_field_default_factory(self):
-        # @dataclasses.dataclass
+        @dataclasses.dataclass
         class A:
-            data: Final = dataclasses.field(default_factory=lambda: [])
-
-        # NOTE: This workaround is needed to avoid a Mypy crash.
-        # See: https://github.com/python/mypy/issues/10090#issuecomment-866686096
-        if not TYPE_CHECKING:
-            A = dataclasses.dataclass(A)
+            data: Final = dataclasses.field(default_factory=lambda: [])  # type: ignore[misc]
 
         with self.assertWarns(Warning):
             schema = class_schema(A)()
