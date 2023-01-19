@@ -6,3 +6,31 @@ target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py310']
 filterwarnings = [
     "error:::marshmallow_dataclass|test",
 ]
+
+[tool.mypy]
+packages = [
+    "marshmallow_dataclass",
+    "tests",
+]
+# XXX: Can not load our plugin when running mypy from pre-commit.
+# Pre-commit runs mypy from its own venv (into which we do not want
+# to install marshmallow_dataclass).
+# The fact that our plugin is in a file named "mypy.py" causes issues
+# (I think) if we try to load it by path.  In that case mypy adds
+# the containing directory to sys.path then calls import_module("mypy"),
+# which, in turn, finds the already imported sys.modules['mypy'].
+#
+# plugins = "marshmallow_dataclass.mypy"
+
+warn_redundant_casts = true
+warn_unused_configs = true
+disable_error_code = "annotation-unchecked"
+
+[[tool.mypy.overrides]]
+# dependencies without type hints
+module = [
+    "marshmallow_enum",
+    "typing_inspect",
+]
+ignore_missing_imports = true
+

@@ -19,7 +19,11 @@ repos:
   rev: v0.991
   hooks:
   - id: mypy
-    additional_dependencies: [marshmallow-enum,typeguard,marshmallow]
+    additional_dependencies:
+      - marshmallow
+      - marshmallow-enum
+      - typeguard
+      - types-setuptools
     args: [--show-error-codes]
 - repo: https://github.com/asottile/blacken-docs
   rev: v1.12.1
