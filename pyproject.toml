@@ -17,9 +17,8 @@ packages = [
 # (See the docstring in mypy_plugin.py for more.)
 plugins = "mypy_plugin.py"
 
-warn_redundant_casts = true
-warn_unused_configs = true
-disable_error_code = "annotation-unchecked"
+strict = true
+warn_unreachable = true
 
 [[tool.mypy.overrides]]
 # dependencies without type hints
@@ -28,4 +27,14 @@ module = [
     "typing_inspect",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+]
+disable_error_code = "annotation-unchecked"
+check_untyped_defs = false
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
