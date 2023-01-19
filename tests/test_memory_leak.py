@@ -4,6 +4,7 @@ import sys
 import unittest
 import weakref
 from dataclasses import dataclass
+from unittest import mock
 
 import marshmallow
 import marshmallow_dataclass as md
@@ -109,3 +110,31 @@ class TestMemoryLeak(unittest.TestCase):
 
         f()
         self.assertFrameCollected()
+
+    def assertDecoratorDoesNotLeakFrame(self, decorator):
+        def f() -> None:
+            class Foo:
+                value: int
+
+            self.trackFrame()
+            with self.assertRaisesRegex(Exception, "forced exception"):
+                decorator(Foo)
+
+        with mock.patch(
+            "marshmallow_dataclass.lazy_class_attribute",
+            side_effect=Exception("forced exception"),
+        ) as m:
+            f()
+
+        assert m.mock_calls == [mock.call(mock.ANY, "Schema", mock.ANY)]
+        # NB: The Mock holds a reference to its arguments, one of which is the
+        # lazy_class_attribute which holds a reference to the caller's frame
+        m.reset_mock()
+
+        self.assertFrameCollected()
+
+    def test_exception_in_dataclass(self):
+        self.assertDecoratorDoesNotLeakFrame(md.dataclass)
+
+    def test_exception_in_add_schema(self):
+        self.assertDecoratorDoesNotLeakFrame(md.add_schema)
