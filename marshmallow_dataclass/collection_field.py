@@ -29,16 +29,18 @@ class Set(marshmallow.fields.List):
         will be random. So if the order matters, use a List or Sequence !
     """
 
+    set_type: typing.Type[
+        typing.Union[typing.FrozenSet[typing.Any], typing.Set[typing.Any]]
+    ]
+
     def __init__(
         self,
         cls_or_instance: typing.Union[marshmallow.fields.Field, type],
         frozen: bool = False,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         super().__init__(cls_or_instance, **kwargs)
-        self.set_type: typing.Type[typing.Union[frozenset, set]] = (
-            frozenset if frozen else set
-        )
+        self.set_type = frozenset if frozen else set
 
     def _deserialize(  # type: ignore[override]
         self,

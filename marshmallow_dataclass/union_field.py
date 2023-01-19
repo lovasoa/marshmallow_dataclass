@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple, Any, Optional
+from typing import Any, List, Mapping, Optional, Tuple
 
 import typeguard
 from marshmallow import fields, Schema, ValidationError
@@ -26,21 +26,23 @@ class Union(fields.Field):
     :param kwargs: The same keyword arguments that :class:`Field` receives.
     """
 
-    def __init__(self, union_fields: List[Tuple[type, fields.Field]], **kwargs):
+    def __init__(self, union_fields: List[Tuple[type, fields.Field]], **kwargs: Any):
         super().__init__(**kwargs)
         self.union_fields = union_fields
 
     def _bind_to_schema(self, field_name: str, schema: Schema) -> None:
-        super()._bind_to_schema(field_name, schema)
+        super()._bind_to_schema(field_name, schema)  # type: ignore[no-untyped-call]
         new_union_fields = []
         for typ, field in self.union_fields:
             field = copy.deepcopy(field)
-            field._bind_to_schema(field_name, self)
+            field._bind_to_schema(field_name, self)  # type: ignore[no-untyped-call]
             new_union_fields.append((typ, field))
 
         self.union_fields = new_union_fields
 
-    def _serialize(self, value: Any, attr: Optional[str], obj, **kwargs) -> Any:
+    def _serialize(
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
+    ) -> Any:
         errors = []
         if value is None:
             return value
@@ -56,7 +58,13 @@ class Union(fields.Field):
             f"Unable to serialize value with any of the fields in the union: {errors}"
         )
 
-    def _deserialize(self, value: Any, attr: Optional[str], data, **kwargs) -> Any:
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
         errors = []
         for typ, field in self.union_fields:
             try:
