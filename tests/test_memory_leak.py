@@ -121,8 +121,7 @@ class TestMemoryLeak(unittest.TestCase):
                 decorator(Foo)
 
         with mock.patch(
-            "marshmallow_dataclass.lazy_class_attribute",
-            side_effect=Exception("forced exception"),
+            "marshmallow_dataclass.setattr", side_effect=Exception("forced exception")
         ) as m:
             f()
 

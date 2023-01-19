@@ -310,6 +310,7 @@ def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
+    attr_name: str = "Schema",
 ) -> Union[Type[_U], ClassDecorator]:
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
@@ -333,17 +334,12 @@ def add_schema(
     """
 
     def decorator(cls: Type[_V], stacklevel: int = stacklevel) -> Type[_V]:
+        nonlocal cls_frame
         _check_decorated_type(cls)
-        frame = cls_frame
-        if frame is None:
-            frame = _maybe_get_callers_frame(cls, stacklevel=stacklevel)
-
-        # noinspection PyTypeHints
-        cls.Schema = lazy_class_attribute(  # type: ignore[attr-defined]
-            partial(class_schema, cls, base_schema, frame),
-            "Schema",
-            cls.__name__,
-        )
+        if cls_frame is None:
+            cls_frame = _maybe_get_callers_frame(cls, stacklevel=stacklevel)
+        fget = partial(class_schema, cls, base_schema, cls_frame)
+        setattr(cls, attr_name, lazy_class_attribute(fget, attr_name))
         return cls
 
     if _cls is None:

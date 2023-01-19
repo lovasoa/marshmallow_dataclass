@@ -22,6 +22,7 @@ repos:
     additional_dependencies:
       - marshmallow
       - marshmallow-enum
+      - pytest
       - typeguard
       - types-setuptools
       - typing-inspect
