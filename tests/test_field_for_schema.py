@@ -134,8 +134,6 @@ class TestFieldForSchema(unittest.TestCase):
             )
 
     def test_union_enum(self):
-        self.maxDiff = None
-
         class Fruit(Enum):
             apple = "Apple"
             banana = "Banana"
