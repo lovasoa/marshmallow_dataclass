@@ -578,13 +578,18 @@ def _field_for_generic_type(
             )
         from . import union_field
 
+        union_metadata = {
+            k: v
+            for k, v in metadata.items()
+            if k not in ("allow_none", "dump_default", "load_default", "required")
+        }
         return union_field.Union(
             [
                 (
                     subtyp,
                     field_for_schema(
                         subtyp,
-                        metadata={"required": True},
+                        metadata=union_metadata,
                         base_schema=base_schema,
                         typ_frame=typ_frame,
                     ),
