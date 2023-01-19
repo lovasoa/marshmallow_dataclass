@@ -598,6 +598,11 @@ def _is_generic_alias_of_dataclass(
     return dataclasses.is_dataclass(get_origin(cls))
 
 
+def _has_generic_base(cls: type) -> bool:
+    """Return True if cls has any generic base classes."""
+    return any(typing_inspect.get_parameters(base) for base in cls.__mro__[1:])
+
+
 class _GenericArgs(Mapping[TypeVar_, TypeSpec], collections.abc.Hashable):
     """A mapping of TypeVars to type specs"""
 
@@ -779,6 +784,10 @@ def _marshmallow_hooks(clazz: type) -> Iterator[Tuple[str, Any]]:
 
 
 def _schema_attrs_for_dataclass(clazz: type) -> Dict[str, Any]:
+    if _has_generic_base(clazz):
+        raise TypeError(
+            "class_schema does not support dataclasses with generic base classes"
+        )
     schema_ctx = _schema_ctx_stack.top
     type_hints = get_type_hints(
         clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns

@@ -543,30 +543,22 @@ class TestClassSchema(unittest.TestCase):
         class TestClass(Base1[T]):
             pass
 
-        test_schema = class_schema(TestClass[int])()
+        with self.assertRaisesRegex(TypeError, "generic base class"):
+            class_schema(TestClass[int])
 
-        self.assertEqual(test_schema.load({"answer": "42"}), TestClass(42))
-
-    @unittest.expectedFailure
-    def test_broken_generic_bases(self) -> None:
-        # When a different TypeVar is used when declaring the base GenericAlias
-        # than when declaring that generic base class, things currently don't work.
-        # TestClass.__orig_bases__ (see PEP 560) might be of some help, but isn't
-        # the full answer.
+    def test_bound_generic_base(self) -> None:
         T = typing.TypeVar("T")
-        U = typing.TypeVar("U")
 
         @dataclasses.dataclass
         class Base1(typing.Generic[T]):
             answer: T
 
         @dataclasses.dataclass
-        class TestClass(Base1[U]):
+        class TestClass(Base1[int]):
             pass
 
-        test_schema = class_schema(TestClass[int])()
-
-        self.assertEqual(test_schema.load({"answer": "42"}), TestClass(42))
+        with self.assertRaisesRegex(TypeError, "generic base class"):
+            class_schema(TestClass)
 
     def test_recursive_reference(self):
         @dataclasses.dataclass
