@@ -174,6 +174,18 @@ def _maybe_get_callers_frame(
         del frame
 
 
+def _check_decorated_type(cls: object) -> None:
+    if typing_inspect.is_generic_type(cls):
+        # A .Schema attribute doesn't make sense on a generic type — there's
+        # no way for it to know the generic parameters at run time.
+        raise TypeError(
+            "decorator does not support generic types "
+            "(hint: use class_schema directly instead)"
+        )
+    if not isinstance(cls, type):
+        raise TypeError(f"expected a class not {cls!r}")
+
+
 @overload
 def dataclass(
     _cls: Type[_U],
@@ -248,6 +260,7 @@ def dataclass(
     )
 
     def decorator(cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
+        _check_decorated_type(cls)
         dc(cls)
         return add_schema(
             cls, base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
@@ -303,6 +316,8 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
     """
 
     def decorator(clazz: Type[_U], stacklevel: int = stacklevel) -> Type[_U]:
+        _check_decorated_type(clazz)
+
         if cls_frame is not None:
             frame = cls_frame
         else:

@@ -14,7 +14,12 @@ from marshmallow import Schema, ValidationError
 from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
 from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema, NewType, _is_generic_alias_of_dataclass
+from marshmallow_dataclass import (
+    add_schema,
+    class_schema,
+    NewType,
+    _is_generic_alias_of_dataclass,
+)
 
 
 class TestClassSchema(unittest.TestCase):
@@ -473,6 +478,32 @@ class TestClassSchema(unittest.TestCase):
             Nested(x=BB(b=1), z=BB(b=1), y=BB(b=AA(1))),
             schema_nested.load({"x": {"b": 1}, "z": {"b": 1}, "y": {"b": {"a": 1}}}),
         )
+
+    def test_marshmallow_dataclass_decorator_raises_on_generics(self):
+        import marshmallow_dataclass
+
+        T = typing.TypeVar("T")
+
+        class GenClass(typing.Generic[T]):
+            pass
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            marshmallow_dataclass.dataclass(GenClass)
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            marshmallow_dataclass.dataclass(GenClass[int])
+
+    def test_add_schema_raises_on_generics(self):
+        T = typing.TypeVar("T")
+
+        class GenClass(typing.Generic[T]):
+            pass
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            add_schema(GenClass)
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            add_schema(GenClass[int])
 
     def test_deep_generic(self):
         T = typing.TypeVar("T")
