@@ -114,15 +114,15 @@ else:
 
     TypeVar_ = type
 
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
-
 if sys.version_info >= (3, 8):
     from typing import Protocol
 else:
     from typing_extensions import Protocol
+
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 
 NoneType = type(None)
@@ -175,8 +175,62 @@ class UnboundTypeVarError(Error):
     """
 
 
+################################################################
+# Type aliases and type guards (FIXME: move these)
+
+if sys.version_info >= (3, 7):
+    _TypeVarType = TypeVar
+else:
+    # py36: type.TypeVar does not work as a type annotation
+    # (⇒ "AttributeError: type object 'TypeVar' has no attribute '_gorg'")
+    _TypeVarType = typing_NewType("_TypeVarType", type)
+
+
+def _is_type_var(obj: object) -> TypeGuard[_TypeVarType]:
+    return isinstance(obj, TypeVar)
+
+
+TypeSpec = object
+GenericAlias = typing_NewType("GenericAlias", object)
+GenericAliasOfDataclass = typing_NewType("GenericAliasOfDataclass", GenericAlias)
+
+
+def _is_generic_alias_of_dataclass(
+    cls: object,
+) -> TypeGuard[GenericAliasOfDataclass]:
+    """
+    Check if given class is a generic alias of a dataclass, if the dataclass is
+    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    """
+    return _is_dataclass_type(get_origin(cls))
+
+
+_DataclassType = typing_NewType("_DataclassType", type)
+
+
+def _is_dataclass_type(obj: object) -> TypeGuard[_DataclassType]:
+    return isinstance(obj, type) and dataclasses.is_dataclass(obj)
+
+
+class _NewType(Protocol):
+    def __call__(self, obj: _U) -> _U:
+        ...
+
+    @property
+    def __name__(self) -> str:
+        ...
+
+    @property
+    def __supertype__(self) -> type:
+        ...
+
+
+def _is_new_type(obj: object) -> TypeGuard[_NewType]:
+    return bool(typing_inspect.is_new_type(obj))
+
+
 def _maybe_get_callers_frame(
-    cls: type, stacklevel: int = 1
+    cls: Union[type, GenericAliasOfDataclass], stacklevel: int = 1
 ) -> Optional[types.FrameType]:
     """Return the caller's frame, but only if it will help resolve forward type references.
 
@@ -317,7 +371,7 @@ def dataclass(
     return decorator(_cls, stacklevel=stacklevel + 1)
 
 
-class ClassDecorator(Protocol):
+class _ClassDecorator(Protocol):
     def __call__(self, cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
         ...
 
@@ -328,7 +382,7 @@ def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
-) -> ClassDecorator:
+) -> _ClassDecorator:
     ...
 
 
@@ -348,7 +402,7 @@ def add_schema(
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
     attr_name: str = "Schema",
-) -> Union[Type[_U], ClassDecorator]:
+) -> Union[Type[_U], _ClassDecorator]:
     """
     This decorator adds a marshmallow schema as the 'Schema' attribute in a dataclass.
     It uses :func:`class_schema` internally.
@@ -407,7 +461,7 @@ def class_schema(
 
 
 def class_schema(
-    clazz: type,  # FIXME: type | _GenericAlias
+    clazz: object,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     # FIXME: delete clazz_frame from API?
     clazz_frame: Optional[types.FrameType] = None,
@@ -533,6 +587,9 @@ def class_schema(
     >>> class_schema(Custom)().load({})
     Custom(name=None)
     """
+    if not (_is_dataclass_type(clazz) or _is_generic_alias_of_dataclass(clazz)):
+        raise InvalidClassError(f"{clazz} is not a dataclass")
+
     if localns is None:
         if clazz_frame is None:
             clazz_frame = _maybe_get_callers_frame(clazz)
@@ -627,20 +684,6 @@ class _Future(Generic[_U]):
         self._done = True
 
 
-TypeSpec = typing_NewType("TypeSpec", object)
-GenericAliasOfDataclass = typing_NewType("GenericAliasOfDataclass", object)
-
-
-def _is_generic_alias_of_dataclass(
-    cls: object,
-) -> TypeGuard[GenericAliasOfDataclass]:
-    """
-    Check if given class is a generic alias of a dataclass, if the dataclass is
-    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
-    """
-    return dataclasses.is_dataclass(get_origin(cls))
-
-
 def _has_generic_base(cls: type) -> bool:
     """Return True if cls has any generic base classes."""
     return any(typing_inspect.get_parameters(base) for base in cls.__mro__[1:])
@@ -697,7 +740,7 @@ class _SchemaContext:
     localns: Optional[Dict[str, Any]] = None
     base_schema: Type[marshmallow.Schema] = marshmallow.Schema
     generic_args: Optional[_GenericArgs] = None
-    seen_classes: Dict[type, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
+    seen_classes: Dict[Hashable, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
         default_factory=dict
     )
 
@@ -706,7 +749,7 @@ class _SchemaContext:
 
     def get_type_mapping(
         self, use_mro: bool = False
-    ) -> Mapping[Any, Type[marshmallow.fields.Field]]:
+    ) -> Mapping[TypeSpec, Type[marshmallow.fields.Field]]:
         """Get base_schema.TYPE_MAPPING.
 
         If use_mro is true, then merges the TYPE_MAPPINGs from
@@ -720,7 +763,7 @@ class _SchemaContext:
         return getattr(base_schema, "TYPE_MAPPING", {})
 
     def class_schema(
-        self, clazz: type
+        self, clazz: Hashable
     ) -> Union[Type[marshmallow.Schema], _Future[Type[marshmallow.Schema]]]:
         if clazz in self.seen_classes:
             return self.seen_classes[clazz]
@@ -742,12 +785,12 @@ class _SchemaContext:
             attributes = self.schema_attrs_for_simple_class(clazz)
         elif _is_generic_alias_of_dataclass(clazz):
             origin = get_origin(clazz)
-            assert isinstance(origin, type)
+            assert _is_dataclass_type(origin)
             class_name = origin.__name__
             constructor = origin
             ctx = self.replace(generic_args=_GenericArgs(clazz, self.generic_args))
             attributes = ctx.schema_attrs_for_dataclass(origin)
-        elif dataclasses.is_dataclass(clazz):
+        elif _is_dataclass_type(clazz):
             class_name = clazz.__name__
             constructor = clazz
             attributes = self.schema_attrs_for_dataclass(clazz)
@@ -783,7 +826,7 @@ class _SchemaContext:
         _schema_cache[cache_key] = schema_class
         return schema_class
 
-    def schema_attrs_for_dataclass(self, clazz: type) -> Dict[str, Any]:
+    def schema_attrs_for_dataclass(self, clazz: _DataclassType) -> Dict[str, Any]:
         if _has_generic_base(clazz):
             raise InvalidClassError(
                 "class_schema does not support dataclasses with generic base classes"
@@ -804,7 +847,9 @@ class _SchemaContext:
                 attrs[field.name] = self.field_for_schema(typ, default, field.metadata)
         return attrs
 
-    def is_simple_annotated_class(self, obj: object) -> bool:
+    _SimpleClass = typing_NewType("_SimpleClass", type)
+
+    def is_simple_annotated_class(self, obj: object) -> TypeGuard[_SimpleClass]:
         """Determine whether obj is a "simple annotated class".
 
         The ```class_schema``` function can generate schemas for
@@ -820,7 +865,7 @@ class _SchemaContext:
         type_hints = get_type_hints(obj, globalns=self.globalns, localns=self.localns)
         return any(not typing_inspect.is_classvar(th) for th in type_hints.values())
 
-    def schema_attrs_for_simple_class(self, clazz: type) -> Dict[str, Any]:
+    def schema_attrs_for_simple_class(self, clazz: _SimpleClass) -> Dict[str, Any]:
         type_hints = get_type_hints(clazz, globalns=self.globalns, localns=self.localns)
 
         attrs = dict(_marshmallow_hooks(clazz))
@@ -832,7 +877,7 @@ class _SchemaContext:
 
     def field_for_schema(
         self,
-        typ: Union[type, object],
+        typ: object,
         default: Any = marshmallow.missing,
         metadata: Optional[Mapping[str, Any]] = None,
     ) -> marshmallow.fields.Field:
@@ -897,7 +942,7 @@ class _SchemaContext:
         if typing_inspect.is_union_type(typ):
             return self.field_for_union_type(typ, metadata)
 
-        if typing_inspect.is_new_type(typ):
+        if _is_new_type(typ):
             return self.field_for_new_type(typ, default, metadata)
 
         # enumerations
@@ -906,7 +951,7 @@ class _SchemaContext:
 
         # nested dataclasses
         if (
-            dataclasses.is_dataclass(typ)
+            _is_dataclass_type(typ)
             or _is_generic_alias_of_dataclass(typ)
             or self.is_simple_annotated_class(typ)
         ):
@@ -937,7 +982,7 @@ class _SchemaContext:
             args = args[:1]
 
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
-        def get_field_type(type_spec: Any, default: Type[_Field]) -> Type[_Field]:
+        def get_field_type(type_spec: TypeSpec, default: Type[_Field]) -> Type[_Field]:
             type_mapping = self.get_type_mapping(use_mro=False)
             return type_mapping.get(type_spec, default)  # type: ignore[return-value]
 
@@ -945,8 +990,9 @@ class _SchemaContext:
             return self.field_for_schema(args[i] if args else Any)
 
         if origin is tuple:
+            tuple_fields = tuple(self.field_for_schema(arg) for arg in args)
             tuple_type = get_field_type(Tuple, default=marshmallow.fields.Tuple)
-            return tuple_type(tuple(map(self.field_for_schema, args)), **metadata)
+            return tuple_type(tuple_fields, **metadata)
 
         if origin in (dict, collections.abc.Mapping):
             dict_type = get_field_type(Dict, default=marshmallow.fields.Dict)
@@ -1018,41 +1064,33 @@ class _SchemaContext:
         return marshmallow.fields.Raw(validate=validate, **metadata)
 
     def field_for_new_type(
-        self, typ: object, default: Any, metadata: Dict[str, Any]
+        self, new_type: _NewType, default: Any, metadata: Mapping[str, Any]
     ) -> marshmallow.fields.Field:
         """
         Return a new field for fields based on a NewType.
         """
         # Add the information coming our custom NewType implementation
-        typ_args = getattr(typ, "_marshmallow_args", {})
 
         # Handle multiple validators from both `typ` and `metadata`.
         # See https://github.com/lovasoa/marshmallow_dataclass/issues/91
-        validators: List[Callable[[Any], Any]] = []
-        for args in (typ_args, metadata):
-            validate = args.get("validate")
-            if marshmallow.utils.is_iterable_but_not_string(validate):
-                validators.extend(validate)  # type: ignore[arg-type]
-            elif validate is not None:
-                validators.append(validate)
-
-        metadata = {
-            **typ_args,
-            **metadata,
-            "validate": validators if validators else None,
-        }
-        type_name = getattr(typ, "__name__", repr(typ))
-        metadata.setdefault("metadata", {}).setdefault("description", type_name)
+        merged_metadata = _merge_metadata(
+            getattr(new_type, "_marshmallow_args", {}),
+            metadata,
+        )
+        merged_metadata.setdefault("metadata", {}).setdefault(
+            "description", new_type.__name__
+        )
 
         field: Optional[Type[marshmallow.fields.Field]] = getattr(
-            typ, "_marshmallow_field", None
+            new_type, "_marshmallow_field", None
         )
         if field is not None:
-            return field(**metadata)
+            return field(**merged_metadata)
+
         return self.field_for_schema(
-            typ.__supertype__,  # type: ignore[attr-defined]
+            new_type.__supertype__,
             default=default,
-            metadata=metadata,
+            metadata=merged_metadata,
         )
 
     @staticmethod
@@ -1079,10 +1117,41 @@ class _SchemaContext:
             # Defer evaluation of .Schema attribute, to avoid forward reference issues
             return partial(getattr, typ, "Schema")
 
-        class_schema = self.class_schema(typ)  # type: ignore[arg-type] # FIXME
+        class_schema = self.class_schema(typ)
         if isinstance(class_schema, _Future):
             return class_schema.result
         return class_schema
+
+
+def _merge_metadata(*args: Mapping[str, Any]) -> Dict[str, Any]:
+    """Merge mutiple metadata mappings into a single dict.
+
+    This is a standard dict merge, except that the "validate" field
+    is handled specially: validators specified in any of the args
+    are combined.
+
+    """
+    merged: Dict[str, Any] = {}
+    validators: List[Callable[[Any], Any]] = []
+
+    for metadata in args:
+        merged.update(metadata)
+        validate = metadata.get("validate")
+        if callable(validate):
+            validators.append(validate)
+        elif marshmallow.utils.is_iterable_but_not_string(validate):
+            assert isinstance(validate, Iterable)
+            validators.extend(validate)
+        elif validate is not None:
+            validators.append(validate)
+
+    if not all(callable(validate) for validate in validators):
+        raise ValueError(
+            "the 'validate' parameter must be a callable or a collection of callables."
+        )
+
+    merged["validate"] = validators if validators else None
+    return merged
 
 
 def _marshmallow_hooks(clazz: type) -> Iterator[Tuple[str, Any]]:
@@ -1154,7 +1223,7 @@ def _get_subtype_for_final_type(typ: object, default: Any) -> object:
 
 
 def field_for_schema(
-    typ: type,
+    typ: object,
     default: Any = marshmallow.missing,
     metadata: Optional[Mapping[str, Any]] = None,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
