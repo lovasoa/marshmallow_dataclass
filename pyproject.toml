@@ -12,15 +12,10 @@ packages = [
     "marshmallow_dataclass",
     "tests",
 ]
-# XXX: Can not load our plugin when running mypy from pre-commit.
-# Pre-commit runs mypy from its own venv (into which we do not want
-# to install marshmallow_dataclass).
-# The fact that our plugin is in a file named "mypy.py" causes issues
-# (I think) if we try to load it by path.  In that case mypy adds
-# the containing directory to sys.path then calls import_module("mypy"),
-# which, in turn, finds the already imported sys.modules['mypy'].
-#
-# plugins = "marshmallow_dataclass.mypy"
+# XXX: Specifying the marshmallow_dataclass.mypy plugin directly by
+# module name or by path does not work when running mypy from pre-commit.
+# (See the docstring in mypy_plugin.py for more.)
+plugins = "mypy_plugin.py"
 
 warn_redundant_casts = true
 warn_unused_configs = true

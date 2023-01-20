@@ -24,6 +24,7 @@ repos:
       - marshmallow-enum
       - typeguard
       - types-setuptools
+      - typing-inspect
     args: [--show-error-codes]
 - repo: https://github.com/asottile/blacken-docs
   rev: v1.12.1
