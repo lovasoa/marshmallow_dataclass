@@ -40,6 +40,7 @@ import inspect
 import sys
 import types
 import warnings
+from contextlib import contextmanager
 from enum import Enum
 from functools import partial
 from typing import (
@@ -107,17 +108,15 @@ else:
 
 if sys.version_info >= (3, 7):
     from typing import OrderedDict
-
-    TypeVar_ = TypeVar
 else:
     from typing_extensions import OrderedDict
 
-    TypeVar_ = type
-
 if sys.version_info >= (3, 8):
     from typing import Protocol
+    from typing import final
 else:
     from typing_extensions import Protocol
+    from typing_extensions import final
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
@@ -689,47 +688,57 @@ def _has_generic_base(cls: type) -> bool:
     return any(typing_inspect.get_parameters(base) for base in cls.__mro__[1:])
 
 
-class _GenericArgs(Mapping[TypeVar_, TypeSpec], collections.abc.Hashable):
-    """A mapping of TypeVars to type specs"""
+@final
+@dataclasses.dataclass(frozen=True)
+class _TypeVarBindings(Mapping[TypeSpec, TypeSpec]):
+    """A mapping of bindings of TypeVars to type specs."""
 
-    def __init__(
-        self,
-        generic_alias: GenericAliasOfDataclass,
-        binding: Optional["_GenericArgs"] = None,
-    ):
-        origin = typing_inspect.get_origin(generic_alias)
-        parameters: Iterable[TypeVar_] = typing_inspect.get_parameters(origin)
-        arguments: Iterable[TypeSpec] = get_args(generic_alias)
-        if binding is not None:
-            arguments = map(binding.resolve, arguments)
+    parameters: Sequence[_TypeVarType] = ()
+    args: Sequence[TypeSpec] = ()
 
-        self._args = dict(zip(parameters, arguments))
-        self._hashvalue = hash(tuple(self._args.items()))
+    def __post_init__(self) -> None:
+        if len(self.parameters) != len(self.args):
+            raise ValueError("the 'parameters' and 'args' must be of the same length")
 
-    _args: Mapping[TypeVar_, TypeSpec]
-    _hashvalue: int
+    @classmethod
+    def from_generic_alias(cls, generic_alias: GenericAlias) -> "_TypeVarBindings":
+        origin = get_origin(generic_alias)
+        parameters = typing_inspect.get_parameters(origin)
+        args = get_args(generic_alias)
+        return cls(parameters, args)
 
-    def resolve(self, spec: Union[TypeVar_, TypeSpec]) -> TypeSpec:
-        if isinstance(spec, TypeVar):
-            try:
-                return self._args[spec]
-            except KeyError as exc:
-                raise UnboundTypeVarError(
-                    f"generic type variable {spec.__name__} is not bound"
-                ) from exc
-        return spec
+    def __getitem__(self, key: TypeSpec) -> TypeSpec:
+        try:
+            i = self.parameters.index(key)
+        except ValueError:
+            raise KeyError(key) from None
+        return self.args[i]
 
-    def __getitem__(self, param: TypeVar_) -> TypeSpec:
-        return self._args[param]
-
-    def __iter__(self) -> Iterator[TypeVar_]:
-        return iter(self._args.keys())
+    def __iter__(self) -> Iterator[_TypeVarType]:
+        return iter(self.parameters)
 
     def __len__(self) -> int:
-        return len(self._args)
+        return len(self.parameters)
 
-    def __hash__(self) -> int:
-        return self._hashvalue
+    def compose(self, other: "_TypeVarBindings") -> "_TypeVarBindings":
+        """Compose TypeVar bindings.
+
+        Given:
+
+            def map(bindings, spec):
+                return bindings.get(spec, spec)
+
+            composed = outer.compose(inner)
+
+        Then, for all values of spec:
+
+            map(composed, spec) == map(outer, map(inner, spec))
+
+        """
+        mapped_args = tuple(
+            self.get(arg, arg) if _is_type_var(arg) else arg for arg in other.args
+        )
+        return _TypeVarBindings(other.parameters, mapped_args)
 
 
 @dataclasses.dataclass
@@ -739,13 +748,23 @@ class _SchemaContext:
     globalns: Optional[Dict[str, Any]] = None
     localns: Optional[Dict[str, Any]] = None
     base_schema: Type[marshmallow.Schema] = marshmallow.Schema
-    generic_args: Optional[_GenericArgs] = None
-    seen_classes: Dict[Hashable, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
-        default_factory=dict
+
+    typevar_bindings: _TypeVarBindings = dataclasses.field(
+        init=False, default_factory=_TypeVarBindings
     )
 
-    def replace(self, generic_args: Optional[_GenericArgs]) -> "_SchemaContext":
-        return dataclasses.replace(self, generic_args=generic_args)
+    seen_classes: Dict[Hashable, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
+        init=False, default_factory=dict
+    )
+
+    @contextmanager
+    def bind_type_vars(self, bindings: _TypeVarBindings) -> Iterator[None]:
+        outer_bindings = self.typevar_bindings
+        try:
+            self.typevar_bindings = outer_bindings.compose(bindings)
+            yield
+        finally:
+            self.typevar_bindings = outer_bindings
 
     def get_type_mapping(
         self, use_mro: bool = False
@@ -788,8 +807,8 @@ class _SchemaContext:
             assert _is_dataclass_type(origin)
             class_name = origin.__name__
             constructor = origin
-            ctx = self.replace(generic_args=_GenericArgs(clazz, self.generic_args))
-            attributes = ctx.schema_attrs_for_dataclass(origin)
+            with self.bind_type_vars(_TypeVarBindings.from_generic_alias(clazz)):
+                attributes = self.schema_attrs_for_dataclass(origin)
         elif _is_dataclass_type(clazz):
             class_name = clazz.__name__
             constructor = clazz
@@ -893,6 +912,14 @@ class _SchemaContext:
 
         """
 
+        if _is_type_var(typ):
+            type_spec = self.typevar_bindings.get(typ, typ)
+            if _is_type_var(type_spec):
+                raise UnboundTypeVarError(
+                    f"can not resolve type variable {type_spec.__name__}"
+                )
+            return self.field_for_schema(type_spec, default, metadata)
+
         metadata = {} if metadata is None else dict(metadata)
 
         # If the field was already defined by the user
@@ -912,9 +939,6 @@ class _SchemaContext:
                 metadata.setdefault("load_default", default)
         else:
             metadata.setdefault("required", not typing_inspect.is_optional_type(typ))
-
-        if self.generic_args is not None and isinstance(typ, TypeVar):
-            typ = self.generic_args.resolve(typ)
 
         if _is_builtin_collection_type(typ):
             return self.field_for_builtin_collection_type(typ, metadata)

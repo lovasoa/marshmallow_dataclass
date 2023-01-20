@@ -19,6 +19,7 @@ from marshmallow_dataclass import (
     add_schema,
     class_schema,
     NewType,
+    UnboundTypeVarError,
     _is_generic_alias_of_dataclass,
 )
 
@@ -548,6 +549,19 @@ class TestClassSchema(unittest.TestCase):
 
         with self.assertRaisesRegex(TypeError, "generic base class"):
             class_schema(TestClass)
+
+    def test_unbound_type_var(self) -> None:
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class Base:
+            answer: T  # type: ignore[valid-type]
+
+        with self.assertRaises(UnboundTypeVarError):
+            class_schema(Base)
+
+        with self.assertRaises(TypeError):
+            class_schema(Base)
 
     def test_recursive_reference(self):
         @dataclasses.dataclass
