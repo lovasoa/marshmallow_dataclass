@@ -708,7 +708,7 @@ def _internal_class_schema(
     return schema_class
 
 
-def _generic_type_add_any(typ: type) -> type:  # FIXME: signature is wrong
+def _generic_type_add_any(typ: object) -> object:
     """if typ is generic type without arguments, replace them by Any."""
     if typ is list or typ is List:
         typ = List[Any]
@@ -798,7 +798,7 @@ def _field_for_builtin_collection_type(
 
 
 def _field_for_union_type(
-    typ: type, metadata: Dict[str, Any]
+    typ: object, metadata: Dict[str, Any]
 ) -> marshmallow.fields.Field:
     """
     Construct the appropriate Field for a union or optional type.
@@ -830,7 +830,7 @@ def _field_for_union_type(
 
 
 def _field_for_literal_type(
-    typ: type, metadata: Dict[str, Any]
+    typ: object, metadata: Dict[str, Any]
 ) -> marshmallow.fields.Field:
     """
     Construct the appropriate Field for a Literal type.
@@ -846,7 +846,7 @@ def _field_for_literal_type(
     return marshmallow.fields.Raw(validate=validate, **metadata)
 
 
-def _get_subtype_for_final_type(typ: type, default: Any) -> Any:
+def _get_subtype_for_final_type(typ: object, default: Any) -> object:
     """
     Construct the appropriate Field for a Final type.
     """
@@ -883,7 +883,7 @@ def _get_subtype_for_final_type(typ: type, default: Any) -> Any:
 
 
 def _field_for_new_type(
-    typ: Type, default: Any, metadata: Dict[str, Any]
+    typ: object, default: Any, metadata: Dict[str, Any]
 ) -> marshmallow.fields.Field:
     """
     Return a new field for fields based on a NewType.
@@ -906,7 +906,8 @@ def _field_for_new_type(
         **metadata,
         "validate": validators if validators else None,
     }
-    metadata.setdefault("metadata", {}).setdefault("description", typ.__name__)
+    if hasattr(typ, "__name__"):
+        metadata.setdefault("metadata", {}).setdefault("description", typ.__name__)
 
     field: Optional[Type[marshmallow.fields.Field]] = getattr(
         typ, "_marshmallow_field", None
@@ -986,7 +987,7 @@ def field_for_schema(
 
 
 def _field_for_schema(
-    typ: type,
+    typ: object,
     default: Any = marshmallow.missing,
     metadata: Optional[Mapping[str, Any]] = None,
 ) -> marshmallow.fields.Field:
