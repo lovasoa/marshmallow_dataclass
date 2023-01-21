@@ -24,6 +24,7 @@ repos:
       - marshmallow-enum
       - pytest
       - typeguard
+      - types-cachetools
       - types-setuptools
       - typing-inspect
     args: [--show-error-codes]

@@ -38,6 +38,7 @@ import collections.abc
 import dataclasses
 import inspect
 import sys
+import threading
 import types
 import warnings
 from contextlib import contextmanager
@@ -47,6 +48,7 @@ from typing import (
     Any,
     Callable,
     ChainMap,
+    ClassVar,
     Dict,
     Generic,
     Hashable,
@@ -54,6 +56,7 @@ from typing import (
     Iterator,
     List,
     Mapping,
+    MutableMapping,
     NewType as typing_NewType,
     Optional,
     Set,
@@ -67,6 +70,7 @@ from typing import (
     FrozenSet,
 )
 
+import cachetools
 import marshmallow
 import typing_inspect
 
@@ -105,11 +109,6 @@ else:
             return origin
         return None
 
-
-if sys.version_info >= (3, 7):
-    from typing import OrderedDict
-else:
-    from typing_extensions import OrderedDict
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -599,51 +598,7 @@ def class_schema(
         base_schema = marshmallow.Schema
 
     schema_ctx = _SchemaContext(globalns, localns, base_schema)
-    schema = schema_ctx.class_schema(clazz)
-    assert not isinstance(schema, _Future)
-    return schema
-
-
-class _LRUDict(OrderedDict[_U, _V]):
-    """Limited-length dict which discards LRU entries."""
-
-    def __init__(self, maxsize: int = 128):
-        self.maxsize = maxsize
-        super().__init__()
-
-    def __setitem__(self, key: _U, value: _V) -> None:
-        super().__setitem__(key, value)
-        super().move_to_end(key)
-
-        while len(self) > self.maxsize:
-            oldkey = next(iter(self))
-            super().__delitem__(oldkey)
-
-    def __getitem__(self, key: _U) -> _V:
-        val = super().__getitem__(key)
-        super().move_to_end(key)
-        return val
-
-    _T = TypeVar("_T")
-
-    @overload
-    def get(self, key: _U) -> Optional[_V]:
-        ...
-
-    @overload
-    def get(self, key: _U, default: _T) -> Union[_V, _T]:
-        ...
-
-    def get(self, key: _U, default: Any = None) -> Any:
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-
-
-_schema_cache = _LRUDict[Hashable, Type[marshmallow.Schema]](
-    MAX_CLASS_SCHEMA_CACHE_SIZE
-)
+    return schema_ctx.class_schema(clazz).result()
 
 
 class InvalidStateError(Exception):
@@ -743,7 +698,13 @@ class _TypeVarBindings(Mapping[TypeSpec, TypeSpec]):
 
 @dataclasses.dataclass
 class _SchemaContext:
-    """Global context for an invocation of class_schema."""
+    """Global context for an invocation of class_schema.
+
+    The _SchemaContext is not thread-safe — methods on a given _SchemaContext
+    instance should only be invoked from a single thread.  (Other threads
+    can safely work with their own _SchemaContext instances.)
+
+    """
 
     globalns: Optional[Dict[str, Any]] = None
     localns: Optional[Dict[str, Any]] = None
@@ -751,10 +712,6 @@ class _SchemaContext:
 
     typevar_bindings: _TypeVarBindings = dataclasses.field(
         init=False, default_factory=_TypeVarBindings
-    )
-
-    seen_classes: Dict[Hashable, _Future[Type[marshmallow.Schema]]] = dataclasses.field(
-        init=False, default_factory=dict
     )
 
     @contextmanager
@@ -781,20 +738,36 @@ class _SchemaContext:
             )
         return getattr(base_schema, "TYPE_MAPPING", {})
 
-    def class_schema(
-        self, clazz: Hashable
-    ) -> Union[Type[marshmallow.Schema], _Future[Type[marshmallow.Schema]]]:
-        if clazz in self.seen_classes:
-            return self.seen_classes[clazz]
+    # We use two caches:
+    #
+    # 1. A global LRU cache. This cache is solely for the sake of efficiency
+    #
+    # 2. A context-local cache. Note that a new context is created for each
+    #    call to the public marshmallow_dataclass.class_schema function.
+    #    This context-local cache exists in order to avoid infinite
+    #    recursion when working on a cyclic dataclass.
+    #
+    _global_cache: ClassVar[MutableMapping[Hashable, Any]]
+    _global_cache = cachetools.LRUCache(MAX_CLASS_SCHEMA_CACHE_SIZE)
 
-        cache_key = clazz, self.base_schema
-        try:
-            return _schema_cache[cache_key]
-        except KeyError:
-            pass
+    def _global_cache_key(self, clazz: Hashable) -> Hashable:
+        return clazz, self.base_schema
 
-        future: _Future[Type[marshmallow.Schema]] = _Future()
-        self.seen_classes[clazz] = future
+    _local_cache: MutableMapping[Hashable, Any] = dataclasses.field(
+        init=False, default_factory=dict
+    )
+
+    def _get_local_cache(self) -> MutableMapping[Hashable, Any]:
+        return self._local_cache
+
+    @cachetools.cached(
+        cache=_global_cache, key=_global_cache_key, lock=threading.Lock()
+    )
+    @cachetools.cachedmethod(cache=_get_local_cache)
+    def class_schema(self, clazz: Hashable) -> _Future[Type[marshmallow.Schema]]:
+        # insert future result into cache to prevent recursion
+        future: _Future[Type[marshmallow.Schema]]
+        future = self._local_cache.setdefault((clazz,), _Future())
 
         constructor: Callable[..., object]
 
@@ -842,8 +815,7 @@ class _SchemaContext:
         )
 
         future.set_result(schema_class)
-        _schema_cache[cache_key] = schema_class
-        return schema_class
+        return future
 
     def schema_attrs_for_dataclass(self, clazz: _DataclassType) -> Dict[str, Any]:
         if _has_generic_base(clazz):
@@ -1141,10 +1113,9 @@ class _SchemaContext:
             # Defer evaluation of .Schema attribute, to avoid forward reference issues
             return partial(getattr, typ, "Schema")
 
-        class_schema = self.class_schema(typ)
-        if isinstance(class_schema, _Future):
-            return class_schema.result
-        return class_schema
+        future = self.class_schema(typ)
+        deferred = future.result
+        return deferred() if future.done() else deferred
 
 
 def _merge_metadata(*args: Mapping[str, Any]) -> Dict[str, Any]:
