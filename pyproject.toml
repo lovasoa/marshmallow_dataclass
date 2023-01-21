@@ -7,6 +7,17 @@ filterwarnings = [
     "error:::marshmallow_dataclass|test",
 ]
 
+[tool.coverage.report]
+omit = [
+    # pytest-mypy-plugins run mypy plugin tests get run in a subprocess,
+    # so we don't get coverage data
+    "marshmallow_dataclass/mypy.py",
+]
+exclude_lines = [
+    "pragma: no cover",
+    '^\s*\.\.\.\s*$',
+]
+
 [tool.mypy]
 packages = [
     "marshmallow_dataclass",
