@@ -6,3 +6,46 @@ target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py310']
 filterwarnings = [
     "error:::marshmallow_dataclass|test",
 ]
+
+[tool.coverage.report]
+omit = [
+    # pytest-mypy-plugins run mypy plugin tests get run in a subprocess,
+    # so we don't get coverage data
+    "marshmallow_dataclass/mypy.py",
+]
+exclude_lines = [
+    "pragma: no cover",
+    '^\s*\.\.\.\s*$',
+]
+
+[tool.mypy]
+packages = [
+    "marshmallow_dataclass",
+    "tests",
+]
+# XXX: Specifying the marshmallow_dataclass.mypy plugin directly by
+# module name or by path does not work when running mypy from pre-commit.
+# (See the docstring in mypy_plugin.py for more.)
+plugins = "mypy_plugin.py"
+
+strict = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+# dependencies without type hints
+module = [
+    "marshmallow_enum",
+    "typing_inspect",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+]
+disable_error_code = "annotation-unchecked"
+check_untyped_defs = false
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+

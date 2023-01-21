@@ -28,13 +28,10 @@ EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": [
         "pytest>=5.4",
+        "types-cachetools",
         # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
         # https://github.com/python/typed_ast/issues/111
         "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
-        # `Literal` was introduced in:
-        # - Python 3.8 (https://www.python.org/dev/peps/pep-0586)
-        # - typing-extensions 3.7.2 (https://github.com/python/typing/pull/591)
-        "typing-extensions>=3.7.2; python_version < '3.8'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
@@ -62,8 +59,10 @@ setup(
     license="MIT",
     python_requires=">=3.6",
     install_requires=[
+        "cachetools>=4.2.4,<6.0",
         "marshmallow>=3.13.0,<4.0",
         "typing-inspect>=0.8.0",
+        "typing-extensions>=3.10; python_version < '3.8'",
     ],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},

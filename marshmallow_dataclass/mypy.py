@@ -2,8 +2,10 @@ import inspect
 from typing import Callable, Optional, Type
 
 from mypy import nodes
-from mypy.plugin import DynamicClassDefContext, Plugin
+from mypy.plugin import ClassDefContext, DynamicClassDefContext, Plugin
 from mypy.plugins import dataclasses
+from mypy.plugins.common import add_attribute_to_class
+from mypy.types import AnyType, TypeOfAny, TypeType
 
 import marshmallow_dataclass
 
@@ -22,10 +24,29 @@ class MarshmallowDataclassPlugin(Plugin):
             return new_type_hook
         return None
 
-    def get_class_decorator_hook(self, fullname: str):
+    def get_class_decorator_hook(
+        self, fullname: str
+    ) -> Optional[Callable[[ClassDefContext], None]]:
         if fullname == "marshmallow_dataclass.dataclass":
-            return dataclasses.dataclass_class_maker_callback
+            return dataclasses.dataclass_tag_callback
         return None
+
+    def get_class_decorator_hook_2(
+        self, fullname: str
+    ) -> Optional[Callable[[ClassDefContext], bool]]:
+        if fullname == "marshmallow_dataclass.dataclass":
+            return class_decorator_hook
+        return None
+
+
+def class_decorator_hook(ctx: ClassDefContext) -> bool:
+    if not dataclasses.dataclass_class_maker_callback(ctx):
+        return False
+    any_type = AnyType(TypeOfAny.explicit)
+    schema_type = ctx.api.named_type_or_none("marshmallow.Schema") or any_type
+    schema_type_type = TypeType.make_normalized(schema_type)
+    add_attribute_to_class(ctx.api, ctx.cls, "Schema", schema_type_type)
+    return True
 
 
 def new_type_hook(ctx: DynamicClassDefContext) -> None:
@@ -66,6 +87,6 @@ def _get_arg_by_name(
     except TypeError:
         return None
     try:
-        return bound_args.arguments[name]
+        return bound_args.arguments[name]  # type: ignore[no-any-return]
     except KeyError:
         return None
