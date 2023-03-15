@@ -37,6 +37,7 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import sys
 import threading
 import types
 import warnings
@@ -66,6 +67,12 @@ import marshmallow
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
+
+
+if sys.version_info >= (3, 11):
+    from typing import dataclass_transform
+else:
+    from typing_extensions import dataclass_transform
 
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
@@ -115,6 +122,7 @@ def dataclass(
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
+@dataclass_transform()
 def dataclass(
     _cls: Optional[Type[_U]] = None,
     *,
