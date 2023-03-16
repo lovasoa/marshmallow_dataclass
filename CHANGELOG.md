@@ -1,12 +1,14 @@
 # marshmallow\_dataclass change log
 
-## v8.5.12 (unreleased)
+## v8.5.12 (2023-03-15)
 
- - Fixes to work with typeguard 3.x.
+ - Fixes to work with typeguard 3.x. ([#235], [#234])
  - Add the @dataclass_transform decorator ([PEP 681]) to
    `marshmallow_dataclass.dataclass`. This fixes our mypy plugin for
    mypy>=1.1.1.
 
+[#234]: https://github.com/lovasoa/marshmallow_dataclass/issues/234
+[#235]: https://github.com/lovasoa/marshmallow_dataclass/pull/235
 [PEP 681]: https://peps.python.org/pep-0681/
 
 ## v8.5.11 (2023-01-08)
