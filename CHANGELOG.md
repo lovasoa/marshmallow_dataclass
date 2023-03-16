@@ -2,7 +2,12 @@
 
 ## v8.5.12 (unreleased)
 
- - Fix to work with typeguard 3.x
+ - Fixes to work with typeguard 3.x.
+ - Add the @dataclass_transform decorator ([PEP 681]) to
+   `marshmallow_dataclass.dataclass`. This fixes our mypy plugin for
+   mypy>=1.1.1.
+
+[PEP 681]: https://peps.python.org/pep-0681/
 
 ## v8.5.11 (2023-01-08)
 

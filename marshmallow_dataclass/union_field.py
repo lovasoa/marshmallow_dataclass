@@ -1,4 +1,5 @@
 import copy
+import inspect
 from typing import List, Tuple, Any, Optional
 
 import typeguard
@@ -8,7 +9,19 @@ try:
     from typeguard import TypeCheckError  # type: ignore[attr-defined]
 except ImportError:
     # typeguard < 3
-    TypeCheckError = TypeError
+    TypeCheckError = TypeError  # type: ignore[misc, assignment]
+
+if "argname" not in inspect.signature(typeguard.check_type).parameters:
+
+    def _check_type(value, expected_type, argname: str):
+        return typeguard.check_type(value=value, expected_type=expected_type)
+
+else:
+    # typeguard < 3.0.0rc2
+    def _check_type(value, expected_type, argname: str):
+        return typeguard.check_type(  # type: ignore[call-overload]
+            value=value, expected_type=expected_type, argname=argname
+        )
 
 
 class Union(fields.Field):
@@ -46,9 +59,7 @@ class Union(fields.Field):
             return value
         for typ, field in self.union_fields:
             try:
-                typeguard.check_type(
-                    value=value, expected_type=typ, argname=attr or "anonymous"
-                )
+                _check_type(value=value, expected_type=typ, argname=attr or "anonymous")
                 return field._serialize(value, attr, obj, **kwargs)
             except TypeCheckError as e:
                 errors.append(e)
@@ -61,7 +72,7 @@ class Union(fields.Field):
         for typ, field in self.union_fields:
             try:
                 result = field.deserialize(value, **kwargs)
-                typeguard.check_type(
+                _check_type(
                     value=result, expected_type=typ, argname=attr or "anonymous"
                 )
                 return result
