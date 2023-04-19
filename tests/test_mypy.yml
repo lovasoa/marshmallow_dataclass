@@ -65,3 +65,18 @@
     reveal_type(website.email)  # N: Revealed type is "builtins.str"
 
     Website(url=42, email="user@email.com")  # E: Argument "url" to "Website" has incompatible type "int"; expected "str"  [arg-type]
+- case: dataclasses_field_not_a_default
+  mypy_config: |
+    follow_imports = silent
+    plugins = marshmallow_dataclass.mypy
+    show_error_codes = true
+  env:
+    - PYTHONPATH=.
+  main: |
+    from dataclasses import field
+    from marshmallow_dataclass import dataclass
+
+    @dataclass
+    class User:
+        id: int = field(metadata={"required": True})
+        name: str

@@ -71,8 +71,12 @@ from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
 if sys.version_info >= (3, 11):
     from typing import dataclass_transform
-else:
+elif sys.version_info >= (3, 7):
     from typing_extensions import dataclass_transform
+else:
+    # @dataclass_transform() only helps us with mypy>=1.1 which is only available for python>=3.7
+    def dataclass_transform(**kwargs):
+        return lambda cls: cls
 
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
@@ -122,7 +126,7 @@ def dataclass(
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
-@dataclass_transform()
+@dataclass_transform(field_specifiers=(dataclasses.Field, dataclasses.field))
 def dataclass(
     _cls: Optional[Type[_U]] = None,
     *,
