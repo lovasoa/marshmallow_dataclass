@@ -1,5 +1,12 @@
 # marshmallow\_dataclass change log
 
+## v8.5.13 (2023-04-20)
+
+ - Fix to allow type-checkers to properly handle fields initialized
+   by a `dataclasses.Field` instance. ([#239])
+
+[#239]: https://github.com/lovasoa/marshmallow_dataclass/pull/239
+
 ## v8.5.12 (2023-03-15)
 
  - Fixes to work with typeguard 3.x. ([#235], [#234])
