@@ -59,7 +59,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "marshmallow>=3.13.0,<4.0",
-        "typing-inspect>=0.8.0",
+        "typing-inspect>=0.8.0,<1.0",
         # Need `Literal`
         "typing-extensions>=3.7.2; python_version < '3.8'",
         # Need `dataclass_transform(field_specifiers)`

@@ -6,6 +6,9 @@
    `field_specifiers` paramter of the `dataclass_transform` decorator.
    ([#240])
 
+ - Tighten pin on `typing-inspect` in an attempt to prevent
+   breakage from a hypothetical major version bump.
+
 [#240]: https://github.com/lovasoa/marshmallow_dataclass/issues/240
 
 ## v8.5.13 (2023-04-20)
