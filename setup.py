@@ -22,7 +22,7 @@ EXTRAS_REQUIRE = {
         "marshmallow-enum; python_version < '3.7'",
         "marshmallow>=3.18.0,<4.0; python_version >= '3.7'",
     ],
-    "union": ["typeguard>=2.0.0,<4.0.0"],
+    "union": ["typeguard>=2.4.1,<4.0.0"],
     "lint": ["pre-commit~=2.17"],
     ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
     "docs": ["sphinx"],

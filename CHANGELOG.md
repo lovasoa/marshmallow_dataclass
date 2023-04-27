@@ -9,6 +9,9 @@
  - Tighten pin on `typing-inspect` in an attempt to prevent
    breakage from a hypothetical major version bump.
 
+ - Tighten pin on `typeguard` to exclude older versions
+   for which our tests fail.
+
 [#240]: https://github.com/lovasoa/marshmallow_dataclass/issues/240
 
 ## v8.5.13 (2023-04-20)
