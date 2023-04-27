@@ -60,10 +60,11 @@ setup(
     install_requires=[
         "marshmallow>=3.13.0,<4.0",
         "typing-inspect>=0.8.0",
-        # `dataclass_transform` was introduced in:
-        # - Python 3.11 (https://www.python.org/dev/peps/pep-0681)
-        # - typing-extensions 4.1.0
-        "typing-extensions>=4.1.0; python_version < '3.11'",
+        # Need `Literal`
+        "typing-extensions>=3.7.2; python_version < '3.8'",
+        # Need `dataclass_transform(field_specifiers)`
+        # NB: typing-extensions>=4.2.0 conflicts with python 3.6
+        "typing-extensions>=4.2.0; python_version<'3.11' and python_version>='3.7'",
     ],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},

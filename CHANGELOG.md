@@ -1,5 +1,13 @@
 # marshmallow\_dataclass change log
 
+## v8.5.14 (unreleased)
+
+ - Pin `typing-extensions>=2.4.0` to ensure support for the
+   `field_specifiers` paramter of the `dataclass_transform` decorator.
+   ([#240])
+
+[#240]: https://github.com/lovasoa/marshmallow_dataclass/issues/240
+
 ## v8.5.13 (2023-04-20)
 
  - Fix to allow type-checkers to properly handle fields initialized
