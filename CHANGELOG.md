@@ -1,6 +1,6 @@
 # marshmallow\_dataclass change log
 
-## v8.5.14 (unreleased)
+## v8.5.14 (2023-04-27)
 
  - Pin `typing-extensions>=2.4.0` to ensure support for the
    `field_specifiers` paramter of the `dataclass_transform` decorator.
