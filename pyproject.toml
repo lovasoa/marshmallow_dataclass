@@ -1,6 +1,87 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+
+[project]
+name = "marshmallow_dataclass"
+version = "8.5.14"
+description = "Python library to convert dataclasses into marshmallow schemas."
+readme = "README.md"
+keywords = ["marshmallow", "dataclass", "serialization"]
+license = { text = "MIT" }
+requires-python = ">=3.6"
+
+authors = [
+    { name = "Ophir LOJKINE", email = "pere.jobs@gmail.com" },
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries",
+]
+
+dependencies = [
+    "marshmallow>=3.13.0,<4.0",
+    'dataclasses; python_version == "3.6"',
+    'types-dataclasses<0.6.4; python_version == "3.6"',
+    "typing-inspect>=0.8.0,<1.0",
+    # Need `Literal`
+    "typing-extensions>=3.7.2; python_version < '3.8'",
+    # Need `dataclass_transform(field_specifiers)`
+    # NB: typing-extensions>=4.2.0 conflicts with python 3.6
+    "typing-extensions>=4.2.0; python_version<'3.11' and python_version>='3.7'",
+]
+
+[project.urls]
+Homepage = "https://github.com/lovasoa/marshmallow_dataclass"
+
+[project.optional-dependencies]
+enum = [
+    "marshmallow-enum; python_version < '3.7'",
+    "marshmallow>=3.18.0,<4.0; python_version >= '3.7'",
+]
+union = ["typeguard>=2.4.1,<4.0.0"]
+lint = ["pre-commit~=2.17"]
+docs = ["sphinx"]
+tests = [
+    "pytest>=5.4",
+    # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
+    # https://github.com/python/typed_ast/issues/111
+    "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
+]
+dev = [
+    "marshmallow_dataclass[enum]",
+    "marshmallow_dataclass[union]",
+    "marshmallow_dataclass[lint]",
+    "marshmallow_dataclass[docs]",
+    "marshmallow_dataclass[tests]",
+]
+
+[tool.setuptools.package-data]
+marshmallow_dataclass = ["py.typed"]
+
+[tool.setuptools.packages.find]
+namespaces = false
+include = [
+    "marshmallow_dataclass",
+    "marshmallow_dataclass.*",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py310']
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 filterwarnings = [
