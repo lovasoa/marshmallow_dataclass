@@ -1,6 +1,6 @@
 # marshmallow-dataclass
 
-[![Build Status](https://travis-ci.org/lovasoa/marshmallow_dataclass.svg?branch=master)](https://travis-ci.org/lovasoa/marshmallow_dataclass)
+[![Test Workflow Status (master branch)](https://img.shields.io/github/actions/workflow/status/lovasoa/marshmallow_dataclass/python-package.yml?branch=master&label=tests)](https://github.com/lovasoa/marshmallow_dataclass/actions/workflows/python-package.yml)
 [![PyPI version](https://badge.fury.io/py/marshmallow-dataclass.svg)](https://badge.fury.io/py/marshmallow-dataclass)
 [![marshmallow 3 compatible](https://badgen.net/badge/marshmallow/3)](https://marshmallow.readthedocs.io/en/latest/upgrading.html)
 [![download stats](https://img.shields.io/pypi/dm/marshmallow-dataclass.svg)](https://pypistats.org/packages/marshmallow-dataclass)
@@ -56,7 +56,7 @@ pip3 install marshmallow-dataclass
 
 You may optionally install the following extras:
 
-- `enum` : for translating python enums to [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
+- `enum` : enum support for marshmallow versions <3.18 [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
 - `union` : for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) to union fields.
 
 ```shell

@@ -37,10 +37,11 @@ Full example::
 import collections.abc
 import dataclasses
 import inspect
+import sys
 import threading
 import types
 import warnings
-from enum import EnumMeta
+from enum import Enum
 from functools import lru_cache, partial
 from typing import (
     Any,
@@ -66,6 +67,16 @@ import marshmallow
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
+
+
+if sys.version_info >= (3, 11):
+    from typing import dataclass_transform
+elif sys.version_info >= (3, 7):
+    from typing_extensions import dataclass_transform
+else:
+    # @dataclass_transform() only helps us with mypy>=1.1 which is only available for python>=3.7
+    def dataclass_transform(**kwargs):
+        return lambda cls: cls
 
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
@@ -115,6 +126,7 @@ def dataclass(
 # _cls should never be specified by keyword, so start it with an
 # underscore.  The presence of _cls is used to detect if this
 # decorator is being called with parameters or not.
+@dataclass_transform(field_specifiers=(dataclasses.Field, dataclasses.field))
 def dataclass(
     _cls: Optional[Type[_U]] = None,
     *,
@@ -762,10 +774,14 @@ def field_for_schema(
         )
 
     # enumerations
-    if isinstance(typ, EnumMeta):
-        import marshmallow_enum
+    if issubclass(typ, Enum):
+        try:
+            return marshmallow.fields.Enum(typ, **metadata)
+        except AttributeError:
+            # Remove this once support for python 3.6 is dropped.
+            import marshmallow_enum
 
-        return marshmallow_enum.EnumField(typ, **metadata)
+            return marshmallow_enum.EnumField(typ, **metadata)
 
     # Nested marshmallow dataclass
     # it would be just a class name instead of actual schema util the schema is not ready yet
@@ -777,8 +793,7 @@ def field_for_schema(
     nested = (
         nested_schema
         or forward_reference
-        or _RECURSION_GUARD.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema, typ_frame, generic_params_to_args)
+        or _internal_class_schema(typ, base_schema, typ_frame, generic_params_to_args)  # type: ignore[arg-type]
     )
 
     return marshmallow.fields.Nested(nested, **metadata)

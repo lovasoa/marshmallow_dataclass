@@ -1,5 +1,46 @@
 # marshmallow\_dataclass change log
 
+## v8.5.14 (2023-04-27)
+
+ - Pin `typing-extensions>=2.4.0` to ensure support for the
+   `field_specifiers` paramter of the `dataclass_transform` decorator.
+   ([#240])
+
+ - Tighten pin on `typing-inspect` in an attempt to prevent
+   breakage from a hypothetical major version bump.
+
+ - Tighten pin on `typeguard` to exclude older versions
+   for which our tests fail.
+
+[#240]: https://github.com/lovasoa/marshmallow_dataclass/issues/240
+
+## v8.5.13 (2023-04-20)
+
+ - Fix to allow type-checkers to properly handle fields initialized
+   by a `dataclasses.Field` instance. ([#239])
+
+[#239]: https://github.com/lovasoa/marshmallow_dataclass/pull/239
+
+## v8.5.12 (2023-03-15)
+
+ - Fixes to work with typeguard 3.x. ([#235], [#234])
+ - Add the @dataclass_transform decorator ([PEP 681]) to
+   `marshmallow_dataclass.dataclass`. This fixes our mypy plugin for
+   mypy>=1.1.1.
+
+[#234]: https://github.com/lovasoa/marshmallow_dataclass/issues/234
+[#235]: https://github.com/lovasoa/marshmallow_dataclass/pull/235
+[PEP 681]: https://peps.python.org/pep-0681/
+
+## v8.5.11 (2023-01-08)
+
+ - Replace the use of `marshmallow-enum` with the native
+   `marshmallow.field.Enum` (when using a sufficiently recent version
+   of `marshmallow`). ([#227][], [#225][])
+
+[#225]: https://github.com/lovasoa/marshmallow_dataclass/issues/225
+[#227]: https://github.com/lovasoa/marshmallow_dataclass/pull/227
+
 ## v8.5.10 (2022-11-09)
 
  - We now test under python version 3.11 (as well as 3.6 through 3.10). ([#220][])

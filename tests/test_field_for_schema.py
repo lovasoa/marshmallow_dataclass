@@ -114,17 +114,23 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_enum(self):
-        import marshmallow_enum
-
         class Color(Enum):
             RED: 1
             GREEN: 2
             BLUE: 3
 
-        self.assertFieldsEqual(
-            field_for_schema(Color),
-            marshmallow_enum.EnumField(enum=Color, required=True),
-        )
+        if hasattr(fields, "Enum"):
+            self.assertFieldsEqual(
+                field_for_schema(Color),
+                fields.Enum(enum=Color, required=True),
+            )
+        else:
+            import marshmallow_enum
+
+            self.assertFieldsEqual(
+                field_for_schema(Color),
+                marshmallow_enum.EnumField(enum=Color, required=True),
+            )
 
     def test_literal(self):
         self.assertFieldsEqual(

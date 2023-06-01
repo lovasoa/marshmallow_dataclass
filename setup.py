@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.5.10"
+VERSION = "8.5.14"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -18,8 +18,11 @@ CLASSIFIERS = [
 ]
 
 EXTRAS_REQUIRE = {
-    "enum": ["marshmallow-enum"],
-    "union": ["typeguard"],
+    "enum": [
+        "marshmallow-enum; python_version < '3.7'",
+        "marshmallow>=3.18.0,<4.0; python_version >= '3.7'",
+    ],
+    "union": ["typeguard>=2.4.1,<4.0.0"],
     "lint": ["pre-commit~=2.17"],
     ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
     "docs": ["sphinx"],
@@ -28,10 +31,6 @@ EXTRAS_REQUIRE = {
         # re: pypy: typed-ast (a dependency of mypy) fails to install on pypy
         # https://github.com/python/typed_ast/issues/111
         "pytest-mypy-plugins>=1.2.0; implementation_name != 'pypy'",
-        # `Literal` was introduced in:
-        # - Python 3.8 (https://www.python.org/dev/peps/pep-0586)
-        # - typing-extensions 3.7.2 (https://github.com/python/typing/pull/591)
-        "typing-extensions>=3.7.2; python_version < '3.8'",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
@@ -58,7 +57,15 @@ setup(
     classifiers=CLASSIFIERS,
     license="MIT",
     python_requires=">=3.6",
-    install_requires=["marshmallow>=3.13.0,<4.0", "typing-inspect>=0.7.1"],
+    install_requires=[
+        "marshmallow>=3.13.0,<4.0",
+        "typing-inspect>=0.8.0,<1.0",
+        # Need `Literal`
+        "typing-extensions>=3.7.2; python_version < '3.8'",
+        # Need `dataclass_transform(field_specifiers)`
+        # NB: typing-extensions>=4.2.0 conflicts with python 3.6
+        "typing-extensions>=4.2.0; python_version<'3.11' and python_version>='3.7'",
+    ],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},
 )
