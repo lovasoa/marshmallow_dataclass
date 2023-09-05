@@ -322,6 +322,39 @@ class TestMappingField(unittest.TestCase):
         )
         self.assertEqual(schema.dump(loaded), data_in)
 
+    @unittest.skipIf(sys.version_info < (3, 9), "PEP 585 unsupported")
+    def test_collections_mapping_no_arg(self):
+        import collections.abc
+
+        @dataclass
+        class AnyMapping:
+            value: collections.abc.Mapping
+
+        schema = AnyMapping.Schema()
+
+        # can load a sequence of mixed kind
+        data_in = {
+            "value": {
+                1: "a number key a str value",
+                "a str key a number value": 2,
+                None: "this is still valid",
+                "even this": None,
+            }
+        }
+        loaded = schema.load(data_in)
+        self.assertEqual(
+            loaded,
+            AnyMapping(
+                value={
+                    1: "a number key a str value",
+                    "a str key a number value": 2,
+                    None: "this is still valid",
+                    "even this": None,
+                }
+            ),
+        )
+        self.assertEqual(schema.dump(loaded), data_in)
+
     def test_mapping_of_frozen_dataclass(self):
         @dataclass(frozen=True)
         class Elm:

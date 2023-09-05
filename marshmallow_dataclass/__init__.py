@@ -482,17 +482,17 @@ def _field_by_supertype(
 
 def _generic_type_add_any(typ: type) -> type:
     """if typ is generic type without arguments, replace them by Any."""
-    if typ is list or typ is List:
+    if typ in (list, List):
         typ = List[Any]
-    elif typ is dict or typ is Dict:
+    elif typ in (dict, Dict):
         typ = Dict[Any, Any]
-    elif typ is Mapping:
+    elif typ in (Mapping, collections.abc.Mapping):
         typ = Mapping[Any, Any]
-    elif typ is Sequence:
+    elif typ in (Sequence, collections.abc.Sequence):
         typ = Sequence[Any]
-    elif typ is set or typ is Set:
+    elif typ in (set, Set, collections.abc.Set):
         typ = Set[Any]
-    elif typ is frozenset or typ is FrozenSet:
+    elif typ in (frozenset, FrozenSet):
         typ = FrozenSet[Any]
     return typ
 
