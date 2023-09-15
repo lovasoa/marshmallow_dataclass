@@ -25,11 +25,11 @@ class TestFieldForSchema(unittest.TestCase):
         self.assertEqual(a.__class__, b.__class__, "field class")
 
         def attrs(x):
-            return {
-                k: f"{v!r} ({v.__mro__!r})" if inspect.isclass(v) else repr(v)
+            return sorted(
+                (k, f"{v!r} ({v.__mro__!r})" if inspect.isclass(v) else repr(v))
                 for k, v in x.__dict__.items()
                 if not k.startswith("_")
-            }
+            )
 
         self.assertEqual(attrs(a), attrs(b))
 
