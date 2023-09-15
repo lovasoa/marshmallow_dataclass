@@ -21,6 +21,8 @@ from marshmallow_dataclass import (
 
 
 class TestFieldForSchema(unittest.TestCase):
+    maxDiff = None
+
     def assertFieldsEqual(self, a: fields.Field, b: fields.Field):
         self.assertEqual(a.__class__, b.__class__, "field class")
 
