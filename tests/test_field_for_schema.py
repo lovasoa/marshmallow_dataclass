@@ -156,6 +156,10 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Final), fields.Raw(required=True, allow_none=True)
         )
 
+    @unittest.skipIf(
+        sys.version_info < (3, 7),
+        "union ordering is not guaranteed in python < 3.7",
+    )
     def test_union(self):
         self.assertFieldsEqual(
             field_for_schema(Union[int, str]),
