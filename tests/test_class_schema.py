@@ -434,6 +434,29 @@ class TestClassSchema(unittest.TestCase):
             {"first": {"second": {"first": None}}},
         )
 
+    def test_init_fields(self):
+        @dataclasses.dataclass
+        class NoMeta:
+            no_init: str = dataclasses.field(init=False)
+
+        @dataclasses.dataclass
+        class NoInit:
+            class Meta:
+                pass
+
+            no_init: str = dataclasses.field(init=False)
+
+        @dataclasses.dataclass
+        class Init:
+            class Meta:
+                include_non_init = True
+
+            no_init: str = dataclasses.field(init=False)
+
+        self.assertNotIn("no_init", class_schema(NoMeta)().fields)
+        self.assertNotIn("no_init", class_schema(NoInit)().fields)
+        self.assertIn("no_init", class_schema(Init)().fields)
+
 
 if __name__ == "__main__":
     unittest.main()
