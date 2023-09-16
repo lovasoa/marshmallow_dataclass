@@ -1,5 +1,9 @@
 # marshmallow\_dataclass change log
 
+## v8.6.0 (2023-09-16)
+ - New field in associated Meta classes: `include_non_init`:
+  - This adds the ability to include non init-ed fields into the schema
+
 ## v8.5.14 (2023-04-27)
 
  - Pin `typing-extensions>=2.4.0` to ensure support for the
