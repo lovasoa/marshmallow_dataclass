@@ -1,16 +1,15 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>marshmallow_dataclass &#8212; marshmallow_dataclass 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=039e1c02" />
+    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
    
@@ -158,7 +157,9 @@
 <span class="c1"># _cls should never be specified by keyword, so start it with an</span>
 <span class="c1"># underscore.  The presence of _cls is used to detect if this</span>
 <span class="c1"># decorator is being called with parameters or not.</span>
-<div class="viewcode-block" id="dataclass"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass">[docs]</a><span class="nd">@dataclass_transform</span><span class="p">(</span><span class="n">field_specifiers</span><span class="o">=</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">,</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">))</span>
+<div class="viewcode-block" id="dataclass">
+<a class="viewcode-back" href="../stubs/marshmallow_dataclass.dataclass.html#marshmallow_dataclass.dataclass">[docs]</a>
+<span class="nd">@dataclass_transform</span><span class="p">(</span><span class="n">field_specifiers</span><span class="o">=</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">,</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span>
     <span class="n">_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -210,6 +211,7 @@
     <span class="k">return</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">)</span></div>
 
 
+
 <span class="nd">@overload</span>
 <span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
     <span class="o">...</span>
@@ -231,7 +233,9 @@
     <span class="o">...</span>
 
 
-<div class="viewcode-block" id="add_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema">[docs]</a><span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="add_schema">
+<a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema">[docs]</a>
+<span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator adds a marshmallow schema as the &#39;Schema&#39; attribute in a dataclass.</span>
 <span class="sd">    It uses :func:`class_schema` internally.</span>
@@ -265,7 +269,10 @@
     <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_cls</span><span class="p">)</span> <span class="k">if</span> <span class="n">_cls</span> <span class="k">else</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="class_schema"><a class="viewcode-back" href="../stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema">[docs]</a><span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
+
+<div class="viewcode-block" id="class_schema">
+<a class="viewcode-back" href="../stubs/marshmallow_dataclass.class_schema.html#marshmallow_dataclass.class_schema">[docs]</a>
+<span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -329,6 +336,9 @@
 <span class="sd">    &gt;&gt;&gt; person</span>
 <span class="sd">    Person(name=&#39;Anonymous&#39;, friends=[Person(name=&#39;Roger Boucher&#39;, friends=[])])</span>
 
+<span class="sd">    Marking dataclass fields as non-initialized (``init=False``), by default, will result in those</span>
+<span class="sd">    fields from being exluded in the schema. To override this behaviour, set the ``Meta`` option</span>
+<span class="sd">    ``include_non_init=True``.</span>
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class C:</span>
 <span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
@@ -341,6 +351,20 @@
 <span class="sd">    ... }, unknown=marshmallow.EXCLUDE)</span>
 <span class="sd">    &gt;&gt;&gt; c</span>
 <span class="sd">    C(important=9, unimportant=0)</span>
+
+<span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
+<span class="sd">    ... class C:</span>
+<span class="sd">    ...   class Meta:</span>
+<span class="sd">    ...     include_non_init = True</span>
+<span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
+<span class="sd">    ...   unimportant: int = dataclasses.field(init=False, default=0)</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; c = class_schema(C)().load({</span>
+<span class="sd">    ...     &quot;important&quot;: 9, # This field will be imported</span>
+<span class="sd">    ...     &quot;unimportant&quot;: 9 # This field will be imported</span>
+<span class="sd">    ... }, unknown=marshmallow.EXCLUDE)</span>
+<span class="sd">    &gt;&gt;&gt; c</span>
+<span class="sd">    C(important=9, unimportant=9)</span>
 
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass</span>
 <span class="sd">    ... class Website:</span>
@@ -403,6 +427,7 @@
         <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 
+
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">MAX_CLASS_SCHEMA_CACHE_SIZE</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_internal_class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
@@ -440,6 +465,9 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;__marshmallow_hook__&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">MEMBERS_WHITELIST</span>
     <span class="p">}</span>
 
+    <span class="c1"># Determine whether we should include non-init fields</span>
+    <span class="n">include_non_init</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="s2">&quot;Meta&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;include_non_init&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
     <span class="c1"># Update the schema members to contain marshmallow fields instead of dataclass fields</span>
     <span class="n">type_hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span>
         <span class="n">clazz</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">clazz_frame</span><span class="o">.</span><span class="n">f_locals</span> <span class="k">if</span> <span class="n">clazz_frame</span> <span class="k">else</span> <span class="kc">None</span>
@@ -456,7 +484,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span>
-        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span>
+        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">init</span> <span class="ow">or</span> <span class="n">include_non_init</span>
     <span class="p">)</span>
 
     <span class="n">schema_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">_base_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">),),</span> <span class="n">attributes</span><span class="p">)</span>
@@ -640,7 +668,9 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<div class="viewcode-block" id="field_for_schema"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.field_for_schema">[docs]</a><span class="k">def</span> <span class="nf">field_for_schema</span><span class="p">(</span>
+<div class="viewcode-block" id="field_for_schema">
+<a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.field_for_schema">[docs]</a>
+<span class="k">def</span> <span class="nf">field_for_schema</span><span class="p">(</span>
     <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -785,6 +815,7 @@
     <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_base_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
@@ -823,7 +854,9 @@
     <span class="k">return</span> <span class="n">field</span><span class="o">.</span><span class="n">default</span>
 
 
-<div class="viewcode-block" id="NewType"><a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.NewType">[docs]</a><span class="k">def</span> <span class="nf">NewType</span><span class="p">(</span>
+<div class="viewcode-block" id="NewType">
+<a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.NewType">[docs]</a>
+<span class="k">def</span> <span class="nf">NewType</span><span class="p">(</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">typ</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span>
     <span class="n">field</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -865,6 +898,7 @@
     <span class="c1"># noinspection PyTypeHints</span>
     <span class="n">new_type</span><span class="o">.</span><span class="n">_marshmallow_args</span> <span class="o">=</span> <span class="n">kwargs</span>  <span class="c1"># type: ignore</span>
     <span class="k">return</span> <span class="n">new_type</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -928,7 +962,7 @@
       &copy;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
