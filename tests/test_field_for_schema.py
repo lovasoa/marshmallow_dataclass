@@ -187,8 +187,8 @@ class TestFieldForSchema(unittest.TestCase):
             field_for_schema(Optional[Union[int, str]]),
             union_field.Union(
                 [
-                    (str, fields.String(required=True)),
                     (int, fields.Integer(required=True)),
+                    (str, fields.String(required=True)),
                 ],
                 required=False,
                 dump_default=None,
