@@ -47,4 +47,4 @@ jobs:
       if: ${{ matrix.python_version != 'pypy3' && matrix.python_version != '3.6' }}
       run: pre-commit run --all-files
     - name: Test with pytest
-      run: pytest
+      run: pytest -ra
