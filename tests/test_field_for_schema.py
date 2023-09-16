@@ -26,11 +26,18 @@ class TestFieldForSchema(unittest.TestCase):
     def assertFieldsEqual(self, a: fields.Field, b: fields.Field):
         self.assertEqual(a.__class__, b.__class__, "field class")
 
+        def canonical(k, v):
+            if k == "union_fields":
+                # See https://github.com/lovasoa/marshmallow_dataclass/pull/246#issuecomment-1722291806
+                return k, sorted(map(repr, v))
+            elif inspect.isclass(v):
+                return k, f"{v!r} ({v.__mro__!r})"
+            else:
+                return k, repr(v)
+
         def attrs(x):
             return sorted(
-                (k, f"{v!r} ({v.__mro__!r})" if inspect.isclass(v) else repr(v))
-                for k, v in x.__dict__.items()
-                if not k.startswith("_")
+                canonical(k, v) for k, v in vars(x).items() if not k.startswith("_")
             )
 
         self.assertEqual(attrs(a), attrs(b))
