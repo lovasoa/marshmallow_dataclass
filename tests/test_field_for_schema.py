@@ -1,3 +1,4 @@
+import copy
 import inspect
 import sys
 import typing
@@ -182,7 +183,11 @@ class TestFieldForSchema(unittest.TestCase):
             ),
         )
 
+    @unittest.expectedFailure
     def test_optional_multiple_types(self):
+        # excercise bug (see #247)
+        Optional[Union[str, int]]
+
         self.assertFieldsEqual(
             field_for_schema(Optional[Union[int, str]]),
             union_field.Union(
@@ -195,6 +200,25 @@ class TestFieldForSchema(unittest.TestCase):
                 load_default=None,
             ),
         )
+
+    def test_optional_multiple_types_ignoring_union_field_order(self):
+        result = field_for_schema(Optional[Union[int, str]])
+        expected = union_field.Union(
+            [
+                (int, fields.Integer(required=True)),
+                (str, fields.String(required=True)),
+            ],
+            required=False,
+            dump_default=None,
+            load_default=None,
+        )
+
+        def sort_union_fields(field):
+            rv = copy.copy(field)
+            rv.union_fields = sorted(field.union_fields, key=repr)
+            return rv
+
+        self.assertFieldsEqual(sort_union_fields(result), sort_union_fields(expected))
 
     def test_newtype(self):
         self.assertFieldsEqual(
