@@ -297,6 +297,9 @@ def class_schema(
     >>> person
     Person(name='Anonymous', friends=[Person(name='Roger Boucher', friends=[])])
 
+    Marking dataclass fields as non-initialized (``init=False``), by default, will result in those
+    fields from being exluded in the schema. To override this behaviour, set the ``Meta`` option
+    ``include_non_init=True``.
     >>> @dataclasses.dataclass()
     ... class C:
     ...   important: int = dataclasses.field(init=True, default=0)
@@ -309,6 +312,20 @@ def class_schema(
     ... }, unknown=marshmallow.EXCLUDE)
     >>> c
     C(important=9, unimportant=0)
+
+    >>> @dataclasses.dataclass()
+    ... class C:
+    ...   class Meta:
+    ...     include_non_init = True
+    ...   important: int = dataclasses.field(init=True, default=0)
+    ...   unimportant: int = dataclasses.field(init=False, default=0)
+    ...
+    >>> c = class_schema(C)().load({
+    ...     "important": 9, # This field will be imported
+    ...     "unimportant": 9 # This field will be imported
+    ... }, unknown=marshmallow.EXCLUDE)
+    >>> c
+    C(important=9, unimportant=9)
 
     >>> @dataclasses.dataclass
     ... class Website:
@@ -408,6 +425,9 @@ def _internal_class_schema(
         if hasattr(v, "__marshmallow_hook__") or k in MEMBERS_WHITELIST
     }
 
+    # Determine whether we should include non-init fields
+    include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
+
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     type_hints = get_type_hints(
         clazz, localns=clazz_frame.f_locals if clazz_frame else None
@@ -424,7 +444,7 @@ def _internal_class_schema(
             ),
         )
         for field in fields
-        if field.init
+        if field.init or include_non_init
     )
 
     schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
