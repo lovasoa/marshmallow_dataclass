@@ -202,6 +202,7 @@ class TestFieldForSchema(unittest.TestCase):
         )
 
     def test_optional_multiple_types_ignoring_union_field_order(self):
+        # see https://github.com/lovasoa/marshmallow_dataclass/pull/246#issuecomment-1722204048
         result = field_for_schema(Optional[Union[int, str]])
         expected = union_field.Union(
             [
