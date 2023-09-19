@@ -300,6 +300,7 @@ def class_schema(
     Marking dataclass fields as non-initialized (``init=False``), by default, will result in those
     fields from being exluded in the schema. To override this behaviour, set the ``Meta`` option
     ``include_non_init=True``.
+
     >>> @dataclasses.dataclass()
     ... class C:
     ...   important: int = dataclasses.field(init=True, default=0)
