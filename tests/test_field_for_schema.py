@@ -12,6 +12,7 @@ except ImportError:
     from typing_extensions import Final, Literal  # type: ignore[assignment]
 
 from marshmallow import fields, Schema, validate
+from marshmallow.warnings import RemovedInMarshmallow4Warning
 
 from marshmallow_dataclass import (
     field_for_schema,
@@ -134,6 +135,56 @@ class TestFieldForSchema(unittest.TestCase):
                 field_for_schema(Color),
                 marshmallow_enum.EnumField(enum=Color, required=True),
             )
+
+    def test_union_enum(self):
+        class Fruit(Enum):
+            apple = "Apple"
+            banana = "Banana"
+            tomato = "Tomato"
+
+        with self.assertWarns(RemovedInMarshmallow4Warning):
+            if hasattr(fields, "Enum"):
+                self.assertFieldsEqual(
+                    field_for_schema(Union[Fruit, str], metadata={"by_value": True}),
+                    union_field.Union(
+                        [
+                            (
+                                Fruit,
+                                fields.Enum(enum=Fruit, required=True, by_value=True),
+                            ),
+                            (
+                                str,
+                                fields.String(
+                                    required=True, metadata={"by_value": True}
+                                ),
+                            ),
+                        ],
+                        required=True,
+                        metadata={"by_value": True},
+                    ),
+                )
+            else:
+                import marshmallow_enum
+
+                self.assertFieldsEqual(
+                    field_for_schema(Union[Fruit, str], metadata={"by_value": True}),
+                    marshmallow_enum.EnumField(
+                        [
+                            (
+                                Fruit,
+                                fields.Enum(enum=Fruit, required=True, by_value=True),
+                            ),
+                            (
+                                str,
+                                fields.String(
+                                    required=True, metadata={"by_value": True}
+                                ),
+                            ),
+                        ],
+                        required=True,
+                        metadata={"by_value": True},
+                    ),
+                )
 
     def test_literal(self):
         self.assertFieldsEqual(
