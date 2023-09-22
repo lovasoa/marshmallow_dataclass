@@ -133,3 +133,19 @@ class TestForwardReferences(unittest.TestCase):
         B.Schema().load(dict(a=dict(c=1)))
         # marshmallow.exceptions.ValidationError:
         # {'a': {'d': ['Missing data for required field.'], 'c': ['Unknown field.']}}
+
+    def test_locals_from_decoration_ns(self):
+        # Test that locals are picked-up at decoration-time rather
+        # than when the decorator is constructed.
+        @frozen_dataclass
+        class A:
+            b: "B"
+
+        @frozen_dataclass
+        class B:
+            x: int
+
+        assert A.Schema().load({"b": {"x": 42}}) == A(b=B(x=42))
+
+
+frozen_dataclass = dataclass(frozen=True)
