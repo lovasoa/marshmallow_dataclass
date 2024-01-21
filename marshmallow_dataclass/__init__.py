@@ -105,7 +105,7 @@ def dataclass(
     frozen: bool = False,
     match_args: bool = True,
     kw_only: bool = False,
-    slots: bool = True,
+    slots: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
 ) -> Type[_U]:
@@ -122,7 +122,7 @@ def dataclass(
     frozen: bool = False,
     match_args: bool = True,
     kw_only: bool = False,
-    slots: bool = True,
+    slots: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
 ) -> Callable[[Type[_U]], Type[_U]]:
@@ -173,7 +173,7 @@ def dataclass(
     Point(x=0.0, y=0.0)
     """
     # Check python version for dataclass params only available for python >= 3.10.
-    # If python version is below 3.10 and any of these params are set to anything 
+    # If python version is below 3.10 and any of these params are set to anything
     # other than their default, raise ValueError
     if sys.version_info >= (3, 10):
         # dataclass's typing doesn't expect it to be called as a function, so ignore type check
@@ -190,23 +190,23 @@ def dataclass(
         )
     else:
         args = {
-            'match_args': {
-                'error_message': "'match_args' argument is only available for python >= 3.10",
-                'default_value': True
+            "match_args": {
+                "error_message": "'match_args' argument is only available for python >= 3.10",
+                "default_value": True,
             },
-            'kw_only': {
-                'error_message': "'kw_only' argument is only available for python >= 3.10",
-                'default_value': False
+            "kw_only": {
+                "error_message": "'kw_only' argument is only available for python >= 3.10",
+                "default_value": False,
             },
-            'slots': {
-                'error_message': "'slots' argument is only available for python >= 3.10",
-                'default_value': False
-            }
+            "slots": {
+                "error_message": "'slots' argument is only available for python >= 3.10",
+                "default_value": False,
+            },
         }
 
         for arg, arg_info in args.items():
-            if locals()[arg] is not arg_info['default_value']:
-                raise ValueError(arg_info['error_message'])
+            if locals()[arg] is not arg_info["default_value"]:
+                raise ValueError(arg_info["error_message"])
 
         # dataclass's typing doesn't expect it to be called as a function, so ignore type check
         dc = dataclasses.dataclass(  # type: ignore
