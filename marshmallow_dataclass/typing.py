@@ -1,8 +1,9 @@
-import marshmallow.fields
-from . import NewType
+from typing import Annotated
 
-Url = NewType("Url", str, field=marshmallow.fields.Url)
-Email = NewType("Email", str, field=marshmallow.fields.Email)
+import marshmallow.fields
+
+Url = Annotated[str, marshmallow.fields.Url]
+Email = Annotated[str, marshmallow.fields.Email]
 
 # Aliases
 URL = Url

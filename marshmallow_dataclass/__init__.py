@@ -43,6 +43,8 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
+from typing import Annotated, Any, Callable, Dict, FrozenSet, List, Mapping
+from typing import NewType as typing_NewType
 from typing import (
     Any,
     Callable,
@@ -52,16 +54,17 @@ from typing import (
     Mapping,
     NewType as typing_NewType,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
+    get_args,
+    get_origin,
     get_type_hints,
     overload,
-    Sequence,
-    FrozenSet,
 )
 
 import marshmallow
@@ -69,15 +72,10 @@ import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
-
 if sys.version_info >= (3, 11):
     from typing import dataclass_transform
-elif sys.version_info >= (3, 7):
-    from typing_extensions import dataclass_transform
 else:
-    # @dataclass_transform() only helps us with mypy>=1.1 which is only available for python>=3.7
-    def dataclass_transform(**kwargs):
-        return lambda cls: cls
+    from typing_extensions import dataclass_transform
 
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
@@ -547,7 +545,7 @@ def _internal_class_schema(
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     type_hints = get_type_hints(
-        clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
+        clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns, include_extras=True,
     )
     attributes.update(
         (
@@ -639,11 +637,26 @@ def _field_for_generic_type(
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
-    origin = typing_inspect.get_origin(typ)
-    arguments = typing_inspect.get_args(typ, True)
+    origin = get_origin(typ)
+    arguments = get_args(typ)
     if origin:
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
+
+        if origin is Annotated:
+            marshmallow_annotations = [
+                arg
+                for arg in arguments[1:]
+                if (inspect.isclass(arg) and issubclass(arg, marshmallow.fields.Field))
+                or isinstance(arg, marshmallow.fields.Field)
+            ]
+            if marshmallow_annotations:
+                field = marshmallow_annotations[-1]
+                # Got a field instance, return as is. User must know what they're doing
+                if isinstance(field, marshmallow.fields.Field):
+                    return field
+
+                return field(**metadata)
 
         if origin in (list, List):
             child_type = _field_for_schema(arguments[0], base_schema=base_schema)
@@ -806,6 +819,7 @@ def _field_for_schema(
         metadata.setdefault("allow_none", True)
         return marshmallow.fields.Raw(**metadata)
 
+    # i.e.: Literal['abc']
     if typing_inspect.is_literal_type(typ):
         arguments = typing_inspect.get_args(typ)
         return marshmallow.fields.Raw(
@@ -817,6 +831,7 @@ def _field_for_schema(
             **metadata,
         )
 
+    # i.e.: Final[str] = 'abc'
     if typing_inspect.is_final_type(typ):
         arguments = typing_inspect.get_args(typ)
         if arguments:
@@ -870,13 +885,7 @@ def _field_for_schema(
 
     # enumerations
     if issubclass(typ, Enum):
-        try:
-            return marshmallow.fields.Enum(typ, **metadata)
-        except AttributeError:
-            # Remove this once support for python 3.6 is dropped.
-            import marshmallow_enum
-
-            return marshmallow_enum.EnumField(typ, **metadata)
+        return marshmallow.fields.Enum(typ, **metadata)
 
     # Nested marshmallow dataclass
     # it would be just a class name instead of actual schema util the schema is not ready yet
@@ -939,7 +948,8 @@ def NewType(
     field: Optional[Type[marshmallow.fields.Field]] = None,
     **kwargs,
 ) -> Callable[[_U], _U]:
-    """NewType creates simple unique types
+    """DEPRECATED: Use typing.Annotated instead.
+    NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
     All the keyword arguments passed to this function will be transmitted
     to the marshmallow field constructor.

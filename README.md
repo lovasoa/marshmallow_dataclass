@@ -242,28 +242,25 @@ class Sample:
 
 See [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html).
 
-### Custom NewType declarations
+### Custom type declarations
 
-This library exports a `NewType` function to create types that generate [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
-
-Keyword arguments to `NewType` are passed to the marshmallow field constructor.
+This library allows you to specify [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class) using python's Annoted type [PEP-593](https://peps.python.org/pep-0593/).
 
 ```python
-import marshmallow.validate
-from marshmallow_dataclass import NewType
+from typing import Annotated
+import marshmallow.fields as mf
+import marshmallow.validate as mv
 
-IPv4 = NewType(
-    "IPv4", str, validate=marshmallow.validate.Regexp(r"^([0-9]{1,3}\\.){3}[0-9]{1,3}$")
-)
+IPv4 = Annotated[str, mf.String(validate=mv.Regexp(r"^([0-9]{1,3}\\.){3}[0-9]{1,3}$"))]
 ```
 
-You can also pass a marshmallow field to `NewType`.
+You can also pass a marshmallow field class.
 
 ```python
 import marshmallow
 from marshmallow_dataclass import NewType
 
-Email = NewType("Email", str, field=marshmallow.fields.Email)
+Email = Annotated[str, marshmallow.fields.Email]
 ```
 
 For convenience, some custom types are provided:
