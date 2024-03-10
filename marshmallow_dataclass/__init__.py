@@ -34,6 +34,7 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+
 import collections.abc
 import dataclasses
 import inspect
@@ -61,13 +62,12 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    get_args,
-    get_origin,
     get_type_hints,
     overload,
 )
 
 import marshmallow
+import typing_extensions
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
@@ -151,8 +151,7 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Type[_U]:
-    ...
+) -> Type[_U]: ...
 
 
 @overload
@@ -165,8 +164,7 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
+) -> Callable[[Type[_U]], Type[_U]]: ...
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -225,15 +223,13 @@ def dataclass(
 
 
 @overload
-def add_schema(_cls: Type[_U]) -> Type[_U]:
-    ...
+def add_schema(_cls: Type[_U]) -> Type[_U]: ...
 
 
 @overload
 def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
+) -> Callable[[Type[_U]], Type[_U]]: ...
 
 
 @overload
@@ -242,8 +238,7 @@ def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
-) -> Type[_U]:
-    ...
+) -> Type[_U]: ...
 
 
 def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
@@ -294,8 +289,7 @@ def class_schema(
     *,
     globalns: Optional[Dict[str, Any]] = None,
     localns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]:
-    ...
+) -> Type[marshmallow.Schema]: ...
 
 
 @overload
@@ -305,8 +299,7 @@ def class_schema(
     clazz_frame: Optional[types.FrameType] = None,
     *,
     globalns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]:
-    ...
+) -> Type[marshmallow.Schema]: ...
 
 
 def class_schema(
@@ -514,7 +507,15 @@ def _internal_class_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> Type[marshmallow.Schema]:
     schema_ctx = _schema_ctx_stack.top
-    schema_ctx.seen_classes[clazz] = clazz.__name__
+
+    if typing_extensions.get_origin(clazz) is Annotated and sys.version_info < (3, 10):
+        # https://github.com/python/cpython/blob/3.10/Lib/typing.py#L977
+        class_name = clazz._name or clazz.__origin__.__name__  # type: ignore[attr-defined]
+    else:
+        class_name = clazz.__name__
+
+    schema_ctx.seen_classes[clazz] = class_name
+
     try:
         # noinspection PyDataclass
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
@@ -549,9 +550,18 @@ def _internal_class_schema(
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = get_type_hints(
-        clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns, include_extras=True,
-    )
+
+    if sys.version_info >= (3, 9):
+        type_hints = get_type_hints(
+            clazz,
+            globalns=schema_ctx.globalns,
+            localns=schema_ctx.localns,
+            include_extras=True,
+        )
+    else:
+        type_hints = get_type_hints(
+            clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
+        )
     attributes.update(
         (
             field.name,
@@ -642,8 +652,8 @@ def _field_for_generic_type(
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
-    origin = get_origin(typ)
-    arguments = get_args(typ)
+    origin = typing_extensions.get_origin(typ)
+    arguments = typing_extensions.get_args(typ)
     if origin:
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
@@ -889,7 +899,7 @@ def _field_for_schema(
         )
 
     # enumerations
-    if issubclass(typ, Enum):
+    if inspect.isclass(typ) and issubclass(typ, Enum):
         return marshmallow.fields.Enum(typ, **metadata)
 
     # Nested marshmallow dataclass

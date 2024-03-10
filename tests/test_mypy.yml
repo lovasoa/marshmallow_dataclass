@@ -27,7 +27,7 @@
     reveal_type(user.email)  # N: Revealed type is "builtins.str"
 
     User(id=42, email="user@email.com")  # E: Argument "id" to "User" has incompatible type "int"; expected "str"  [arg-type]
-    User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "list[str]"; expected "str"  [arg-type]
+    User(id="a"*32, email=["not", "a", "string"])  # E: Argument "email" to "User" has incompatible type "List[str]"; expected "str"  [arg-type]
 - case: marshmallow_dataclass_keyword_arguments
   mypy_config: |
     follow_imports = silent
