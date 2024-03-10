@@ -43,7 +43,7 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
-from typing import Annotated, Any, Callable, Dict, FrozenSet, List, Mapping
+from typing import Any, Callable, Dict, FrozenSet, List, Mapping
 from typing import NewType as typing_NewType
 from typing import (
     Any,
@@ -71,6 +71,11 @@ import marshmallow
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
+
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
 
 if sys.version_info >= (3, 11):
     from typing import dataclass_transform
