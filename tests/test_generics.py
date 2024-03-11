@@ -4,7 +4,12 @@ import unittest
 
 from marshmallow import ValidationError
 
-from marshmallow_dataclass import _is_generic_alias_of_dataclass, class_schema
+from marshmallow_dataclass import (
+    UnboundTypeVarError,
+    _is_generic_alias_of_dataclass,
+    add_schema,
+    class_schema,
+)
 
 
 class TestGenerics(unittest.TestCase):
@@ -80,6 +85,130 @@ class TestGenerics(unittest.TestCase):
             Nested(x=BB(b=1), z=BB(b=1), y=BB(b=AA(1))),
             schema_nested.load({"x": {"b": 1}, "z": {"b": 1}, "y": {"b": {"a": 1}}}),
         )
+
+    def test_marshmallow_dataclass_decorator_raises_on_generic_alias(self):
+        """
+        We can't support `GenClass[int].Schema` because the class function was created on `GenClass`
+        Therefore the function does not know about the `int` type.
+        This is a Python limitation, not a marshmallow_dataclass limitation.
+        """
+        import marshmallow_dataclass
+
+        T = typing.TypeVar("T")
+
+        class GenClass(typing.Generic[T]):
+            pass
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            marshmallow_dataclass.dataclass(GenClass[int])
+
+    def test_add_schema_raises_on_generic_alias(self):
+        """
+        We can't support `GenClass[int].Schema` because the class function was created on `GenClass`
+        Therefore the function does not know about the `int` type.
+        This is a Python limitation, not a marshmallow_dataclass limitation.
+        """
+        T = typing.TypeVar("T")
+
+        class GenClass(typing.Generic[T]):
+            pass
+
+        with self.assertRaisesRegex(TypeError, "generic"):
+            add_schema(GenClass[int])
+
+    def test_deep_generic(self):
+        T = typing.TypeVar("T")
+        U = typing.TypeVar("U")
+
+        @dataclasses.dataclass
+        class TestClass(typing.Generic[T, U]):
+            pairs: typing.List[typing.Tuple[T, U]]
+
+        test_schema = class_schema(TestClass[str, int])()
+
+        self.assertEqual(
+            test_schema.load({"pairs": [("first", "1")]}), TestClass([("first", 1)])
+        )
+
+    def test_deep_generic_with_overrides(self):
+        T = typing.TypeVar("T")
+        U = typing.TypeVar("U")
+        V = typing.TypeVar("V")
+        W = typing.TypeVar("W")
+
+        @dataclasses.dataclass
+        class TestClass(typing.Generic[T, U, V]):
+            pairs: typing.List[typing.Tuple[T, U]]
+            gen: V
+            override: int
+
+        # Don't only override typevar, but switch order to further confuse things
+        @dataclasses.dataclass
+        class TestClass2(TestClass[str, W, U]):
+            override: str  # type: ignore  # Want to test that it works, even if incompatible types
+
+        TestAlias = TestClass2[int, T]
+
+        # inherit from alias
+        @dataclasses.dataclass
+        class TestClass3(TestAlias[typing.List[int]]):
+            pass
+
+        test_schema = class_schema(TestClass3)()
+
+        self.assertEqual(
+            test_schema.load(
+                {"pairs": [("first", "1")], "gen": ["1", 2], "override": "overridden"}
+            ),
+            TestClass3([("first", 1)], [1, 2], "overridden"),
+        )
+
+    def test_generic_bases(self) -> None:
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class Base1(typing.Generic[T]):
+            answer: T
+
+        @dataclasses.dataclass
+        class TestClass(Base1[T]):
+            pass
+
+        test_schema = class_schema(TestClass[int])()
+
+        self.assertEqual(test_schema.load({"answer": "1"}), TestClass(1))
+
+    def test_bound_generic_base(self) -> None:
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class Base1(typing.Generic[T]):
+            answer: T
+
+        @dataclasses.dataclass
+        class TestClass(Base1[int]):
+            pass
+
+        with self.assertRaisesRegex(
+            UnboundTypeVarError, "Base1 has unbound fields: answer"
+        ):
+            class_schema(Base1)
+
+        test_schema = class_schema(TestClass)()
+        self.assertEqual(test_schema.load({"answer": "1"}), TestClass(1))
+
+    def test_unbound_type_var(self) -> None:
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class Base:
+            answer: T  # type: ignore[valid-type]
+
+        with self.assertRaises(UnboundTypeVarError):
+            class_schema(Base)
+
+        with self.assertRaises(TypeError):
+            class_schema(Base)
 
 
 if __name__ == "__main__":
