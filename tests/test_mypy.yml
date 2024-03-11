@@ -6,7 +6,7 @@
     follow_imports = silent
     plugins = marshmallow_dataclass.mypy
     show_error_codes = true
-    python_version = 3.6
+    python_version = 3.8
   env:
     - PYTHONPATH=.
   main: |

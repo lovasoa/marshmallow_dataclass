@@ -34,7 +34,9 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+
 import collections.abc
+import copy
 import dataclasses
 import inspect
 import sys
@@ -43,14 +45,11 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
+from typing import Any, Callable, Dict, FrozenSet, Generic, List, Mapping
+from typing import NewType as typing_NewType
 from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    NewType as typing_NewType,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Type,
@@ -59,15 +58,12 @@ from typing import (
     cast,
     get_type_hints,
     overload,
-    Sequence,
-    FrozenSet,
 )
 
 import marshmallow
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
-
 
 if sys.version_info >= (3, 11):
     from typing import dataclass_transform
@@ -92,6 +88,63 @@ MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
 
 # Recursion guard for class_schema()
 _RECURSION_GUARD = threading.local()
+
+
+class UnboundTypeVarError(TypeError):
+    """TypeVar instance can not be resolved to a type spec.
+
+    This exception is raised when an unbound TypeVar is encountered.
+
+    """
+
+
+class InvalidStateError(Exception):
+    """Raised when an operation is performed on a future that is not
+    allowed in the current state.
+    """
+
+
+class _Future(Generic[_U]):
+    """The _Future class allows deferred access to a result that is not
+    yet available.
+    """
+
+    _done: bool
+    _result: _U
+
+    def __init__(self) -> None:
+        self._done = False
+
+    def done(self) -> bool:
+        """Return ``True`` if the value is available"""
+        return self._done
+
+    def result(self) -> _U:
+        """Return the deferred value.
+
+        Raises ``InvalidStateError`` if the value has not been set.
+        """
+        if self.done():
+            return self._result
+        raise InvalidStateError("result has not been set")
+
+    def set_result(self, result: _U) -> None:
+        if self.done():
+            raise InvalidStateError("result has already been set")
+        self._result = result
+        self._done = True
+
+
+def _check_decorated_type(cls: object) -> None:
+    if not isinstance(cls, type):
+        raise TypeError(f"expected a class not {cls!r}")
+    if _is_generic_alias(cls):
+        # A .Schema attribute doesn't make sense on a generic alias — there's
+        # no way for it to know the generic parameters at run time.
+        raise TypeError(
+            "decorator does not support generic aliasses "
+            "(hint: use class_schema directly instead)"
+        )
 
 
 @overload
@@ -163,6 +216,9 @@ def dataclass(
     >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
+    if _cls is not None:
+        _check_decorated_type(_cls)
+
     # dataclass's typing doesn't expect it to be called as a function, so ignore type check
     dc = dataclasses.dataclass(  # type: ignore
         _cls, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
@@ -222,6 +278,7 @@ def add_schema(_cls=None, base_schema=None, cls_frame=None):
     """
 
     def decorator(clazz: Type[_U]) -> Type[_U]:
+        _check_decorated_type(clazz)
         # noinspection PyTypeHints
         clazz.Schema = lazy_class_attribute(  # type: ignore
             partial(class_schema, clazz, base_schema, cls_frame),
@@ -374,7 +431,9 @@ def class_schema(
     >>> class_schema(Custom)().load({})
     Custom(name=None)
     """
-    if not dataclasses.is_dataclass(clazz):
+    if not dataclasses.is_dataclass(clazz) and not _is_generic_alias_of_dataclass(
+        clazz
+    ):
         clazz = dataclasses.dataclass(clazz)
     if not clazz_frame:
         current_frame = inspect.currentframe()
@@ -395,10 +454,14 @@ def _internal_class_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     clazz_frame: Optional[types.FrameType] = None,
 ) -> Type[marshmallow.Schema]:
-    _RECURSION_GUARD.seen_classes[clazz] = clazz.__name__
+    # generic aliases do not have a __name__ prior python 3.10
+    _name = getattr(clazz, "__name__", repr(clazz))
+
+    _RECURSION_GUARD.seen_classes[clazz] = _name
     try:
-        # noinspection PyDataclass
-        fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
+        fields = _dataclass_fields(clazz)
+    except UnboundTypeVarError:
+        raise
     except TypeError:  # Not a dataclass
         try:
             warnings.warn(
@@ -414,6 +477,8 @@ def _internal_class_schema(
             )
             created_dataclass: type = dataclasses.dataclass(clazz)
             return _internal_class_schema(created_dataclass, base_schema, clazz_frame)
+        except UnboundTypeVarError:
+            raise
         except Exception as exc:
             raise TypeError(
                 f"{getattr(clazz, '__name__', repr(clazz))} is not a dataclass and cannot be turned into one."
@@ -428,16 +493,11 @@ def _internal_class_schema(
 
     # Determine whether we should include non-init fields
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
-
-    # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = get_type_hints(
-        clazz, localns=clazz_frame.f_locals if clazz_frame else None
-    )
     attributes.update(
         (
             field.name,
             field_for_schema(
-                type_hints[field.name],
+                _get_field_type_hints(field, clazz_frame),
                 _get_field_default(field),
                 field.metadata,
                 base_schema,
@@ -448,7 +508,7 @@ def _internal_class_schema(
         if field.init or include_non_init
     )
 
-    schema_class = type(clazz.__name__, (_base_schema(clazz, base_schema),), attributes)
+    schema_class = type(_name, (_base_schema(clazz, base_schema),), attributes)
     return cast(Type[marshmallow.Schema], schema_class)
 
 
@@ -535,7 +595,9 @@ def _field_for_generic_type(
 
         if origin in (list, List):
             child_type = field_for_schema(
-                arguments[0], base_schema=base_schema, typ_frame=typ_frame
+                arguments[0],
+                base_schema=base_schema,
+                typ_frame=typ_frame,
             )
             list_type = cast(
                 Type[marshmallow.fields.List],
@@ -550,14 +612,18 @@ def _field_for_generic_type(
             from . import collection_field
 
             child_type = field_for_schema(
-                arguments[0], base_schema=base_schema, typ_frame=typ_frame
+                arguments[0],
+                base_schema=base_schema,
+                typ_frame=typ_frame,
             )
             return collection_field.Sequence(cls_or_instance=child_type, **metadata)
         if origin in (set, Set):
             from . import collection_field
 
             child_type = field_for_schema(
-                arguments[0], base_schema=base_schema, typ_frame=typ_frame
+                arguments[0],
+                base_schema=base_schema,
+                typ_frame=typ_frame,
             )
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=False, **metadata
@@ -566,14 +632,20 @@ def _field_for_generic_type(
             from . import collection_field
 
             child_type = field_for_schema(
-                arguments[0], base_schema=base_schema, typ_frame=typ_frame
+                arguments[0],
+                base_schema=base_schema,
+                typ_frame=typ_frame,
             )
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=True, **metadata
             )
         if origin in (tuple, Tuple):
             children = tuple(
-                field_for_schema(arg, base_schema=base_schema, typ_frame=typ_frame)
+                field_for_schema(
+                    arg,
+                    base_schema=base_schema,
+                    typ_frame=typ_frame,
+                )
                 for arg in arguments
             )
             tuple_type = cast(
@@ -583,14 +655,18 @@ def _field_for_generic_type(
                 ),
             )
             return tuple_type(children, **metadata)
-        elif origin in (dict, Dict, collections.abc.Mapping, Mapping):
+        if origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
                 keys=field_for_schema(
-                    arguments[0], base_schema=base_schema, typ_frame=typ_frame
+                    arguments[0],
+                    base_schema=base_schema,
+                    typ_frame=typ_frame,
                 ),
                 values=field_for_schema(
-                    arguments[1], base_schema=base_schema, typ_frame=typ_frame
+                    arguments[1],
+                    base_schema=base_schema,
+                    typ_frame=typ_frame,
                 ),
                 **metadata,
             )
@@ -656,6 +732,9 @@ def field_for_schema(
     >>> field_for_schema(str, metadata={"marshmallow_field": marshmallow.fields.Url()}).__class__
     <class 'marshmallow.fields.Url'>
     """
+
+    if isinstance(typ, TypeVar):
+        raise UnboundTypeVarError(f"can not resolve type variable {typ.__name__}")
 
     metadata = {} if metadata is None else dict(metadata)
 
@@ -748,7 +827,7 @@ def field_for_schema(
         )
 
     # enumerations
-    if issubclass(typ, Enum):
+    if inspect.isclass(typ) and issubclass(typ, Enum):
         try:
             return marshmallow.fields.Enum(typ, **metadata)
         except AttributeError:
@@ -768,7 +847,9 @@ def field_for_schema(
         nested_schema
         or forward_reference
         or _RECURSION_GUARD.seen_classes.get(typ)
-        or _internal_class_schema(typ, base_schema, typ_frame)  # type: ignore [arg-type]
+        or _internal_class_schema(
+            typ, base_schema, typ_frame  # type: ignore [arg-type]
+        )
     )
 
     return marshmallow.fields.Nested(nested, **metadata)
@@ -810,6 +891,166 @@ def _get_field_default(field: dataclasses.Field):
     elif field.default is dataclasses.MISSING:
         return marshmallow.missing
     return field.default
+
+
+def _is_generic_alias_of_dataclass(clazz: type) -> bool:
+    """
+    Check if given class is a generic alias of a dataclass, if the dataclass is
+    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    """
+    is_generic = is_generic_type(clazz)
+    type_arguments = typing_inspect.get_args(clazz)
+    origin_class = typing_inspect.get_origin(clazz)
+    return (
+        is_generic
+        and len(type_arguments) > 0
+        and dataclasses.is_dataclass(origin_class)
+    )
+
+
+def _get_field_type_hints(
+    field: dataclasses.Field,
+    clazz_frame: Optional[types.FrameType] = None,
+) -> type:
+    """typing.get_type_hints doesn't generic aliasses. But this 'hack' works."""
+
+    class X:
+        x: field.type  # type: ignore[name-defined]
+
+    localns = clazz_frame.f_locals if clazz_frame else None
+    return get_type_hints(X, localns=localns)["x"]
+
+
+def _is_generic_alias(clazz: type) -> bool:
+    """
+    Check if given class is a generic alias of a class is
+    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    """
+    is_generic = is_generic_type(clazz)
+    type_arguments = typing_inspect.get_args(clazz)
+    return is_generic and len(type_arguments) > 0
+
+
+def is_generic_type(clazz: type) -> bool:
+    """
+    typing_inspect.is_generic_type explicitly ignores Union, Tuple, Callable, ClassVar
+    """
+    return (
+        isinstance(clazz, type)
+        and issubclass(clazz, Generic)  # type: ignore[arg-type]
+        or isinstance(clazz, typing_inspect.typingGenericAlias)
+    )
+
+
+def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
+    """
+    Attemps to resolves all TypeVars in the class bases. Allows us to resolve inherited and aliased generics.
+
+    Returns a dict of each base class and the resolved generics.
+    """
+    # Use Tuples so can zip (order matters)
+    args_by_class: Dict[type, Tuple[Tuple[TypeVar, _Future], ...]] = {}
+    parent_class: Optional[type] = None
+    # Loop in reversed order and iteratively resolve types
+    for subclass in reversed(clazz.mro()):
+        if issubclass(subclass, Generic) and hasattr(subclass, "__orig_bases__"):  # type: ignore[arg-type]
+            args = typing_inspect.get_args(subclass.__orig_bases__[0])
+
+            if parent_class and args_by_class.get(parent_class):
+                subclass_generic_params_to_args: List[Tuple[TypeVar, _Future]] = []
+                for (_arg, future), potential_type in zip(
+                    args_by_class[parent_class], args
+                ):
+                    if isinstance(potential_type, TypeVar):
+                        subclass_generic_params_to_args.append((potential_type, future))
+                    else:
+                        future.set_result(potential_type)
+
+                args_by_class[subclass] = tuple(subclass_generic_params_to_args)
+
+            else:
+                args_by_class[subclass] = tuple((arg, _Future()) for arg in args)
+
+            parent_class = subclass
+
+    # clazz itself is a generic alias i.e.: A[int]. So it hold the last types.
+    if _is_generic_alias(clazz):
+        origin = typing_inspect.get_origin(clazz)
+        args = typing_inspect.get_args(clazz)
+        for (_arg, future), potential_type in zip(args_by_class[origin], args):
+            if not isinstance(potential_type, TypeVar):
+                future.set_result(potential_type)
+
+    # Convert to nested dict for easier lookup
+    return {k: {typ: fut for typ, fut in args} for k, args in args_by_class.items()}
+
+
+def _replace_typevars(
+    clazz: type, resolved_generics: Optional[Dict[TypeVar, _Future]] = None
+) -> type:
+    if not resolved_generics or inspect.isclass(clazz) or not is_generic_type(clazz):
+        return clazz
+
+    return clazz.copy_with(  # type: ignore
+        tuple(
+            (
+                _replace_typevars(arg, resolved_generics)
+                if is_generic_type(arg)
+                else (
+                    resolved_generics[arg].result() if arg in resolved_generics else arg
+                )
+            )
+            for arg in typing_inspect.get_args(clazz)
+        )
+    )
+
+
+def _dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
+    if not is_generic_type(clazz):
+        return dataclasses.fields(clazz)
+
+    else:
+        unbound_fields = set()
+        # Need to manually resolve fields because `dataclasses.fields` doesn't handle generics and
+        # looses the source class. Thus I don't know how to resolve this at later on.
+        # Instead we recreate the type but with all known TypeVars resolved to their actual types.
+        resolved_typevars = _resolve_typevars(clazz)
+        # Dict[field_name, Tuple[original_field, resolved_field]]
+        fields: Dict[str, Tuple[dataclasses.Field, dataclasses.Field]] = {}
+
+        for subclass in reversed(clazz.mro()):
+            if not dataclasses.is_dataclass(subclass):
+                continue
+
+            for field in dataclasses.fields(subclass):
+                try:
+                    if field.name in fields and fields[field.name][0] == field:
+                        continue  # identical, so already resolved.
+
+                    # Either the first time we see this field, or it got overridden
+                    # If it's a class we handle it later as a Nested. Nothing to resolve now.
+                    new_field = field
+                    if not inspect.isclass(field.type) and is_generic_type(field.type):
+                        new_field = copy.copy(field)
+                        new_field.type = _replace_typevars(
+                            field.type, resolved_typevars[subclass]
+                        )
+                    elif isinstance(field.type, TypeVar):
+                        new_field = copy.copy(field)
+                        new_field.type = resolved_typevars[subclass][
+                            field.type
+                        ].result()
+
+                    fields[field.name] = (field, new_field)
+                except InvalidStateError:
+                    unbound_fields.add(field.name)
+
+        if unbound_fields:
+            raise UnboundTypeVarError(
+                f"{clazz.__name__} has unbound fields: {', '.join(unbound_fields)}"
+            )
+
+        return tuple(v[1] for v in fields.values())
 
 
 def NewType(
