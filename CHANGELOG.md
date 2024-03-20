@@ -1,5 +1,20 @@
 # marshmallow\_dataclass change log
 
+## v8.6.1 (2024-03-20)
+
+ - (Mostly) fix [memory leak][#198] when using
+   `marshamallow_dataclass.dataclass` decorator. ([#258], thank you @mvanderlee!)
+ - Fix docstring formatting for `class_schema`. ([#249])
+ - Do not ignore `Union` argument ordering in tests. Note that a
+   [bug][#247] remains: semantically, `Union`s do not respect argument
+   order, yet order matters for de/serialization. ([#248])
+
+[#198]: https://github.com/lovasoa/marshmallow_dataclass/issues/198
+[#247]: https://github.com/lovasoa/marshmallow_dataclass/issues/247
+[#248]: https://github.com/lovasoa/marshmallow_dataclass/pull/248
+[#249]: https://github.com/lovasoa/marshmallow_dataclass/pull/249
+[#258]: https://github.com/lovasoa/marshmallow_dataclass/pull/258
+
 ## v8.6.0 (2023-09-16)
  - New field in associated Meta classes: `include_non_init`:
   - This adds the ability to include non init-ed fields into the schema
