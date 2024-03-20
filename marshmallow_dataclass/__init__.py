@@ -44,12 +44,11 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
-from typing import Any, Callable, Dict, FrozenSet, List, Mapping
-from typing import NewType as typing_NewType
 from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Generic,
     List,
     Mapping,
@@ -151,7 +150,8 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Type[_U]: ...
+) -> Type[_U]:
+    ...
 
 
 @overload
@@ -164,7 +164,8 @@ def dataclass(
     frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
-) -> Callable[[Type[_U]], Type[_U]]: ...
+) -> Callable[[Type[_U]], Type[_U]]:
+    ...
 
 
 # _cls should never be specified by keyword, so start it with an
@@ -223,13 +224,15 @@ def dataclass(
 
 
 @overload
-def add_schema(_cls: Type[_U]) -> Type[_U]: ...
+def add_schema(_cls: Type[_U]) -> Type[_U]:
+    ...
 
 
 @overload
 def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
-) -> Callable[[Type[_U]], Type[_U]]: ...
+) -> Callable[[Type[_U]], Type[_U]]:
+    ...
 
 
 @overload
@@ -238,7 +241,8 @@ def add_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
-) -> Type[_U]: ...
+) -> Type[_U]:
+    ...
 
 
 def add_schema(_cls=None, base_schema=None, cls_frame=None, stacklevel=1):
@@ -289,7 +293,8 @@ def class_schema(
     *,
     globalns: Optional[Dict[str, Any]] = None,
     localns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]: ...
+) -> Type[marshmallow.Schema]:
+    ...
 
 
 @overload
@@ -299,7 +304,8 @@ def class_schema(
     clazz_frame: Optional[types.FrameType] = None,
     *,
     globalns: Optional[Dict[str, Any]] = None,
-) -> Type[marshmallow.Schema]: ...
+) -> Type[marshmallow.Schema]:
+    ...
 
 
 def class_schema(
