@@ -3,7 +3,8 @@ repos:
   rev: v3.3.1
   hooks:
   - id: pyupgrade
-    args: ["--py36-plus"]
+    # I've kept it on py3.7 so that it doesn't replace `Dict` with `dict`
+    args: ["--py37-plus"]
 - repo: https://github.com/python/black
   rev: 23.1.0
   hooks:
