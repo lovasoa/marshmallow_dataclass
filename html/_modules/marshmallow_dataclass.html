@@ -5,8 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>marshmallow_dataclass &#8212; marshmallow_dataclass 0.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=4f649999" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=039e1c02" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
     <script src="../_static/documentation_options.js?v=01f34227"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -15,8 +15,9 @@
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -78,6 +79,7 @@
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">Generic</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Mapping</span><span class="p">,</span>
     <span class="n">NewType</span> <span class="k">as</span> <span class="n">typing_NewType</span><span class="p">,</span>
@@ -121,8 +123,50 @@
 <span class="c1"># Max number of generated schemas that class_schema keeps of generated schemas. Removes duplicates.</span>
 <span class="n">MAX_CLASS_SCHEMA_CACHE_SIZE</span> <span class="o">=</span> <span class="mi">1024</span>
 
-<span class="c1"># Recursion guard for class_schema()</span>
-<span class="n">_RECURSION_GUARD</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">_maybe_get_callers_frame</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the caller&#39;s frame, but only if it will help resolve forward type references.</span>
+
+<span class="sd">    We sometimes need the caller&#39;s frame to get access to the caller&#39;s</span>
+<span class="sd">    local namespace in order to be able to resolve forward type</span>
+<span class="sd">    references in dataclasses.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    If the caller&#39;s locals are the same as the dataclass&#39; module</span>
+<span class="sd">    globals — this is the case for the common case of dataclasses</span>
+<span class="sd">    defined at the module top-level — we don&#39;t need the locals.</span>
+<span class="sd">    (Typing.get_type_hints() knows how to check the class module</span>
+<span class="sd">    globals on its own.)</span>
+
+<span class="sd">    In that case, we don&#39;t need the caller&#39;s frame.  Not holding a</span>
+<span class="sd">    reference to the frame in our our lazy ``.Scheme`` class attribute</span>
+<span class="sd">    is a significant win, memory-wise.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">stacklevel</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">f_back</span>
+
+        <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">globalns</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">),</span> <span class="s2">&quot;__dict__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">f_locals</span> <span class="ow">is</span> <span class="n">globalns</span><span class="p">:</span>
+            <span class="c1"># Locals are the globals</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">frame</span>
+
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># Paranoia, per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
+        <span class="k">del</span> <span class="n">frame</span>
 
 
 <span class="nd">@overload</span>
@@ -170,6 +214,7 @@
     <span class="n">frozen</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cls_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]],</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.</span>
@@ -196,19 +241,18 @@
 <span class="sd">    &gt;&gt;&gt; Point.Schema().load({&#39;x&#39;:0, &#39;y&#39;:0}) # This line can be statically type checked</span>
 <span class="sd">    Point(x=0.0, y=0.0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># dataclass&#39;s typing doesn&#39;t expect it to be called as a function, so ignore type check</span>
-    <span class="n">dc</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-        <span class="n">_cls</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span>
+    <span class="n">dc</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">cls_frame</span><span class="p">:</span>
-        <span class="n">current_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">current_frame</span><span class="p">:</span>
-            <span class="n">cls_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
-        <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
-        <span class="k">del</span> <span class="n">current_frame</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span> <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">add_schema</span><span class="p">(</span>
+            <span class="n">dc</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="n">stacklevel</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+
     <span class="k">if</span> <span class="n">_cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="k">lambda</span> <span class="bp">cls</span><span class="p">:</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dc</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">add_schema</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="n">cls_frame</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span>
+    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_cls</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="n">stacklevel</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
 
@@ -229,13 +273,14 @@
     <span class="n">_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cls_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
     <span class="o">...</span>
 
 
 <div class="viewcode-block" id="add_schema">
 <a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.add_schema">[docs]</a>
-<span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">add_schema</span><span class="p">(</span><span class="n">_cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls_frame</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This decorator adds a marshmallow schema as the &#39;Schema&#39; attribute in a dataclass.</span>
 <span class="sd">    It uses :func:`class_schema` internally.</span>
@@ -257,17 +302,46 @@
 <span class="sd">    Artist(names=(&#39;Martin&#39;, &#39;Ramirez&#39;))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">clazz</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">],</span> <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">stacklevel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">_U</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">cls_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">cls_frame</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">_maybe_get_callers_frame</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="n">stacklevel</span><span class="p">)</span>
+
         <span class="c1"># noinspection PyTypeHints</span>
         <span class="n">clazz</span><span class="o">.</span><span class="n">Schema</span> <span class="o">=</span> <span class="n">lazy_class_attribute</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-            <span class="n">partial</span><span class="p">(</span><span class="n">class_schema</span><span class="p">,</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">cls_frame</span><span class="p">),</span>
+            <span class="n">partial</span><span class="p">(</span><span class="n">class_schema</span><span class="p">,</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">frame</span><span class="p">),</span>
             <span class="s2">&quot;Schema&quot;</span><span class="p">,</span>
             <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">clazz</span>
 
-    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_cls</span><span class="p">)</span> <span class="k">if</span> <span class="n">_cls</span> <span class="k">else</span> <span class="n">decorator</span></div>
+    <span class="k">if</span> <span class="n">_cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">decorator</span>
+    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_cls</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="n">stacklevel</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
 
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
+    <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">globalns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">localns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
+    <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
+    <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">globalns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
+    <span class="o">...</span>
 
 
 <div class="viewcode-block" id="class_schema">
@@ -275,7 +349,11 @@
 <span class="k">def</span> <span class="nf">class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># FIXME: delete clazz_frame from API?</span>
     <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">globalns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">localns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a class to a marshmallow schema</span>
@@ -339,6 +417,7 @@
 <span class="sd">    Marking dataclass fields as non-initialized (``init=False``), by default, will result in those</span>
 <span class="sd">    fields from being exluded in the schema. To override this behaviour, set the ``Meta`` option</span>
 <span class="sd">    ``include_non_init=True``.</span>
+
 <span class="sd">    &gt;&gt;&gt; @dataclasses.dataclass()</span>
 <span class="sd">    ... class C:</span>
 <span class="sd">    ...   important: int = dataclasses.field(init=True, default=0)</span>
@@ -414,27 +493,66 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">):</span>
         <span class="n">clazz</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">clazz_frame</span><span class="p">:</span>
-        <span class="n">current_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">current_frame</span><span class="p">:</span>
-            <span class="n">clazz_frame</span> <span class="o">=</span> <span class="n">current_frame</span><span class="o">.</span><span class="n">f_back</span>
-        <span class="c1"># Per https://docs.python.org/3/library/inspect.html#the-interpreter-stack</span>
-        <span class="k">del</span> <span class="n">current_frame</span>
-    <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+    <span class="k">if</span> <span class="n">localns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">clazz_frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">clazz_frame</span> <span class="o">=</span> <span class="n">_maybe_get_callers_frame</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">clazz_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">localns</span> <span class="o">=</span> <span class="n">clazz_frame</span><span class="o">.</span><span class="n">f_locals</span>
+    <span class="k">with</span> <span class="n">_SchemaContext</span><span class="p">(</span><span class="n">globalns</span><span class="p">,</span> <span class="n">localns</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span></div>
 
+
+
+<span class="k">class</span> <span class="nc">_SchemaContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Global context for an invocation of class_schema.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">globalns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">localns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen_classes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">globalns</span> <span class="o">=</span> <span class="n">globalns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">localns</span> <span class="o">=</span> <span class="n">localns</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_SchemaContext&quot;</span><span class="p">:</span>
+        <span class="n">_schema_ctx_stack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">_typ</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]],</span>
+        <span class="n">_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span>
+        <span class="n">_tb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">TracebackType</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_schema_ctx_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_LocalStack</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">_U</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">_U</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">_U</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">top</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_U</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="n">_schema_ctx_stack</span> <span class="o">=</span> <span class="n">_LocalStack</span><span class="p">[</span><span class="n">_SchemaContext</span><span class="p">]()</span>
 
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">MAX_CLASS_SCHEMA_CACHE_SIZE</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_internal_class_schema</span><span class="p">(</span>
     <span class="n">clazz</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">clazz_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]:</span>
-    <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="p">[</span><span class="n">clazz</span><span class="p">]</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">schema_ctx</span> <span class="o">=</span> <span class="n">_schema_ctx_stack</span><span class="o">.</span><span class="n">top</span>
+    <span class="n">schema_ctx</span><span class="o">.</span><span class="n">seen_classes</span><span class="p">[</span><span class="n">clazz</span><span class="p">]</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># noinspection PyDataclass</span>
         <span class="n">fields</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
@@ -452,7 +570,7 @@
                 <span class="s2">&quot;****** WARNING ******&quot;</span>
             <span class="p">)</span>
             <span class="n">created_dataclass</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">created_dataclass</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">clazz_frame</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">created_dataclass</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;__name__&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">repr</span><span class="p">(</span><span class="n">clazz</span><span class="p">))</span><span class="si">}</span><span class="s2"> is not a dataclass and cannot be turned into one.&quot;</span>
@@ -470,17 +588,16 @@
 
     <span class="c1"># Update the schema members to contain marshmallow fields instead of dataclass fields</span>
     <span class="n">type_hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span>
-        <span class="n">clazz</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">clazz_frame</span><span class="o">.</span><span class="n">f_locals</span> <span class="k">if</span> <span class="n">clazz_frame</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">clazz</span><span class="p">,</span> <span class="n">globalns</span><span class="o">=</span><span class="n">schema_ctx</span><span class="o">.</span><span class="n">globalns</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">schema_ctx</span><span class="o">.</span><span class="n">localns</span>
     <span class="p">)</span>
     <span class="n">attributes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
         <span class="p">(</span>
             <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">field_for_schema</span><span class="p">(</span>
+            <span class="n">_field_for_schema</span><span class="p">(</span>
                 <span class="n">type_hints</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">],</span>
                 <span class="n">_get_field_default</span><span class="p">(</span><span class="n">field</span><span class="p">),</span>
                 <span class="n">field</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
                 <span class="n">base_schema</span><span class="p">,</span>
-                <span class="n">clazz_frame</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span>
@@ -505,7 +622,6 @@
     <span class="n">newtype_supertype</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]],</span>
-    <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a new field for fields based on a super field. (Usually spawned from NewType)</span>
@@ -531,12 +647,11 @@
     <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">_field_for_schema</span><span class="p">(</span>
             <span class="n">newtype_supertype</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
             <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
             <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span>
-            <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span><span class="p">,</span>
         <span class="p">)</span>
 
 
@@ -560,7 +675,6 @@
 <span class="k">def</span> <span class="nf">_field_for_generic_type</span><span class="p">(</span>
     <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]],</span>
-    <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">],</span>
     <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -573,9 +687,7 @@
         <span class="n">type_mapping</span> <span class="o">=</span> <span class="n">base_schema</span><span class="o">.</span><span class="n">TYPE_MAPPING</span> <span class="k">if</span> <span class="n">base_schema</span> <span class="k">else</span> <span class="p">{}</span>
 
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
-            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span>
-                <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-            <span class="p">)</span>
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
             <span class="n">list_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
                 <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">],</span>
                 <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">List</span><span class="p">),</span>
@@ -588,32 +700,25 @@
         <span class="p">):</span>
             <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
 
-            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span>
-                <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-            <span class="p">)</span>
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Sequence</span><span class="p">(</span><span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="n">Set</span><span class="p">):</span>
             <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
 
-            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span>
-                <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-            <span class="p">)</span>
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span>
                 <span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">frozenset</span><span class="p">,</span> <span class="n">FrozenSet</span><span class="p">):</span>
             <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">collection_field</span>
 
-            <span class="n">child_type</span> <span class="o">=</span> <span class="n">field_for_schema</span><span class="p">(</span>
-                <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-            <span class="p">)</span>
+            <span class="n">child_type</span> <span class="o">=</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">collection_field</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span>
                 <span class="n">cls_or_instance</span><span class="o">=</span><span class="n">child_type</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">):</span>
             <span class="n">children</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                <span class="n">field_for_schema</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span>
+                <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span>
             <span class="p">)</span>
             <span class="n">tuple_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
                 <span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Tuple</span><span class="p">],</span>
@@ -625,14 +730,11 @@
         <span class="k">elif</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
             <span class="n">dict_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">dict_type</span><span class="p">(</span>
-                <span class="n">keys</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span>
-                    <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-                <span class="p">),</span>
-                <span class="n">values</span><span class="o">=</span><span class="n">field_for_schema</span><span class="p">(</span>
-                    <span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span>
-                <span class="p">),</span>
+                <span class="n">keys</span><span class="o">=</span><span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">_field_for_schema</span><span class="p">(</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">),</span>
                 <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
             <span class="p">)</span>
+
     <span class="k">if</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_union_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">typing_inspect</span><span class="o">.</span><span class="n">is_optional_type</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
             <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;allow_none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;allow_none&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
@@ -642,11 +744,10 @@
             <span class="n">metadata</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">subtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NoneType</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subtypes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">_field_for_schema</span><span class="p">(</span>
                 <span class="n">subtypes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                 <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
                 <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span>
-                <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">union_field</span>
 
@@ -654,11 +755,10 @@
             <span class="p">[</span>
                 <span class="p">(</span>
                     <span class="n">subtyp</span><span class="p">,</span>
-                    <span class="n">field_for_schema</span><span class="p">(</span>
+                    <span class="n">_field_for_schema</span><span class="p">(</span>
                         <span class="n">subtyp</span><span class="p">,</span>
                         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
                         <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span>
-                        <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span><span class="p">,</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">subtyp</span> <span class="ow">in</span> <span class="n">subtypes</span>
@@ -672,9 +772,10 @@
 <a class="viewcode-back" href="../marshmallow_dataclass.html#marshmallow_dataclass.field_for_schema">[docs]</a>
 <span class="k">def</span> <span class="nf">field_for_schema</span><span class="p">(</span>
     <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
-    <span class="n">default</span><span class="o">=</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># FIXME: delete typ_frame from API?</span>
     <span class="n">typ_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -696,6 +797,30 @@
 
 <span class="sd">    &gt;&gt;&gt; field_for_schema(str, metadata={&quot;marshmallow_field&quot;: marshmallow.fields.Url()}).__class__</span>
 <span class="sd">    &lt;class &#39;marshmallow.fields.Url&#39;&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">_SchemaContext</span><span class="p">(</span><span class="n">localns</span><span class="o">=</span><span class="n">typ_frame</span><span class="o">.</span><span class="n">f_locals</span> <span class="k">if</span> <span class="n">typ_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_field_for_schema</span><span class="p">(</span>
+    <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">missing</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">base_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">marshmallow</span><span class="o">.</span><span class="n">Schema</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Field</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a marshmallow Field corresponding to the given python type.</span>
+<span class="sd">    The metadata of the dataclass field is used as arguments to the marshmallow Field.</span>
+
+<span class="sd">    This is an internal version of field_for_schema. It assumes a _SchemaContext</span>
+<span class="sd">    has been pushed onto the local stack.</span>
+
+<span class="sd">    :param typ: The type for which a field should be generated</span>
+<span class="sd">    :param default: value to use for (de)serialization when the field is missing</span>
+<span class="sd">    :param metadata: Additional parameters to pass to the marshmallow field constructor</span>
+<span class="sd">    :param base_schema: marshmallow schema used as a base class when deriving dataclass schema</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
@@ -768,10 +893,10 @@
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">subtyp</span> <span class="o">=</span> <span class="n">Any</span>
-        <span class="k">return</span> <span class="n">field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_field_for_schema</span><span class="p">(</span><span class="n">subtyp</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span>
 
     <span class="c1"># Generic types</span>
-    <span class="n">generic_field</span> <span class="o">=</span> <span class="n">_field_for_generic_type</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+    <span class="n">generic_field</span> <span class="o">=</span> <span class="n">_field_for_generic_type</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">generic_field</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generic_field</span>
 
@@ -785,7 +910,6 @@
             <span class="n">newtype_supertype</span><span class="o">=</span><span class="n">newtype_supertype</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
             <span class="n">base_schema</span><span class="o">=</span><span class="n">base_schema</span><span class="p">,</span>
-            <span class="n">typ_frame</span><span class="o">=</span><span class="n">typ_frame</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># enumerations</span>
@@ -808,12 +932,11 @@
     <span class="n">nested</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">nested_schema</span>
         <span class="ow">or</span> <span class="n">forward_reference</span>
-        <span class="ow">or</span> <span class="n">_RECURSION_GUARD</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
-        <span class="ow">or</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">,</span> <span class="n">typ_frame</span><span class="p">)</span>  <span class="c1"># type: ignore [arg-type]</span>
+        <span class="ow">or</span> <span class="n">_schema_ctx_stack</span><span class="o">.</span><span class="n">top</span><span class="o">.</span><span class="n">seen_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">_internal_class_schema</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">base_schema</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type] # FIXME</span>
     <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span></div>
-
+    <span class="k">return</span> <span class="n">marshmallow</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Nested</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_base_schema</span><span class="p">(</span>
@@ -959,11 +1082,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Ophir LOJKINE.
+      &#169;2019, Ophir LOJKINE.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
     </div>
 
