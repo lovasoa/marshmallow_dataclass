@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.6.0"
+VERSION = "8.6.1"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
