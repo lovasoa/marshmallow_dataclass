@@ -1,8 +1,10 @@
 from dataclasses import field
+from enum import Enum
 import sys
 import unittest
 from typing import List, Optional, Union, Dict
 
+from marshmallow.warnings import RemovedInMarshmallow4Warning
 import marshmallow
 
 from marshmallow_dataclass import dataclass
@@ -195,4 +197,23 @@ class TestClassSchema(unittest.TestCase):
         self.assertEqual(schema.dump(loaded), data_in)
 
         data_in = {"value": 42}
+        self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+    def test_union_enum(self):
+        class Fruit(Enum):
+            apple = "Apple"
+            banana = "Banana"
+            tomato = "Tomato"
+
+        @dataclass
+        class Dclass:
+            value: Union[Fruit, dict] = field(metadata={"by_value": True})
+
+        with self.assertWarns(RemovedInMarshmallow4Warning):
+            schema = Dclass.Schema()
+
+        data_in = {"value": "Apple"}
+        self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+        data_in = {"value": {"fruit": "Orange"}}
         self.assertEqual(schema.dump(schema.load(data_in)), data_in)
