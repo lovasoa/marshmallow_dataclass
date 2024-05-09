@@ -5,7 +5,7 @@ from typing import List, Optional, Union, Dict
 
 import marshmallow
 
-from marshmallow_dataclass import dataclass
+from marshmallow_dataclass import dataclass, NewType
 
 
 class TestClassSchema(unittest.TestCase):
@@ -196,3 +196,23 @@ class TestClassSchema(unittest.TestCase):
 
         data_in = {"value": 42}
         self.assertEqual(schema.dump(schema.load(data_in)), data_in)
+
+    @unittest.skipIf(
+        sys.version_info < (3, 7, 4),
+        "Requires  typeguard >=4.0.0 not available for py<3.7.4",
+    )
+    def test_union_with_generics(self):
+        IntList = NewType("IntList", List[int])
+
+        @dataclass
+        class Dclass:
+            value: Union[IntList, List[str]]
+
+        schema = Dclass.Schema()
+
+        self.assertEqual(
+            schema.load({"value": [1, 2, 3]}), Dclass(value=IntList([1, 2, 3]))
+        )
+        self.assertEqual(
+            schema.dump(Dclass(value=IntList([1, 2, 3]))), {"value": [1, 2, 3]}
+        )
