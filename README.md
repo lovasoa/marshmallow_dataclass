@@ -54,13 +54,8 @@ This package [is hosted on PyPI](https://pypi.org/project/marshmallow-dataclass/
 pip3 install marshmallow-dataclass
 ```
 
-You may optionally install the following extras:
-
-- `enum` : enum support for marshmallow versions <3.18 [marshmallow-enum](https://github.com/justanr/marshmallow_enum).
-- `union` : for translating python [`Union` types](https://docs.python.org/3/library/typing.html#typing.Union) to union fields.
-
 ```shell
-pip3 install "marshmallow-dataclass[enum,union]"
+pip3 install "marshmallow-dataclass"
 ```
 
 ### marshmallow 2 support

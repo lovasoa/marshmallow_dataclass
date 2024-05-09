@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "8.6.1"
+VERSION = "9.0.0"
 
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -8,23 +8,16 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries",
 ]
 
 EXTRAS_REQUIRE = {
-    "enum": [
-        "marshmallow-enum; python_version < '3.7'",
-        "marshmallow>=3.18.0,<4.0; python_version >= '3.7'",
-    ],
-    "union": ["typeguard>=2.4.1,<5.0.0"],
     "lint": ["pre-commit~=2.17"],
-    ':python_version == "3.6"': ["dataclasses", "types-dataclasses<0.6.4"],
     "docs": ["sphinx"],
     "tests": [
         "pytest>=5.4",
@@ -34,11 +27,7 @@ EXTRAS_REQUIRE = {
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["enum"]
-    + EXTRAS_REQUIRE["union"]
-    + EXTRAS_REQUIRE["lint"]
-    + EXTRAS_REQUIRE["docs"]
-    + EXTRAS_REQUIRE["tests"]
+    EXTRAS_REQUIRE["lint"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["tests"]
 )
 
 setup(
@@ -56,15 +45,13 @@ setup(
     keywords=["marshmallow", "dataclass", "serialization"],
     classifiers=CLASSIFIERS,
     license="MIT",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
-        "marshmallow>=3.13.0,<4.0",
-        "typing-inspect>=0.8.0,<1.0",
-        # Need `Literal`
-        "typing-extensions>=3.7.2; python_version < '3.8'",
+        "marshmallow>=3.18.0,",
+        "typing-inspect~=0.9.0",
+        "typeguard~=4.0.0",
         # Need `dataclass_transform(field_specifiers)`
-        # NB: typing-extensions>=4.2.0 conflicts with python 3.6
-        "typing-extensions>=4.2.0; python_version<'3.11' and python_version>='3.7'",
+        "typing-extensions>=4.2.0; python_version<'3.11'",
     ],
     extras_require=EXTRAS_REQUIRE,
     package_data={"marshmallow_dataclass": ["py.typed"]},

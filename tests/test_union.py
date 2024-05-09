@@ -197,10 +197,6 @@ class TestClassSchema(unittest.TestCase):
         data_in = {"value": 42}
         self.assertEqual(schema.dump(schema.load(data_in)), data_in)
 
-    @unittest.skipIf(
-        sys.version_info < (3, 7, 4),
-        "Requires  typeguard >=4.0.0 not available for py<3.7.4",
-    )
     def test_union_with_generics(self):
         IntList = NewType("IntList", List[int])
 
