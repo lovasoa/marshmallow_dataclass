@@ -646,7 +646,10 @@ def _field_for_generic_type(
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
         if origin in (list, List):
-            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
+            child_metadata = metadata.pop("child_metadata", None)
+            child_type = _field_for_schema(
+                arguments[0], base_schema=base_schema, metadata=child_metadata
+            )
             list_type = cast(
                 Type[marshmallow.fields.List],
                 type_mapping.get(List, marshmallow.fields.List),
