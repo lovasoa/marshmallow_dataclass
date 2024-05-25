@@ -886,7 +886,8 @@ def _field_for_schema(
     forward_reference = getattr(typ, "__forward_arg__", None)
 
     nested = (
-        nested_schema
+        metadata.pop("nested", None)
+        or nested_schema
         or forward_reference
         or _schema_ctx_stack.top.seen_classes.get(typ)
         or _internal_class_schema(typ, base_schema)  # type: ignore[arg-type] # FIXME
