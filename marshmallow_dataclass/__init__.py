@@ -664,21 +664,6 @@ def _field_for_generic_type(
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
-        if origin is Annotated:
-            marshmallow_annotations = [
-                arg
-                for arg in arguments[1:]
-                if (inspect.isclass(arg) and issubclass(arg, marshmallow.fields.Field))
-                or isinstance(arg, marshmallow.fields.Field)
-            ]
-            if marshmallow_annotations:
-                field = marshmallow_annotations[-1]
-                # Got a field instance, return as is. User must know what they're doing
-                if isinstance(field, marshmallow.fields.Field):
-                    return field
-
-                return field(**metadata)
-
         if origin in (list, List):
             child_type = _field_for_schema(arguments[0], base_schema=base_schema)
             list_type = cast(
@@ -728,6 +713,41 @@ def _field_for_generic_type(
                 **metadata,
             )
 
+    return None
+
+
+def _field_for_annotated_type(
+    typ: type,
+    **metadata: Any,
+) -> Optional[marshmallow.fields.Field]:
+    """
+    If the type is an Annotated interface, resolve the arguments and construct the appropriate Field.
+    """
+    origin = typing_extensions.get_origin(typ)
+    arguments = typing_extensions.get_args(typ)
+    if origin and origin is Annotated:
+        marshmallow_annotations = [
+            arg
+            for arg in arguments[1:]
+            if (inspect.isclass(arg) and issubclass(arg, marshmallow.fields.Field))
+            or isinstance(arg, marshmallow.fields.Field)
+        ]
+        if marshmallow_annotations:
+            field = marshmallow_annotations[-1]
+            # Got a field instance, return as is. User must know what they're doing
+            if isinstance(field, marshmallow.fields.Field):
+                return field
+
+            return field(**metadata)
+    return None
+
+
+def _field_for_union_type(
+    typ: type,
+    base_schema: Optional[Type[marshmallow.Schema]],
+    **metadata: Any,
+) -> Optional[marshmallow.fields.Field]:
+    arguments = typing_extensions.get_args(typ)
     if typing_inspect.is_union_type(typ):
         if typing_inspect.is_optional_type(typ):
             metadata["allow_none"] = metadata.get("allow_none", True)
@@ -886,6 +906,14 @@ def _field_for_schema(
         else:
             subtyp = Any
         return _field_for_schema(subtyp, default, metadata, base_schema)
+
+    annotated_field = _field_for_annotated_type(typ, **metadata)
+    if annotated_field:
+        return annotated_field
+
+    union_field = _field_for_union_type(typ, base_schema, **metadata)
+    if union_field:
+        return union_field
 
     # Generic types
     generic_field = _field_for_generic_type(typ, base_schema, **metadata)
