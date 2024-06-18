@@ -6,3 +6,9 @@ target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py310']
 filterwarnings = [
     "error:::marshmallow_dataclass|test",
 ]
+
+[tool.coverage.report]
+exclude_also = [
+    '^\s*\.\.\.\s*$',
+    '^\s*pass\s*$',
+]
