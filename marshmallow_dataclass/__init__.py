@@ -733,6 +733,11 @@ def _field_for_annotated_type(
             or isinstance(arg, marshmallow.fields.Field)
         ]
         if marshmallow_annotations:
+            if len(marshmallow_annotations) > 1:
+                warnings.warn(
+                    "Multiple marshmallow Field annotations found. Using the last one."
+                )
+
             field = marshmallow_annotations[-1]
             # Got a field instance, return as is. User must know what they're doing
             if isinstance(field, marshmallow.fields.Field):
