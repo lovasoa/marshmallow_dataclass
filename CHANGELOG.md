@@ -1,5 +1,20 @@
 # marshmallow\_dataclass change log
 
+## v8.7.0 (unreleased)
+
+ - Drop support for python 3.6 and 3.7. Test under python 3.12. ([#263])
+ - Add support for using `Annotated` (rather than our now deprecated
+   custom `NewType`) to associate marshmallow configuration with
+   particular types. ([#257])
+ - Update pin to allow typeguard 4.*. This fixes issues with `Union`s
+   of generic types. ([#260], [#261], [#250])
+
+[#250]: https://github.com/lovasoa/marshmallow_dataclass/issues/250
+[#257]: https://github.com/lovasoa/marshmallow_dataclass/pull/257
+[#260]: https://github.com/lovasoa/marshmallow_dataclass/pull/260
+[#261]: https://github.com/lovasoa/marshmallow_dataclass/pull/261
+[#263]: https://github.com/lovasoa/marshmallow_dataclass/pull/263
+
 ## v8.6.1 (2024-03-20)
 
  - (Mostly) fix [memory leak][#198] when using
