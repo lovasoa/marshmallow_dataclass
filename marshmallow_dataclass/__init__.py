@@ -34,6 +34,7 @@ Full example::
       })
       Schema: ClassVar[Type[Schema]] = Schema # For the type checker
 """
+
 import collections.abc
 import dataclasses
 import inspect
@@ -47,11 +48,13 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Generic,
     List,
     Mapping,
     NewType as typing_NewType,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Type,
@@ -60,24 +63,23 @@ from typing import (
     cast,
     get_type_hints,
     overload,
-    Sequence,
-    FrozenSet,
 )
 
 import marshmallow
+import typing_extensions
 import typing_inspect
 
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
 
 if sys.version_info >= (3, 11):
     from typing import dataclass_transform
-elif sys.version_info >= (3, 7):
-    from typing_extensions import dataclass_transform
 else:
-    # @dataclass_transform() only helps us with mypy>=1.1 which is only available for python>=3.7
-    def dataclass_transform(**kwargs):
-        return lambda cls: cls
+    from typing_extensions import dataclass_transform
 
 
 __all__ = ["dataclass", "add_schema", "class_schema", "field_for_schema", "NewType"]
@@ -511,7 +513,15 @@ def _internal_class_schema(
     base_schema: Optional[Type[marshmallow.Schema]] = None,
 ) -> Type[marshmallow.Schema]:
     schema_ctx = _schema_ctx_stack.top
-    schema_ctx.seen_classes[clazz] = clazz.__name__
+
+    if typing_extensions.get_origin(clazz) is Annotated and sys.version_info < (3, 10):
+        # https://github.com/python/cpython/blob/3.10/Lib/typing.py#L977
+        class_name = clazz._name or clazz.__origin__.__name__  # type: ignore[attr-defined]
+    else:
+        class_name = clazz.__name__
+
+    schema_ctx.seen_classes[clazz] = class_name
+
     try:
         # noinspection PyDataclass
         fields: Tuple[dataclasses.Field, ...] = dataclasses.fields(clazz)
@@ -546,9 +556,18 @@ def _internal_class_schema(
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = get_type_hints(
-        clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
-    )
+
+    if sys.version_info >= (3, 9):
+        type_hints = get_type_hints(
+            clazz,
+            globalns=schema_ctx.globalns,
+            localns=schema_ctx.localns,
+            include_extras=True,
+        )
+    else:
+        type_hints = get_type_hints(
+            clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
+        )
     attributes.update(
         (
             field.name,
@@ -639,8 +658,8 @@ def _field_for_generic_type(
     """
     If the type is a generic interface, resolve the arguments and construct the appropriate Field.
     """
-    origin = typing_inspect.get_origin(typ)
-    arguments = typing_inspect.get_args(typ, True)
+    origin = typing_extensions.get_origin(typ)
+    arguments = typing_extensions.get_args(typ)
     if origin:
         # Override base_schema.TYPE_MAPPING to change the class used for generic types below
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
@@ -694,6 +713,46 @@ def _field_for_generic_type(
                 **metadata,
             )
 
+    return None
+
+
+def _field_for_annotated_type(
+    typ: type,
+    **metadata: Any,
+) -> Optional[marshmallow.fields.Field]:
+    """
+    If the type is an Annotated interface, resolve the arguments and construct the appropriate Field.
+    """
+    origin = typing_extensions.get_origin(typ)
+    arguments = typing_extensions.get_args(typ)
+    if origin and origin is Annotated:
+        marshmallow_annotations = [
+            arg
+            for arg in arguments[1:]
+            if (inspect.isclass(arg) and issubclass(arg, marshmallow.fields.Field))
+            or isinstance(arg, marshmallow.fields.Field)
+        ]
+        if marshmallow_annotations:
+            if len(marshmallow_annotations) > 1:
+                warnings.warn(
+                    "Multiple marshmallow Field annotations found. Using the last one."
+                )
+
+            field = marshmallow_annotations[-1]
+            # Got a field instance, return as is. User must know what they're doing
+            if isinstance(field, marshmallow.fields.Field):
+                return field
+
+            return field(**metadata)
+    return None
+
+
+def _field_for_union_type(
+    typ: type,
+    base_schema: Optional[Type[marshmallow.Schema]],
+    **metadata: Any,
+) -> Optional[marshmallow.fields.Field]:
+    arguments = typing_extensions.get_args(typ)
     if typing_inspect.is_union_type(typ):
         if typing_inspect.is_optional_type(typ):
             metadata["allow_none"] = metadata.get("allow_none", True)
@@ -806,6 +865,7 @@ def _field_for_schema(
         metadata.setdefault("allow_none", True)
         return marshmallow.fields.Raw(**metadata)
 
+    # i.e.: Literal['abc']
     if typing_inspect.is_literal_type(typ):
         arguments = typing_inspect.get_args(typ)
         return marshmallow.fields.Raw(
@@ -817,6 +877,7 @@ def _field_for_schema(
             **metadata,
         )
 
+    # i.e.: Final[str] = 'abc'
     if typing_inspect.is_final_type(typ):
         arguments = typing_inspect.get_args(typ)
         if arguments:
@@ -851,6 +912,14 @@ def _field_for_schema(
             subtyp = Any
         return _field_for_schema(subtyp, default, metadata, base_schema)
 
+    annotated_field = _field_for_annotated_type(typ, **metadata)
+    if annotated_field:
+        return annotated_field
+
+    union_field = _field_for_union_type(typ, base_schema, **metadata)
+    if union_field:
+        return union_field
+
     # Generic types
     generic_field = _field_for_generic_type(typ, base_schema, **metadata)
     if generic_field:
@@ -869,14 +938,8 @@ def _field_for_schema(
         )
 
     # enumerations
-    if issubclass(typ, Enum):
-        try:
-            return marshmallow.fields.Enum(typ, **metadata)
-        except AttributeError:
-            # Remove this once support for python 3.6 is dropped.
-            import marshmallow_enum
-
-            return marshmallow_enum.EnumField(typ, **metadata)
+    if inspect.isclass(typ) and issubclass(typ, Enum):
+        return marshmallow.fields.Enum(typ, **metadata)
 
     # Nested marshmallow dataclass
     # it would be just a class name instead of actual schema util the schema is not ready yet
@@ -939,7 +1002,8 @@ def NewType(
     field: Optional[Type[marshmallow.fields.Field]] = None,
     **kwargs,
 ) -> Callable[[_U], _U]:
-    """NewType creates simple unique types
+    """DEPRECATED: Use typing.Annotated instead.
+    NewType creates simple unique types
     to which you can attach custom marshmallow attributes.
     All the keyword arguments passed to this function will be transmitted
     to the marshmallow field constructor.

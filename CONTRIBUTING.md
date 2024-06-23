@@ -21,3 +21,4 @@ Every commit is checked with pre-commit hooks for :
  - type safety with [mypy](http://mypy-lang.org/)
  - test conformance by running [tests](./tests) with [pytest](https://docs.pytest.org/en/latest/)
    - You can run `pytest` from the command line.
+ 

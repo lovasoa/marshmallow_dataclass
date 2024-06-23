@@ -242,7 +242,47 @@ class Sample:
 
 See [marshmallow's documentation about extending `Schema`](https://marshmallow.readthedocs.io/en/stable/extending.html).
 
-### Custom NewType declarations
+### Custom type aliases
+
+This library allows you to specify [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class) using python's Annoted type [PEP-593](https://peps.python.org/pep-0593/).
+
+```python
+from typing import Annotated
+import marshmallow.fields as mf
+import marshmallow.validate as mv
+
+IPv4 = Annotated[str, mf.String(validate=mv.Regexp(r"^([0-9]{1,3}\\.){3}[0-9]{1,3}$"))]
+```
+
+You can also pass a marshmallow field class.
+
+```python
+from typing import Annotated
+import marshmallow
+from marshmallow_dataclass import NewType
+
+Email = Annotated[str, marshmallow.fields.Email]
+```
+
+For convenience, some custom types are provided:
+
+```python
+from marshmallow_dataclass.typing import Email, Url
+```
+
+When using Python 3.8, you must import `Annotated` from the typing_extensions package
+
+```python
+# Version agnostic import code:
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
+```
+
+### Custom NewType declarations [__deprecated__]
+
+> NewType is deprecated in favor or type aliases using Annotated, as described above.
 
 This library exports a `NewType` function to create types that generate [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class).
 
@@ -264,12 +304,6 @@ import marshmallow
 from marshmallow_dataclass import NewType
 
 Email = NewType("Email", str, field=marshmallow.fields.Email)
-```
-
-For convenience, some custom types are provided:
-
-```python
-from marshmallow_dataclass.typing import Email, Url
 ```
 
 Note: if you are using `mypy`, you will notice that `mypy` throws an error if a variable defined with
