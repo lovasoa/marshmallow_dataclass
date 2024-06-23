@@ -257,6 +257,7 @@ IPv4 = Annotated[str, mf.String(validate=mv.Regexp(r"^([0-9]{1,3}\\.){3}[0-9]{1,
 You can also pass a marshmallow field class.
 
 ```python
+from typing import Annotated
 import marshmallow
 from marshmallow_dataclass import NewType
 
@@ -267,6 +268,16 @@ For convenience, some custom types are provided:
 
 ```python
 from marshmallow_dataclass.typing import Email, Url
+```
+
+When using Python 3.8, you must import `Annotated` from the typing_extensions package
+
+```python
+# Version agnostic import code:
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
 ```
 
 ### Custom NewType declarations [__deprecated__]
