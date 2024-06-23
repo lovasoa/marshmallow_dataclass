@@ -1,6 +1,6 @@
 # marshmallow\_dataclass change log
 
-## v8.7.0 (unreleased)
+## v8.7.0 (2024-06-23)
 
  - Drop support for python 3.6 and 3.7. Test under python 3.12. ([#263])
  - Add support for using `Annotated` (rather than our now deprecated
