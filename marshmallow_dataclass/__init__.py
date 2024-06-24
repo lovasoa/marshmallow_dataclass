@@ -727,10 +727,7 @@ def _field_for_generic_type(
         type_mapping = base_schema.TYPE_MAPPING if base_schema else {}
 
         if origin in (list, List):
-            child_type = _field_for_schema(
-                arguments[0],
-                base_schema=base_schema,
-            )
+            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
             list_type = cast(
                 Type[marshmallow.fields.List],
                 type_mapping.get(List, marshmallow.fields.List),
@@ -743,38 +740,25 @@ def _field_for_generic_type(
         ):
             from . import collection_field
 
-            child_type = _field_for_schema(
-                arguments[0],
-                base_schema=base_schema,
-            )
+            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
             return collection_field.Sequence(cls_or_instance=child_type, **metadata)
         if origin in (set, Set):
             from . import collection_field
 
-            child_type = _field_for_schema(
-                arguments[0],
-                base_schema=base_schema,
-            )
+            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=False, **metadata
             )
         if origin in (frozenset, FrozenSet):
             from . import collection_field
 
-            child_type = _field_for_schema(
-                arguments[0],
-                base_schema=base_schema,
-            )
+            child_type = _field_for_schema(arguments[0], base_schema=base_schema)
             return collection_field.Set(
                 cls_or_instance=child_type, frozen=True, **metadata
             )
         if origin in (tuple, Tuple):
             children = tuple(
-                _field_for_schema(
-                    arg,
-                    base_schema=base_schema,
-                )
-                for arg in arguments
+                _field_for_schema(arg, base_schema=base_schema) for arg in arguments
             )
             tuple_type = cast(
                 Type[marshmallow.fields.Tuple],
@@ -786,14 +770,8 @@ def _field_for_generic_type(
         if origin in (dict, Dict, collections.abc.Mapping, Mapping):
             dict_type = type_mapping.get(Dict, marshmallow.fields.Dict)
             return dict_type(
-                keys=field_for_schema(
-                    arguments[0],
-                    base_schema=base_schema,
-                ),
-                values=field_for_schema(
-                    arguments[1],
-                    base_schema=base_schema,
-                ),
+                keys=field_for_schema(arguments[0], base_schema=base_schema),
+                values=field_for_schema(arguments[1], base_schema=base_schema),
                 **metadata,
             )
 
