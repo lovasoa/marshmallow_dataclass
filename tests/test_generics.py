@@ -1,15 +1,67 @@
 import dataclasses
+import inspect
+import sys
 import typing
 import unittest
 
+import marshmallow.fields
 from marshmallow import ValidationError
 
 from marshmallow_dataclass import (
     UnboundTypeVarError,
-    _is_generic_alias_of_dataclass,
     add_schema,
     class_schema,
+    dataclass,
+    is_generic_alias_of_dataclass,
 )
+from marshmallow_dataclass.generic_resolver import is_generic_type
+
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
+
+
+def get_orig_class(obj):
+    """
+    Allows you got get the runtime origin class inside __init__
+
+    Near duplicate of https://github.com/Stewori/pytypes/blob/master/pytypes/type_util.py#L182
+    """
+    try:
+        # See https://github.com/Stewori/pytypes/pull/53:
+        # Returns  `obj.__orig_class__` protecting from infinite recursion in `__getattr[ibute]__`
+        # wrapped in a `checker_tp`.
+        # (See `checker_tp` in `typechecker._typeinspect_func for context)
+        # Necessary if:
+        # - we're wrapping a method (`obj` is `self`/`cls`) and either
+        #     - the object's class defines __getattribute__
+        # or
+        #     - the object doesn't have an `__orig_class__` attribute
+        #       and the object's class defines __getattr__.
+        # In such a situation, `parent_class = obj.__orig_class__`
+        # would call `__getattr[ibute]__`. But that method is wrapped in a `checker_tp` too,
+        # so then we'd go into the wrapped `__getattr[ibute]__` and do
+        # `parent_class = obj.__orig_class__`, which would call `__getattr[ibute]__`
+        # again, and so on. So to bypass `__getattr[ibute]__` we do this:
+        return object.__getattribute__(obj, "__orig_class__")
+    except AttributeError:
+        cls = object.__getattribute__(obj, "__class__")
+        if is_generic_type(cls):
+            # Searching from index 1 is sufficient: At 0 is get_orig_class, at 1 is the caller.
+            frame = inspect.currentframe().f_back
+            try:
+                while frame:
+                    try:
+                        res = frame.f_locals["self"]
+                        if res.__origin__ is cls:
+                            return res
+                    except (KeyError, AttributeError):
+                        frame = frame.f_back
+            finally:
+                del frame
+
+        raise
 
 
 class TestGenerics(unittest.TestCase):
@@ -28,8 +80,8 @@ class TestGenerics(unittest.TestCase):
         class NestedGeneric(typing.Generic[T]):
             data: SimpleGeneric[T]
 
-        self.assertTrue(_is_generic_alias_of_dataclass(SimpleGeneric[int]))
-        self.assertFalse(_is_generic_alias_of_dataclass(SimpleGeneric))
+        self.assertTrue(is_generic_alias_of_dataclass(SimpleGeneric[int]))
+        self.assertFalse(is_generic_alias_of_dataclass(SimpleGeneric))
 
         schema_s = class_schema(SimpleGeneric[str])()
         self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
@@ -209,6 +261,45 @@ class TestGenerics(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             class_schema(Base)
+
+    def test_annotated_generic_mf_field(self) -> None:
+        T = typing.TypeVar("T")
+
+        class GenericList(marshmallow.fields.List, typing.Generic[T]):
+            """
+            Generic Marshmallow List Field that can be used in Annotated and still get all kwargs
+            from marshmallow_dataclass.
+            """
+
+            def __init__(
+                self,
+                **kwargs,
+            ):
+                cls_or_instance = get_orig_class(self).__args__[0]
+
+                super().__init__(cls_or_instance, **kwargs)
+
+        @dataclass
+        class AnnotatedValue:
+            emails: Annotated[
+                typing.List[str], GenericList[marshmallow.fields.Email]
+            ] = dataclasses.field(default_factory=lambda: ["default@email.com"])
+
+        schema = AnnotatedValue.Schema()  # type: ignore[attr-defined]
+
+        self.assertEqual(
+            schema.load({}),
+            AnnotatedValue(emails=["default@email.com"]),
+        )
+        self.assertEqual(
+            schema.load({"emails": ["test@test.com"]}),
+            AnnotatedValue(
+                emails=["test@test.com"],
+            ),
+        )
+
+        with self.assertRaises(marshmallow.exceptions.ValidationError):
+            schema.load({"emails": "notavalidemail"})
 
 
 if __name__ == "__main__":
