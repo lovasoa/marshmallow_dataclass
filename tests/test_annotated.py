@@ -66,35 +66,3 @@ class TestAnnotatedField(unittest.TestCase):
 
         with self.assertRaises(marshmallow.exceptions.ValidationError):
             schema.load({"emails": "notavalidemail"})
-
-    def test_annotated_callable_field(self) -> None:
-        """
-        NewType allowed us to specify a lambda or partial because there was no type inspection.
-        But with Annotated we do type inspection. While we can't reliably do type inspection on a callable,
-        i.e.: lambda, we can call it and check if it returns a Field.
-        """
-
-        @dataclass
-        class AnnotatedValue:
-            emails: Annotated[
-                List[str],
-                lambda *args, **kwargs: marshmallow.fields.List(
-                    marshmallow.fields.Email, *args, **kwargs
-                ),
-            ] = dataclasses.field(default_factory=lambda: ["default@email.com"])
-
-        schema = AnnotatedValue.Schema()  # type: ignore[attr-defined]
-
-        self.assertEqual(
-            schema.load({}),
-            AnnotatedValue(emails=["default@email.com"]),
-        )
-        self.assertEqual(
-            schema.load({"emails": ["test@test.com"]}),
-            AnnotatedValue(
-                emails=["test@test.com"],
-            ),
-        )
-
-        with self.assertRaises(marshmallow.exceptions.ValidationError):
-            schema.load({"emails": "notavalidemail"})

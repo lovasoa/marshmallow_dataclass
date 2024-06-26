@@ -757,8 +757,6 @@ def _field_for_annotated_type(
             )
             # Support `partial(mf.List, mf.String)`
             or (isinstance(arg, partial) and _is_marshmallow_field(arg.func))
-            # Support `lambda *args, **kwargs: mf.List(mf.String, *args, **kwargs)`
-            or (_is_callable_marshmallow_field(arg))
         ]
         if marshmallow_annotations:
             if len(marshmallow_annotations) > 1:
@@ -1085,18 +1083,6 @@ def _is_marshmallow_field(obj) -> bool:
     return (
         inspect.isclass(obj) and issubclass(obj, marshmallow.fields.Field)
     ) or isinstance(obj, marshmallow.fields.Field)
-
-
-def _is_callable_marshmallow_field(obj) -> bool:
-    """Checks if the object is a callable and if the callable returns a marshmallow field"""
-    if callable(obj):
-        try:
-            potential_field = obj()
-            return _is_marshmallow_field(potential_field)
-        except Exception:
-            return False
-
-    return False
 
 
 def NewType(
