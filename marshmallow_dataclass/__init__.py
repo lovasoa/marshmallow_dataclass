@@ -968,16 +968,39 @@ def _base_schema(
 
     # Remove `type: ignore` when mypy handles dynamic base classes
     # https://github.com/python/mypy/issues/2813
+    fields_not_init = set()
+    for field in dataclasses.fields(clazz):
+        if field.init is False:
+            fields_not_init.add(field.name)
+            continue
+
     class BaseSchema(base_schema or marshmallow.Schema):  # type: ignore
         def load(self, data: Mapping, *, many: Optional[bool] = None, **kwargs):
             all_loaded = super().load(data, many=many, **kwargs)
             many = self.many if many is None else bool(many)
             if many:
-                return [clazz(**loaded) for loaded in all_loaded]
+                return [
+                    get_obj_with_init(clazz, fields_not_init, loaded)
+                    for loaded in all_loaded
+                ]
             else:
-                return clazz(**all_loaded)
+                return get_obj_with_init(clazz, fields_not_init, all_loaded)
 
     return BaseSchema
+
+
+def get_obj_with_init(
+    clazz: type, fields_not_init: set[str], all_loaded: dict[str, Any]
+):
+    if fields_not_init:
+        not_in_init = {
+            key: all_loaded.pop(key) for key in fields_not_init if key in all_loaded
+        }
+    obj = clazz(**all_loaded)
+    if fields_not_init:
+        for key, value in not_in_init.items():
+            setattr(obj, key, value)
+    return obj
 
 
 def _get_field_default(field: dataclasses.Field):
