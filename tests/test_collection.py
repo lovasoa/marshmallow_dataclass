@@ -1,3 +1,6 @@
+from dataclasses import field
+from enum import StrEnum
+from typing import List
 import itertools
 import sys
 import unittest
@@ -277,6 +280,28 @@ class TestSetField(unittest.TestCase):
             SetIntSet(value=frozenset([frozenset([1, 2, 3]), frozenset([123])])),
         )
         self.assertEqualAsSet(schema.dump(loaded), data_in)
+
+    def test_child_metadata(self):
+        """Test child metadata."""
+
+        class Color(StrEnum):
+            RED = "red"
+            GREEN = "green"
+            BLUE = "blue"
+
+        @dataclass
+        class Thing:
+            color: Color = field(metadata={"by_value": True})
+            color_list: List[Color] = field(
+                default_factory=list,
+                metadata=dict(child_metadata=dict(by_value=True)),
+            )
+
+        thing = Thing(
+            color=Color.RED, color_list=[Color.RED, Color.GREEN, Color.BLUE]
+        )  # Example data
+        serialized_thing = Thing.Schema().dump(thing)
+        self.assertEqual(serialized_thing["color_list"], ["red", "green", "blue"])
 
 
 class TestMappingField(unittest.TestCase):
