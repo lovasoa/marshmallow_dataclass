@@ -755,8 +755,6 @@ def _field_for_annotated_type(
                 is_generic_type(arg)
                 and _is_marshmallow_field(typing_extensions.get_origin(arg))
             )
-            # Support `partial(mf.List, mf.String)`
-            or (isinstance(arg, partial) and _is_marshmallow_field(arg.func))
         ]
         if marshmallow_annotations:
             if len(marshmallow_annotations) > 1:
