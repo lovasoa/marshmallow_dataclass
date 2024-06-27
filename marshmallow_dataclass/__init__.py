@@ -597,7 +597,7 @@ def _internal_class_schema(
                 (
                     type_hints[field.name]
                     if not is_generic_type(clazz)
-                    else _get_generic_type_hints(field.type, schema_ctx)
+                    else _get_type_hint_of_generic_object(field.type, schema_ctx)
                 ),
                 _get_field_default(field),
                 field.metadata,
@@ -1058,11 +1058,11 @@ def _get_type_hints(
     return type_hints
 
 
-def _get_generic_type_hints(
+def _get_type_hint_of_generic_object(
     obj,
     schema_ctx: _SchemaContext,
 ) -> type:
-    """typing.get_type_hints doesn't work with generic aliases. But this 'hack' works."""
+    """typing.get_type_hints doesn't work with generic aliases, i.e.: A[int]. But this 'hack' works."""
 
     class X:
         x: obj  # type: ignore[name-defined]
