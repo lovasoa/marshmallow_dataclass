@@ -11,13 +11,12 @@ from typing import (
     TypeVar,
 )
 
-import typing_extensions
 import typing_inspect
 
 if sys.version_info >= (3, 9):
-    from typing import Annotated
+    from typing import Annotated, get_args, get_origin
 else:
-    from typing_extensions import Annotated
+    from typing_extensions import Annotated, get_args, get_origin
 
 _U = TypeVar("_U")
 
@@ -81,7 +80,7 @@ def is_generic_alias(clazz: type) -> bool:
     ``A[int]`` is a _generic alias_ (while ``A`` is a *generic type*, but not a *generic alias*).
     """
     is_generic = is_generic_type(clazz)
-    type_arguments = typing_extensions.get_args(clazz)
+    type_arguments = get_args(clazz)
     return is_generic and len(type_arguments) > 0
 
 
@@ -89,7 +88,7 @@ def is_generic_type(clazz: type) -> bool:
     """
     typing_inspect.is_generic_type explicitly ignores Union and Tuple
     """
-    origin = typing_extensions.get_origin(clazz)
+    origin = get_origin(clazz)
     return origin is not Annotated and (
         (isinstance(clazz, type) and issubclass(clazz, Generic))  # type: ignore[arg-type]
         or isinstance(clazz, typing_inspect.typingGenericAlias)
@@ -108,7 +107,7 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
     # Loop in reversed order and iteratively resolve types
     for subclass in reversed(clazz.mro()):
         if issubclass(subclass, Generic) and hasattr(subclass, "__orig_bases__"):  # type: ignore[arg-type]
-            args = typing_extensions.get_args(subclass.__orig_bases__[0])
+            args = get_args(subclass.__orig_bases__[0])
 
             if parent_class and args_by_class.get(parent_class):
                 subclass_generic_params_to_args: List[Tuple[TypeVar, _Future]] = []
@@ -129,8 +128,8 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
 
     # clazz itself is a generic alias i.e.: A[int]. So it hold the last types.
     if is_generic_alias(clazz):
-        origin = typing_extensions.get_origin(clazz)
-        args = typing_extensions.get_args(clazz)
+        origin = get_origin(clazz)
+        args = get_args(clazz)
         for (_arg, future), potential_type in zip(args_by_class[origin], args):  # type: ignore[index]
             if not isinstance(potential_type, TypeVar):
                 future.set_result(potential_type)
@@ -154,7 +153,7 @@ def _replace_typevars(
                     resolved_generics[arg].result() if arg in resolved_generics else arg
                 )
             )
-            for arg in typing_extensions.get_args(clazz)
+            for arg in get_args(clazz)
         )
     )
 

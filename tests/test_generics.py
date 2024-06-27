@@ -315,6 +315,19 @@ class TestGenerics(unittest.TestCase):
         with self.assertRaises(marshmallow.exceptions.ValidationError):
             schema.load({"emails": "notavalidemail"})
 
+    def test_generic_dataclass_with_forwardref(self):
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class SimpleGeneric(typing.Generic[T]):
+            data: T
+
+        schema_s = class_schema(SimpleGeneric["str"])()
+        self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
+        self.assertEqual(schema_s.dump(SimpleGeneric(data="a")), {"data": "a"})
+        with self.assertRaises(ValidationError):
+            schema_s.load({"data": 2})
+
 
 if __name__ == "__main__":
     unittest.main()
