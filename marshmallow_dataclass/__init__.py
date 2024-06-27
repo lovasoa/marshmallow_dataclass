@@ -44,9 +44,15 @@ import types
 import warnings
 from enum import Enum
 from functools import lru_cache, partial
-from typing import Any, Callable, Dict, FrozenSet, Generic, List, Mapping
-from typing import NewType as typing_NewType
 from typing import (
+    Any,
+    Callable,
+    Dict,
+    FrozenSet,
+    Generic,
+    List,
+    Mapping,
+    NewType as typing_NewType,
     Optional,
     Sequence,
     Set,
@@ -146,7 +152,7 @@ def _check_decorated_type(cls: object) -> None:
         # A .Schema attribute doesn't make sense on a generic alias — there's
         # no way for it to know the generic parameters at run time.
         raise TypeError(
-            "decorator does not support generic aliasses "
+            "decorator does not support generic aliases "
             "(hint: use class_schema directly instead)"
         )
 
@@ -1028,13 +1034,8 @@ def is_generic_alias_of_dataclass(clazz: type) -> bool:
     Check if given class is a generic alias of a dataclass, if the dataclass is
     defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
     """
-    is_generic = is_generic_type(clazz)
-    type_arguments = typing_extensions.get_args(clazz)
-    origin_class = typing_extensions.get_origin(clazz)
-    return (
-        is_generic
-        and len(type_arguments) > 0
-        and dataclasses.is_dataclass(origin_class)
+    return is_generic_alias(clazz) and dataclasses.is_dataclass(
+        typing_extensions.get_origin(clazz)
     )
 
 
@@ -1061,7 +1062,7 @@ def _get_generic_type_hints(
     obj,
     schema_ctx: _SchemaContext,
 ) -> type:
-    """typing.get_type_hints doesn't work with generic aliasses. But this 'hack' works."""
+    """typing.get_type_hints doesn't work with generic aliases. But this 'hack' works."""
 
     class X:
         x: obj  # type: ignore[name-defined]

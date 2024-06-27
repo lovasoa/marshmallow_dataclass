@@ -69,8 +69,8 @@ class _Future(Generic[_U]):
 
 def is_generic_alias(clazz: type) -> bool:
     """
-    Check if given class is a generic alias of a class is
-    defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    Check if given class is a generic alias of a class.
+    If a class is defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
     """
     is_generic = is_generic_type(clazz)
     type_arguments = typing_extensions.get_args(clazz)
@@ -79,7 +79,7 @@ def is_generic_alias(clazz: type) -> bool:
 
 def is_generic_type(clazz: type) -> bool:
     """
-    typing_inspect.is_generic_type explicitly ignores Union, Tuple, Callable, ClassVar
+    typing_inspect.is_generic_type explicitly ignores Union and Tuple
     """
     origin = typing_extensions.get_origin(clazz)
     return origin is not Annotated and (

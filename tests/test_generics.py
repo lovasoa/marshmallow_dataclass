@@ -182,6 +182,20 @@ class TestGenerics(unittest.TestCase):
             test_schema.load({"pairs": [("first", "1")]}), TestClass([("first", 1)])
         )
 
+    def test_deep_generic_with_union(self):
+        T = typing.TypeVar("T")
+        U = typing.TypeVar("U")
+
+        @dataclasses.dataclass
+        class TestClass(typing.Generic[T, U]):
+            either: typing.List[typing.Union[T, U]]
+
+        test_schema = class_schema(TestClass[str, int])()
+
+        self.assertEqual(
+            test_schema.load({"either": ["first", 1]}), TestClass(["first", 1])
+        )
+
     def test_deep_generic_with_overrides(self):
         T = typing.TypeVar("T")
         U = typing.TypeVar("U")
