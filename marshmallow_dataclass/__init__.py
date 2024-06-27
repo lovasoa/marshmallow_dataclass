@@ -72,7 +72,6 @@ from marshmallow_dataclass.generic_resolver import (
     UnboundTypeVarError,
     get_generic_dataclass_fields,
     is_generic_alias,
-    is_generic_type,
 )
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
 
@@ -586,7 +585,7 @@ def _internal_class_schema(
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
     type_hints = {}
-    if not is_generic_type(clazz):
+    if not typing_inspect.is_generic_type(clazz):
         type_hints = _get_type_hints(clazz, schema_ctx)
 
     attributes.update(
@@ -595,7 +594,7 @@ def _internal_class_schema(
             _field_for_schema(
                 (
                     type_hints[field.name]
-                    if not is_generic_type(clazz)
+                    if not typing_inspect.is_generic_type(clazz)
                     else _resolve_forward_type_refs(field.type, schema_ctx)
                 ),
                 _get_field_default(field),
@@ -758,7 +757,10 @@ def _field_for_annotated_type(
             for arg in arguments[1:]
             if _is_marshmallow_field(arg)
             # Support `CustomGenericField[mf.String]`
-            or (is_generic_type(arg) and _is_marshmallow_field(get_origin(arg)))
+            or (
+                typing_inspect.is_generic_type(arg)
+                and _is_marshmallow_field(get_origin(arg))
+            )
         ]
         if marshmallow_annotations:
             if len(marshmallow_annotations) > 1:
@@ -1069,7 +1071,7 @@ def _resolve_forward_type_refs(
 
 
 def _dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
-    if not is_generic_type(clazz):
+    if not typing_inspect.is_generic_type(clazz):
         return dataclasses.fields(clazz)
 
     else:

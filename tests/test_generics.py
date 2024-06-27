@@ -3,6 +3,7 @@ import inspect
 import sys
 import typing
 import unittest
+from typing_inspect import is_generic_type
 
 import marshmallow.fields
 from marshmallow import ValidationError
@@ -14,7 +15,6 @@ from marshmallow_dataclass import (
     dataclass,
     is_generic_alias_of_dataclass,
 )
-from marshmallow_dataclass.generic_resolver import is_generic_type
 
 if sys.version_info >= (3, 9):
     from typing import Annotated
@@ -319,12 +319,29 @@ class TestGenerics(unittest.TestCase):
         T = typing.TypeVar("T")
 
         @dataclasses.dataclass
-        class SimpleGeneric(typing.Generic[T]):
+        class ForwardGeneric(typing.Generic[T]):
             data: T
 
-        schema_s = class_schema(SimpleGeneric["str"])()
-        self.assertEqual(SimpleGeneric(data="a"), schema_s.load({"data": "a"}))
-        self.assertEqual(schema_s.dump(SimpleGeneric(data="a")), {"data": "a"})
+        schema_s = class_schema(ForwardGeneric["str"])()
+        self.assertEqual(ForwardGeneric(data="a"), schema_s.load({"data": "a"}))
+        self.assertEqual(schema_s.dump(ForwardGeneric(data="a")), {"data": "a"})
+        with self.assertRaises(ValidationError):
+            schema_s.load({"data": 2})
+
+    def test_generic_dataclass_with_optional(self):
+        T = typing.TypeVar("T")
+
+        @dataclasses.dataclass
+        class OptionalGeneric(typing.Generic[T]):
+            data: typing.Optional[T]
+
+        schema_s = class_schema(OptionalGeneric["str"])()
+        self.assertEqual(OptionalGeneric(data="a"), schema_s.load({"data": "a"}))
+        self.assertEqual(schema_s.dump(OptionalGeneric(data="a")), {"data": "a"})
+
+        self.assertEqual(OptionalGeneric(data=None), schema_s.load({}))
+        self.assertEqual(schema_s.dump(OptionalGeneric(data=None)), {"data": None})
+
         with self.assertRaises(ValidationError):
             schema_s.load({"data": 2})
 

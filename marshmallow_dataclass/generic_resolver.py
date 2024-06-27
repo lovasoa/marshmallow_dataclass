@@ -79,14 +79,18 @@ def is_generic_alias(clazz: type) -> bool:
 
     ``A[int]`` is a _generic alias_ (while ``A`` is a *generic type*, but not a *generic alias*).
     """
-    is_generic = is_generic_type(clazz)
+    is_generic = typing_inspect.is_generic_type(clazz)
     type_arguments = get_args(clazz)
     return is_generic and len(type_arguments) > 0
 
 
-def is_generic_type(clazz: type) -> bool:
+def may_contain_typevars(clazz: type) -> bool:
     """
-    typing_inspect.is_generic_type explicitly ignores Union and Tuple
+    Check if the class can contain typevars. This includes Special Forms.
+
+    Different from typing_inspect.is_generic_type as that explicitly ignores Union and Tuple.
+
+    We still need to resolve typevars for Union and Tuple
     """
     origin = get_origin(clazz)
     return origin is not Annotated and (
@@ -141,14 +145,18 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
 def _replace_typevars(
     clazz: type, resolved_generics: Optional[Dict[TypeVar, _Future]] = None
 ) -> type:
-    if not resolved_generics or inspect.isclass(clazz) or not is_generic_type(clazz):
+    if (
+        not resolved_generics
+        or inspect.isclass(clazz)
+        or not may_contain_typevars(clazz)
+    ):
         return clazz
 
     return clazz.copy_with(  # type: ignore
         tuple(
             (
                 _replace_typevars(arg, resolved_generics)
-                if is_generic_type(arg)
+                if may_contain_typevars(arg)
                 else (
                     resolved_generics[arg].result() if arg in resolved_generics else arg
                 )
@@ -179,7 +187,7 @@ def get_generic_dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
                 # Either the first time we see this field, or it got overridden
                 # If it's a class we handle it later as a Nested. Nothing to resolve now.
                 new_field = field
-                if not inspect.isclass(field.type) and is_generic_type(field.type):
+                if not inspect.isclass(field.type) and may_contain_typevars(field.type):
                     new_field = copy.copy(field)
                     new_field.type = _replace_typevars(
                         field.type, resolved_typevars[subclass]
