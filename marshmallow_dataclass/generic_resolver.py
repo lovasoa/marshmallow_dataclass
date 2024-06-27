@@ -69,8 +69,16 @@ class _Future(Generic[_U]):
 
 def is_generic_alias(clazz: type) -> bool:
     """
-    Check if given class is a generic alias of a class.
-    If a class is defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
+    Check if given object is a Generic Alias.
+
+    A `generic alias`__ is a generic type bound to generic parameters.
+
+    E.g., given
+
+        class A(Generic[T]):
+            pass
+
+    ``A[int]`` is a _generic alias_ (while ``A`` is a *generic type*, but not a *generic alias*).
     """
     is_generic = is_generic_type(clazz)
     type_arguments = typing_extensions.get_args(clazz)
