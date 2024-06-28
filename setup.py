@@ -48,8 +48,8 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "marshmallow>=3.18.0,",
-        "typing-inspect~=0.9.0",
-        "typeguard~=4.0.0",
+        "typing-inspect>=0.9.0",
+        "typeguard>=4.0.0",
         # Need `dataclass_transform(field_specifiers)`
         "typing-extensions>=4.2.0; python_version<'3.11'",
     ],
