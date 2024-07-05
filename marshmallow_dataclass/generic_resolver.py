@@ -3,7 +3,9 @@ import dataclasses
 import inspect
 import sys
 from typing import (
+    Any,
     Dict,
+    ForwardRef,
     Generic,
     List,
     Optional,
@@ -15,8 +17,16 @@ import typing_inspect
 
 if sys.version_info >= (3, 9):
     from typing import Annotated, get_args, get_origin
+
+    def eval_forward_ref(t: ForwardRef, globalns, localns, recursive_guard=frozenset()):
+        return t._evaluate(globalns, localns, recursive_guard)
+
 else:
     from typing_extensions import Annotated, get_args, get_origin
+
+    def eval_forward_ref(t: ForwardRef, globalns, localns):
+        return t._evaluate(globalns, localns)
+
 
 _U = TypeVar("_U")
 
@@ -99,7 +109,35 @@ def may_contain_typevars(clazz: type) -> bool:
     )
 
 
-def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
+def _get_namespaces(
+    clazz: type,
+    globalns: Optional[Dict[str, Any]] = None,
+    localns: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    # region - Copied from typing.get_type_hints
+    if globalns is None:
+        base_globals = getattr(sys.modules.get(clazz.__module__, None), "__dict__", {})
+    else:
+        base_globals = globalns
+    base_locals = dict(vars(clazz)) if localns is None else localns
+    if localns is None and globalns is None:
+        # This is surprising, but required.  Before Python 3.10,
+        # get_type_hints only evaluated the globalns of
+        # a class.  To maintain backwards compatibility, we reverse
+        # the globalns and localns order so that eval() looks into
+        # *base_globals* first rather than *base_locals*.
+        # This only affects ForwardRefs.
+        base_globals, base_locals = base_locals, base_globals
+    # endregion - Copied from typing.get_type_hints
+
+    return base_globals, base_locals
+
+
+def _resolve_typevars(
+    clazz: type,
+    globalns: Optional[Dict[str, Any]] = None,
+    localns: Optional[Dict[str, Any]] = None,
+) -> Dict[type, Dict[TypeVar, _Future]]:
     """
     Attemps to resolves all TypeVars in the class bases. Allows us to resolve inherited and aliased generics.
 
@@ -110,6 +148,7 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
     parent_class: Optional[type] = None
     # Loop in reversed order and iteratively resolve types
     for subclass in reversed(clazz.mro()):
+        base_globals, base_locals = _get_namespaces(subclass, globalns, localns)
         if issubclass(subclass, Generic) and hasattr(subclass, "__orig_bases__"):  # type: ignore[arg-type]
             args = get_args(subclass.__orig_bases__[0])
 
@@ -121,10 +160,17 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
                     if isinstance(potential_type, TypeVar):
                         subclass_generic_params_to_args.append((potential_type, future))
                     else:
-                        future.set_result(potential_type)
+                        future.set_result(
+                            eval_forward_ref(
+                                potential_type,
+                                globalns=base_globals,
+                                localns=base_locals,
+                            )
+                            if isinstance(potential_type, ForwardRef)
+                            else potential_type
+                        )
 
                 args_by_class[subclass] = tuple(subclass_generic_params_to_args)
-
             else:
                 args_by_class[subclass] = tuple((arg, _Future()) for arg in args)
 
@@ -136,7 +182,11 @@ def _resolve_typevars(clazz: type) -> Dict[type, Dict[TypeVar, _Future]]:
         args = get_args(clazz)
         for (_arg, future), potential_type in zip(args_by_class[origin], args):  # type: ignore[index]
             if not isinstance(potential_type, TypeVar):
-                future.set_result(potential_type)
+                future.set_result(
+                    eval_forward_ref(potential_type, globalns=globalns, localns=localns)
+                    if isinstance(potential_type, ForwardRef)
+                    else potential_type
+                )
 
     # Convert to nested dict for easier lookup
     return {k: {typ: fut for typ, fut in args} for k, args in args_by_class.items()}
@@ -166,12 +216,16 @@ def _replace_typevars(
     )
 
 
-def get_generic_dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
+def get_resolved_dataclass_fields(
+    clazz: type,
+    globalns: Optional[Dict[str, Any]] = None,
+    localns: Optional[Dict[str, Any]] = None,
+) -> Tuple[dataclasses.Field, ...]:
     unbound_fields = set()
     # Need to manually resolve fields because `dataclasses.fields` doesn't handle generics and
     # looses the source class. Thus I don't know how to resolve this at later on.
     # Instead we recreate the type but with all known TypeVars resolved to their actual types.
-    resolved_typevars = _resolve_typevars(clazz)
+    resolved_typevars = _resolve_typevars(clazz, globalns=globalns, localns=localns)
     # Dict[field_name, Tuple[original_field, resolved_field]]
     fields: Dict[str, Tuple[dataclasses.Field, dataclasses.Field]] = {}
 
@@ -190,14 +244,34 @@ def get_generic_dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
                 if not inspect.isclass(field.type) and may_contain_typevars(field.type):
                     new_field = copy.copy(field)
                     new_field.type = _replace_typevars(
-                        field.type, resolved_typevars[subclass]
+                        field.type, resolved_typevars.get(subclass)
                     )
                 elif isinstance(field.type, TypeVar):
                     new_field = copy.copy(field)
                     new_field.type = resolved_typevars[subclass][field.type].result()
+                elif isinstance(field.type, ForwardRef):
+                    base_globals, base_locals = _get_namespaces(
+                        subclass, globalns, localns
+                    )
+                    new_field = copy.copy(field)
+                    new_field.type = eval_forward_ref(
+                        field.type, globalns=base_globals, localns=base_locals
+                    )
+                elif isinstance(field.type, str):
+                    base_globals, base_locals = _get_namespaces(
+                        subclass, globalns, localns
+                    )
+                    new_field = copy.copy(field)
+                    new_field.type = eval_forward_ref(
+                        ForwardRef(field.type, is_argument=False, is_class=True)
+                        if sys.version_info >= (3, 9)
+                        else ForwardRef(field.type, is_argument=False),
+                        globalns=base_globals,
+                        localns=base_locals,
+                    )
 
                 fields[field.name] = (field, new_field)
-            except InvalidStateError:
+            except (InvalidStateError, KeyError):
                 unbound_fields.add(field.name)
 
     if unbound_fields:

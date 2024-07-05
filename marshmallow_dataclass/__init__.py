@@ -61,7 +61,6 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    get_type_hints,
     overload,
 )
 
@@ -70,7 +69,7 @@ import typing_inspect
 
 from marshmallow_dataclass.generic_resolver import (
     UnboundTypeVarError,
-    get_generic_dataclass_fields,
+    get_resolved_dataclass_fields,
     is_generic_alias,
 )
 from marshmallow_dataclass.lazy_class_attribute import lazy_class_attribute
@@ -548,7 +547,9 @@ def _internal_class_schema(
     schema_ctx.seen_classes[clazz] = class_name
 
     try:
-        fields = _dataclass_fields(clazz)
+        fields = get_resolved_dataclass_fields(
+            clazz, globalns=schema_ctx.globalns, localns=schema_ctx.localns
+        )
     except UnboundTypeVarError:
         raise
     except TypeError:  # Not a dataclass
@@ -584,19 +585,11 @@ def _internal_class_schema(
     include_non_init = getattr(getattr(clazz, "Meta", None), "include_non_init", False)
 
     # Update the schema members to contain marshmallow fields instead of dataclass fields
-    type_hints = {}
-    if not typing_inspect.is_generic_type(clazz):
-        type_hints = _get_type_hints(clazz, schema_ctx)
-
     attributes.update(
         (
             field.name,
             _field_for_schema(
-                (
-                    type_hints[field.name]
-                    if not typing_inspect.is_generic_type(clazz)
-                    else _resolve_forward_type_refs(field.type, schema_ctx)
-                ),
+                field.type,
                 _get_field_default(field),
                 field.metadata,
                 base_schema,
@@ -1035,47 +1028,6 @@ def is_generic_alias_of_dataclass(clazz: type) -> bool:
     defined as `class A(Generic[T])`, this method will return true if `A[int]` is passed
     """
     return is_generic_alias(clazz) and dataclasses.is_dataclass(get_origin(clazz))
-
-
-def _get_type_hints(
-    obj,
-    schema_ctx: _SchemaContext,
-):
-    if sys.version_info >= (3, 9):
-        type_hints = get_type_hints(
-            obj,
-            globalns=schema_ctx.globalns,
-            localns=schema_ctx.localns,
-            include_extras=True,
-        )
-    else:
-        type_hints = get_type_hints(
-            obj, globalns=schema_ctx.globalns, localns=schema_ctx.localns
-        )
-
-    return type_hints
-
-
-def _resolve_forward_type_refs(
-    obj,
-    schema_ctx: _SchemaContext,
-) -> type:
-    """
-    Resolve forward references, mainly applies to Generics i.e.: `A["int"]` -> `A[int]`
-    """
-
-    class X:
-        x: obj  # type: ignore[name-defined]
-
-    return _get_type_hints(X, schema_ctx)["x"]
-
-
-def _dataclass_fields(clazz: type) -> Tuple[dataclasses.Field, ...]:
-    if not typing_inspect.is_generic_type(clazz):
-        return dataclasses.fields(clazz)
-
-    else:
-        return get_generic_dataclass_fields(clazz)
 
 
 def _is_marshmallow_field(obj) -> bool:
