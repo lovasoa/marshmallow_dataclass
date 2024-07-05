@@ -19,7 +19,7 @@ if sys.version_info >= (3, 9):
     from typing import Annotated, get_args, get_origin
 
     def eval_forward_ref(t: ForwardRef, globalns, localns, recursive_guard=frozenset()):
-        return t._evaluate(globalns, localns, recursive_guard)
+        return t._evaluate(globalns, localns, recursive_guard=recursive_guard)
 
 else:
     from typing_extensions import Annotated, get_args, get_origin
