@@ -1,5 +1,12 @@
 # marshmallow\_dataclass change log
 
+## v8.7.1 (2024-09-12)
+
+ - Relax dependency pins for `typeguard` and `typing-inspect`. ([#273], [#272])
+
+[#272]: https://github.com/lovasoa/marshmallow_dataclass/issues/272
+[#273]: https://github.com/lovasoa/marshmallow_dataclass/pull/273
+
 ## v8.7.0 (2024-06-23)
 
  - Drop support for python 3.6 and 3.7. Test under python 3.12. ([#263])
