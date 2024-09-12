@@ -1,27 +1,13 @@
 import copy
-import inspect
 from typing import List, Tuple, Any, Optional
 
 import typeguard
+from typeguard import TypeCheckError
 from marshmallow import fields, Schema, ValidationError
 
-try:
-    from typeguard import TypeCheckError  # type: ignore[attr-defined]
-except ImportError:
-    # typeguard < 3
-    TypeCheckError = TypeError  # type: ignore[misc, assignment]
 
-if "argname" not in inspect.signature(typeguard.check_type).parameters:
-
-    def _check_type(value, expected_type, argname: str):
-        return typeguard.check_type(value=value, expected_type=expected_type)
-
-else:
-    # typeguard < 3.0.0rc2
-    def _check_type(value, expected_type, argname: str):
-        return typeguard.check_type(  # type: ignore[call-overload]
-            value=value, expected_type=expected_type, argname=argname
-        )
+def _check_type(value, expected_type, argname: str):
+    return typeguard.check_type(value=value, expected_type=expected_type)
 
 
 class Union(fields.Field):
