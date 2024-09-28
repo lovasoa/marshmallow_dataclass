@@ -1,7 +1,7 @@
 import inspect
 import typing
 import unittest
-from typing import Any, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 try:
@@ -10,11 +10,14 @@ except ImportError:
     from typing_extensions import Final, Literal  # type: ignore[assignment]
 
 import dataclasses
+
 from marshmallow import Schema, ValidationError
-from marshmallow.fields import Field, UUID as UUIDField, List as ListField, Integer
+from marshmallow.fields import UUID as UUIDField
+from marshmallow.fields import Field, Integer
+from marshmallow.fields import List as ListField
 from marshmallow.validate import Validator
 
-from marshmallow_dataclass import class_schema, NewType
+from marshmallow_dataclass import NewType, class_schema
 
 
 class TestClassSchema(unittest.TestCase):
