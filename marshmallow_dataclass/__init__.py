@@ -229,8 +229,7 @@ def dataclass(
     )
 
     def decorator(cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
-        if cls is not None:
-            _check_decorated_type(cls)
+        _check_decorated_type(cls)
 
         return add_schema(
             dc(cls), base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
@@ -239,8 +238,6 @@ def dataclass(
     if _cls is None:
         return decorator
 
-    if _cls is not None:
-        _check_decorated_type(_cls)
     return decorator(_cls, stacklevel=stacklevel + 1)
 
 
