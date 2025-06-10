@@ -13,6 +13,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: CGI Tools/Libraries",
 ]
 
