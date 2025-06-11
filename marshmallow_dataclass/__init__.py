@@ -139,50 +139,119 @@ def _maybe_get_callers_frame(
         del frame
 
 
-@overload
-def dataclass(
-    _cls: Type[_U],
-    *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
-) -> Type[_U]:
-    ...
+if sys.version_info >= (3, 11):
+
+    @overload
+    def dataclass(
+        __cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        weakref_slot: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Type[_U]:
+        ...
+
+    @overload
+    def dataclass(
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        weakref_slot: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Callable[[Type[_U]], Type[_U]]:
+        ...
+
+elif sys.version_info >= (3, 10):
+
+    @overload
+    def dataclass(
+        __cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Type[_U]:
+        ...
+
+    @overload
+    def dataclass(
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        match_args: bool = True,
+        kw_only: bool = False,
+        slots: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Callable[[Type[_U]], Type[_U]]:
+        ...
+
+else:
+
+    @overload
+    def dataclass(
+        __cls: Type[_U],
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Type[_U]:
+        ...
+
+    @overload
+    def dataclass(
+        *,
+        repr: bool = True,
+        eq: bool = True,
+        order: bool = False,
+        unsafe_hash: bool = False,
+        frozen: bool = False,
+        base_schema: Optional[Type[marshmallow.Schema]] = None,
+        cls_frame: Optional[types.FrameType] = None,
+    ) -> Callable[[Type[_U]], Type[_U]]:
+        ...
 
 
-@overload
-def dataclass(
-    *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
-    base_schema: Optional[Type[marshmallow.Schema]] = None,
-    cls_frame: Optional[types.FrameType] = None,
-) -> Callable[[Type[_U]], Type[_U]]:
-    ...
-
-
-# _cls should never be specified by keyword, so start it with an
-# underscore.  The presence of _cls is used to detect if this
+# __cls should never be specified by keyword, so start it with an
+# underscore.  The presence of __cls is used to detect if this
 # decorator is being called with parameters or not.
 @dataclass_transform(field_specifiers=(dataclasses.Field, dataclasses.field))
 def dataclass(
-    _cls: Optional[Type[_U]] = None,
+    __cls: Optional[Type[_U]] = None,
     *,
-    repr: bool = True,
-    eq: bool = True,
-    order: bool = False,
-    unsafe_hash: bool = False,
-    frozen: bool = False,
     base_schema: Optional[Type[marshmallow.Schema]] = None,
     cls_frame: Optional[types.FrameType] = None,
     stacklevel: int = 1,
+    **kwargs,
 ) -> Union[Type[_U], Callable[[Type[_U]], Type[_U]]]:
     """
     This decorator does the same as dataclasses.dataclass, but also applies :func:`add_schema`.
@@ -209,18 +278,19 @@ def dataclass(
     >>> Point.Schema().load({'x':0, 'y':0}) # This line can be statically type checked
     Point(x=0.0, y=0.0)
     """
-    dc = dataclasses.dataclass(
-        repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen
-    )
+    dc = dataclasses.dataclass(**kwargs)
 
     def decorator(cls: Type[_U], stacklevel: int = 1) -> Type[_U]:
         return add_schema(
-            dc(cls), base_schema, cls_frame=cls_frame, stacklevel=stacklevel + 1
+            dc(cls),
+            base_schema=base_schema,
+            cls_frame=cls_frame,
+            stacklevel=stacklevel + 1,
         )
 
-    if _cls is None:
+    if __cls is None:
         return decorator
-    return decorator(_cls, stacklevel=stacklevel + 1)
+    return decorator(__cls, stacklevel=stacklevel + 1)
 
 
 @overload
