@@ -8,7 +8,6 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -45,7 +44,7 @@ setup(
     keywords=["marshmallow", "dataclass", "serialization"],
     classifiers=CLASSIFIERS,
     license="MIT",
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
         "marshmallow>=3.18.0,",
         "typing-inspect>=0.9.0",

@@ -270,16 +270,6 @@ For convenience, some custom types are provided:
 from marshmallow_dataclass.typing import Email, Url
 ```
 
-When using Python 3.8, you must import `Annotated` from the typing_extensions package
-
-```python
-# Version agnostic import code:
-if sys.version_info >= (3, 9):
-    from typing import Annotated
-else:
-    from typing_extensions import Annotated
-```
-
 ### Custom NewType declarations [__deprecated__]
 
 > NewType is deprecated in favor or type aliases using Annotated, as described above.
