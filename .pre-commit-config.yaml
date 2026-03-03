@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.3.1
+  rev: v3.21.0
   hooks:
   - id: pyupgrade
     # I've kept it on py3.7 so that it doesn't replace `Dict` with `dict`
@@ -11,11 +11,10 @@ repos:
   - id: black
     language_version: python3
 - repo: https://github.com/PyCQA/flake8
-  # Flake8==6.0.0 requires python>=3.8.1
-  rev: 5.0.4
+  rev: 7.3.0
   hooks:
   - id: flake8
-    additional_dependencies: ['flake8-bugbear==22.10.27']
+    additional_dependencies: ['flake8-bugbear==24.12.12']
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.1.1
   hooks:
