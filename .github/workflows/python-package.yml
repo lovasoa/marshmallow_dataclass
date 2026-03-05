@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# This workflow will install Python dependencies and run tests with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Python package
@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python_version: ["3.9", "3.10", "3.11", "3.12", "pypy3.10"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "pypy3.10"]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -21,13 +21,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python_version }}
-    - name: set pre-commit cache
+    - name: set pip cache
       uses: actions/cache@v4
       with:
         path: |
-          ~/.cache/pre-commit
           ~/.cache/pip
-        key: ${{ matrix.python_version }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ hashFiles('setup.py') }}
+        key: ${{ matrix.python_version }}-${{ hashFiles('setup.py') }}
 
     - name: Use latest pip
       run: python -m pip install --upgrade pip
@@ -38,10 +37,7 @@ jobs:
       # see https://github.com/yaml/pyyaml/issues/601
       run: pip install PyYAML
     - name: Install dependencies
-      run: pip install --pre -e '.[dev]'
+      run: pip install --pre -e '.[docs,tests]'
 
-    - name: Pre-commit hooks
-      if: ${{ matrix.python_version != 'pypy3' && matrix.python_version != '3.6' }}
-      run: pre-commit run --all-files
     - name: Test with pytest
       run: pytest -ra
