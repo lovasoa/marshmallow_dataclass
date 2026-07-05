@@ -91,7 +91,7 @@ The type of your fields must be either basic
 
 ### Union (de)serialization coercion 
 
-Typically the Union type; `Union[X, Y]` means—from a set theory perspective—either `X` or `Y`, i.e., an unordered set, howevever the order of the sub-types defines the precedence when attempting to ether deserialize or serialize the value per [here](https://github.com/lovasoa/marshmallow_dataclass/blob/master/marshmallow_dataclass/union_field.py). 
+Typically the Union type; `Union[X, Y]` means—from a set theory perspective—either `X` or `Y`, i.e., an unordered set, however the order of the sub-types defines the precedence when attempting to either deserialize or serialize the value per [here](https://github.com/lovasoa/marshmallow_dataclass/blob/master/marshmallow_dataclass/union_field.py).
 
 For example, 
 
@@ -112,7 +112,7 @@ PersonSchema().load({"name": "jane", "age": 50.0})
 # => Person(name="jane", age=50)
 ```
 
-will first (sucessfully) try to coerce `50.0` to an `int`. If coercion is not desired the `Any` type can be used with the caveat that values will not be type checked without additional [validation](https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html).
+will first (successfully) try to coerce `50.0` to an `int`. If coercion is not desired the `Any` type can be used with the caveat that values will not be type checked without additional [validation](https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html).
 
 ### Customizing generated fields
 
@@ -244,7 +244,7 @@ See [marshmallow's documentation about extending `Schema`](https://marshmallow.r
 
 ### Custom type aliases
 
-This library allows you to specify [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class) using python's Annoted type [PEP-593](https://peps.python.org/pep-0593/).
+This library allows you to specify [customized marshmallow fields](https://marshmallow.readthedocs.io/en/stable/custom_fields.html#creating-a-field-class) using python's Annotated type [PEP-593](https://peps.python.org/pep-0593/).
 
 ```python
 from typing import Annotated
