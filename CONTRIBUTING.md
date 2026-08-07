@@ -5,7 +5,7 @@ To create a development environment and install the development dependencies, ru
 ```bash
 python3 -m venv venv
 . venv/bin/activate
-pip install --upgrade pip setuptools
+pip install --upgrade pip
 pip install '.[dev]'
 pre-commit install --install-hooks
 ```
